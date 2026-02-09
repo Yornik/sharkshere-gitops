@@ -50,6 +50,8 @@ apps:
           name: org.democratic-csi.nfs
         driver:
           existingConfigSecret: democratic-csi-nfs-driver-config
+          config:
+            driver: freenas-api-nfs
         storageClasses:
           - name: truenas-nfs
             defaultClass: true
@@ -73,6 +75,8 @@ apps:
           name: org.democratic-csi.iscsi
         driver:
           existingConfigSecret: democratic-csi-iscsi-driver-config
+          config:
+            driver: freenas-api-iscsi
         storageClasses:
           - name: truenas-iscsi
             defaultClass: false
