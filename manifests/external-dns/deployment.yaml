@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: external-dns
+  labels:
+    app: external-dns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.15.1
+          args:
+            - --source=service
+            - --source=ingress
+            - --provider=webhook
+            - --domain-filter=fedishark.eu
+            - --policy=sync
+            - --txt-owner-id=sharkshere
+            - --txt-prefix=reg-%{record_type}-
+            - --interval=1m
+          ports:
+            - name: http
+              containerPort: 7979
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+        - name: hetzner-webhook
+          image: ghcr.io/mconfalonieri/external-dns-hetzner-webhook:v0.10.0
+          ports:
+            - name: http-webhook
+              containerPort: 8888
+              protocol: TCP
+          env:
+            - name: HETZNER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hetzner-credentials
+                  key: api-key
+            - name: USE_CLOUD_API
+              value: "true"
+            - name: DEFAULT_TTL
+              value: "300"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http-webhook
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-webhook
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
