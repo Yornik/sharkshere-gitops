@@ -34,3 +34,51 @@ apps:
   jellyfin:
     namespace: jellyfin
     path: manifests/jellyfin
+
+  democratic-csi:
+    namespace: democratic-csi
+    path: manifests/democratic-csi
+
+  democratic-csi-nfs:
+    namespace: democratic-csi
+    helm:
+      repoURL: https://democratic-csi.github.io/charts/
+      chart: democratic-csi
+      targetRevision: "*"
+      values: |
+        csiDriver:
+          name: org.democratic-csi.nfs
+        driver:
+          existingConfigSecret: democratic-csi-nfs-driver-config
+        storageClasses:
+          - name: truenas-nfs
+            defaultClass: true
+            reclaimPolicy: Delete
+            allowVolumeExpansion: true
+            parameters:
+              fsType: nfs
+            mountOptions:
+              - noatime
+              - nfsvers=4
+        volumeSnapshotClasses: []
+
+  democratic-csi-iscsi:
+    namespace: democratic-csi
+    helm:
+      repoURL: https://democratic-csi.github.io/charts/
+      chart: democratic-csi
+      targetRevision: "*"
+      values: |
+        csiDriver:
+          name: org.democratic-csi.iscsi
+        driver:
+          existingConfigSecret: democratic-csi-iscsi-driver-config
+        storageClasses:
+          - name: truenas-iscsi
+            defaultClass: false
+            reclaimPolicy: Delete
+            allowVolumeExpansion: true
+            parameters:
+              fsType: ext4
+            mountOptions: []
+        volumeSnapshotClasses: []
