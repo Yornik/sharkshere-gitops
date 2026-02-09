@@ -1,50 +1,76 @@
 # sharkshere-gitops
 
-GitOps repo for the sharkshere Kubernetes cluster. Argo CD bootstraps itself and then deploys all cluster apps using an app-of-apps Helm chart.
+GitOps repository for the **sharkshere** Kubernetes cluster — a 4-node Talos Linux cluster managed via Sidero Omni. Argo CD bootstraps itself and deploys all workloads through an app-of-apps Helm chart.
 
-## Layout
+## Cluster
 
-- `apps/`: Helm chart that renders Argo CD `Application` resources (app-of-apps).
-- `bootstrap/`: Manifests to install Argo CD and seed the root application.
-- `manifests/`: Per-application manifests or Kustomize overlays.
+| Nodes | CPU | RAM | Storage | OS |
+|-------|-----|-----|---------|----|
+| 4x Intel N150 | 4 cores each | 32 GB each | ~475 GB each | Talos Linux |
+
+3 control-plane nodes (scheduling enabled) + 1 worker. All 4 nodes accept workloads and each has an Intel iGPU available for hardware transcoding.
+
+## Repository Layout
+
+```
+apps/           Helm chart that renders Argo CD Application resources (app-of-apps)
+bootstrap/      Manifests to install Argo CD and seed the root application
+manifests/      Per-application manifests and Kustomize overlays
+```
+
+## Deployed Applications
+
+| Application | Namespace | Source | Description |
+|-------------|-----------|--------|-------------|
+| **example-app** | `example` | Local manifests | Nginx demo deployment |
+| **local-path-provisioner** | `local-path-storage` | Local manifests | Default StorageClass using node-local storage |
+| **smb-csi-driver** | `kube-system` | Helm chart | CSI driver for mounting SMB/CIFS shares |
+| **external-dns** | `external-dns` | Local manifests | Hetzner Cloud DNS webhook for `fedishark.eu` |
+| **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
+
+All applications use automated sync with prune and self-heal enabled.
 
 ## How It Works
 
-1. Apply the bootstrap manifests to install Argo CD and the root application.
+1. Bootstrap manifests install Argo CD and create the root application.
 2. The root application points at `apps/` and renders one `Application` per entry in `apps/values.yaml`.
-3. Argo CD continuously syncs each application from this repo or external Helm charts.
+3. Argo CD continuously syncs each application from this repo or from external Helm charts.
 
 ## Bootstrap
 
-Prereqs: `kubectl`, cluster access, and any Argo CD/KSOPS prerequisites you use in your environment.
-
-1. Create the Argo CD namespace and install Argo CD:
+Prerequisites: `kubectl` with cluster access.
 
 ```sh
 kubectl apply -f bootstrap/argocd-namespace.yaml
 kubectl apply -f bootstrap/argocd-install.yaml
 kubectl apply -f bootstrap/argocd-project.yaml
-```
-
-2. Seed the root application:
-
-```sh
 kubectl apply -f bootstrap/root-app.yaml
 ```
+
+After the root application is created, Argo CD takes over and deploys everything else.
 
 ## Managing Apps
 
 Edit `apps/values.yaml` to add or remove applications.
 
-Raw manifests or Kustomize: add an entry with `path: manifests/<app>` and commit manifests under `manifests/<app>/`.
-
-Helm charts: add an entry under `apps.<name>.helm` with `repoURL`, `chart`, and `targetRevision`.
+- **Local manifests:** add an entry with `path: manifests/<app>` and commit manifests under that directory.
+- **Helm charts:** add an entry under `apps.<name>.helm` with `repoURL`, `chart`, and `targetRevision`.
 
 ## Secrets
 
-This repo uses KSOPS generators for encrypted secrets (see `secret-generator.yaml` in each app). Ensure your Argo CD setup includes KSOPS and SOPS decryption for `*.enc.yaml` files.
+Secrets are encrypted with [SOPS](https://github.com/getsops/sops) using age encryption. Encrypted files follow the `*.enc.yaml` naming convention.
 
-## Notes
+At sync time, Argo CD decrypts secrets via [KSOPS](https://github.com/viaductoss/ksops) generators (`secret-generator.yaml` in each app that needs secrets).
 
-- The default GitHub repo URL is set in `apps/values.yaml` and `bootstrap/root-app.yaml`.
-- Argo CD applications are set to automated sync with prune and self-heal.
+## CI
+
+Every pull request runs four checks:
+
+1. **YAML lint** — validates manifests and bootstrap files
+2. **Helm template** — renders the app-of-apps chart
+3. **Kubeconform** — schema validation on raw manifests
+4. **Helm + Kubeconform** — schema validation on rendered Helm output
+
+## Dependency Updates
+
+[Renovate](https://docs.renovatebot.com/) monitors this repo for dependency updates. Patch and minor container image updates are auto-merged; major updates and Helm chart bumps require manual review.
