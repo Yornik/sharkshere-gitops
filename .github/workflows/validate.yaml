@@ -1,0 +1,80 @@
+name: Validate Manifests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Lint YAML files
+        run: |
+          yamllint -d '{extends: relaxed, rules: {line-length: {max: 200}}}' \
+            manifests/ bootstrap/
+
+  helm-template:
+    name: Helm Template Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Render app-of-apps chart
+        run: helm template sharkshere-apps apps/ --namespace argocd
+
+  kubeconform:
+    name: Validate Kubernetes Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -fsSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Validate manifests
+        run: |
+          kubeconform \
+            -strict \
+            -ignore-missing-schemas \
+            -summary \
+            -output text \
+            manifests/
+
+      - name: Validate bootstrap
+        run: |
+          kubeconform \
+            -strict \
+            -ignore-missing-schemas \
+            -summary \
+            -output text \
+            bootstrap/argocd-namespace.yaml bootstrap/argocd-project.yaml
+
+  helm-kubeconform:
+    name: Validate Rendered Helm Output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -fsSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Template and validate
+        run: |
+          helm template sharkshere-apps apps/ --namespace argocd \
+            | kubeconform -strict -ignore-missing-schemas -summary -output text

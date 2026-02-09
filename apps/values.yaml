@@ -1,0 +1,34 @@
+# Git repo where your manifests live
+# CHANGE THIS to your actual repo URL
+repoURL: https://github.com/YOURUSER/sharkshere-gitops.git
+targetRevision: main
+
+# Define your apps here. Each entry becomes an ArgoCD Application.
+#
+# To add a new app:
+#   1. Add an entry below
+#   2. Create its manifests under manifests/<name>/
+#   3. Push — ArgoCD picks it up automatically
+#
+apps:
+  example-app:
+    namespace: example
+    path: manifests/example-app
+
+  local-path-provisioner:
+    namespace: local-path-storage
+    path: manifests/local-path-provisioner
+
+  smb-csi-driver:
+    namespace: kube-system
+    helm:
+      repoURL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
+      chart: csi-driver-smb
+      targetRevision: "v1.*"
+      values: |
+        controller:
+          replicas: 1
+
+  jellyfin:
+    namespace: jellyfin
+    path: manifests/jellyfin

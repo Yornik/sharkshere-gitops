@@ -1,0 +1,10 @@
+# ArgoCD HA install manifest
+# Apply after creating the namespace:
+#   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+#
+# Or for HA:
+#   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/ha/install.yaml
+#
+# This file is a pointer — ArgoCD upstream manifests are large and version-pinned.
+# Pin a specific version by replacing "stable" with e.g. "v2.14.0":
+#   https://raw.githubusercontent.com/argoproj/argo-cd/v2.14.0/manifests/install.yaml

@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-movies
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb
+  mountOptions:
+    - dir_mode=0555
+    - file_mode=0444
+    - ro
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: jellyfin-movies
+    source: //192.168.1.42/lilnasx/shared_evreyone/movies
+    nodeStageSecretRef:
+      name: smb-credentials
+      namespace: jellyfin
+    volumeAttributes:
+      source: //192.168.1.42/lilnasx/shared_evreyone/movies

@@ -1,0 +1,33 @@
+{{- range $name, $app := .Values.apps }}
+{{- if $app.helm }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $name }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ $app.helm.repoURL }}
+    chart: {{ $app.helm.chart }}
+    targetRevision: {{ $app.helm.targetRevision | default "*" }}
+    helm:
+      releaseName: {{ $name }}
+      {{- if $app.helm.values }}
+      values: |
+{{ $app.helm.values | indent 8 }}
+      {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ $app.namespace | default "default" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+{{- end }}
+{{- end }}
