@@ -13,7 +13,7 @@ spec:
   source:
     repoURL: {{ $app.helm.repoURL }}
     chart: {{ $app.helm.chart }}
-    targetRevision: {{ $app.helm.targetRevision | default "*" }}
+    targetRevision: {{ $app.helm.targetRevision | default "*" | quote }}
     helm:
       releaseName: {{ $name }}
       {{- if $app.helm.values }}
