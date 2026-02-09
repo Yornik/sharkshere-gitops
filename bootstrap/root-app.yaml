@@ -8,8 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    # CHANGE THIS to your actual git repo URL
-    repoURL: https://github.com/YOURUSER/sharkshere-gitops.git
+    repoURL: https://github.com/Yornik/sharkshere-gitops.git
     targetRevision: main
     path: apps
     helm:
