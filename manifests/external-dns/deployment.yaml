@@ -58,6 +58,9 @@ spec:
             - name: http-webhook
               containerPort: 8888
               protocol: TCP
+            - name: http-metrics
+              containerPort: 8080
+              protocol: TCP
           env:
             - name: HETZNER_API_KEY
               valueFrom:
@@ -71,12 +74,12 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: http-webhook
+              port: http-metrics
             initialDelaySeconds: 10
           readinessProbe:
             httpGet:
               path: /ready
-              port: http-webhook
+              port: http-metrics
             initialDelaySeconds: 10
           resources:
             requests:
