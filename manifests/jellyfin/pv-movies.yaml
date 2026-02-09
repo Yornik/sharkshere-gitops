@@ -16,7 +16,6 @@ spec:
   csi:
     driver: smb.csi.k8s.io
     volumeHandle: jellyfin-movies
-    source: //192.168.1.42/lilnasx/shared_evreyone/movies
     nodeStageSecretRef:
       name: smb-credentials
       namespace: jellyfin
