@@ -5,6 +5,9 @@ metadata:
   namespace: jellyfin
   labels:
     app: jellyfin
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: jelly.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
 spec:
   type: LoadBalancer
   selector:
