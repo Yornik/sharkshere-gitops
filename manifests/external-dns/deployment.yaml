@@ -33,6 +33,7 @@ spec:
             - --txt-prefix=reg-%{record_type}-
             - --interval=1m
             - --webhook-provider-url=http://127.0.0.1:8888
+            - --dry-run
           ports:
             - name: http
               containerPort: 7979
