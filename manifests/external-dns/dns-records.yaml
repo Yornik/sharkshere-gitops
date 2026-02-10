@@ -17,6 +17,10 @@ metadata:
   namespace: external-dns
   annotations:
     external-dns.alpha.kubernetes.io/hostname: argocd.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
 spec:
-  type: ExternalName
-  externalName: jump.fedishark.eu
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
