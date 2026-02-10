@@ -7,8 +7,11 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: jump.fedishark.eu
     external-dns.alpha.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
 spec:
-  type: ExternalName
-  externalName: jump.fedishark.eu
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
 ---
 apiVersion: v1
 kind: Service
@@ -19,5 +22,23 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: argocd.fedishark.eu
     external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
 spec:
-  type: ExternalName
-  externalName: jump.fedishark.eu
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-txt-debug-fedishark-eu
+  namespace: external-dns
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: txt-debug.fedishark.eu
+    external-dns.alpha.kubernetes.io/txt-value: "hello world from external dns"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
