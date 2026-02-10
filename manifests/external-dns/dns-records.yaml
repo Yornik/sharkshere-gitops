@@ -20,7 +20,7 @@ metadata:
   namespace: external-dns
   annotations:
     external-dns.alpha.kubernetes.io/hostname: argocd.fedishark.eu
-    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu.
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
 spec:
   type: ClusterIP
   ports:
