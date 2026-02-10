@@ -53,7 +53,7 @@ spec:
               memory: 128Mi
 
         - name: desec-webhook
-          image: ghcr.io/michelangelomo/external-dns-desec-provider:v0.2.0
+          image: ghcr.io/michelangelomo/external-dns-desec-provider:0.2.0
           ports:
             - name: http-webhook
               containerPort: 8888
