@@ -8,6 +8,8 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/hostname: jelly.fedishark.eu
     external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: jellyfin
 spec:
   type: LoadBalancer
   selector:

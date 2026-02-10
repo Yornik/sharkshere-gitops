@@ -96,3 +96,25 @@ apps:
               fsType: ext4
             mountOptions: []
         volumeSnapshotClasses: []
+
+  tailscale:
+    namespace: tailscale
+    path: manifests/tailscale
+
+  tailscale-operator:
+    namespace: tailscale
+    helm:
+      repoURL: https://pkgs.tailscale.com/helmcharts
+      chart: tailscale-operator
+      targetRevision: "*"
+      values: |
+        oauth:
+          clientId: ""
+          clientSecret: ""
+        operatorConfig:
+          defaultTags:
+            - "tag:k8s-operator"
+        proxyConfig:
+          defaultTags: "tag:k8s"
+        apiServerProxyConfig:
+          mode: "false"
