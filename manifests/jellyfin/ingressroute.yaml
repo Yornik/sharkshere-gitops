@@ -1,0 +1,21 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`jelly.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: rate-limit
+          namespace: traefik
+        - name: fail2ban
+          namespace: traefik
+      services:
+        - name: jellyfin
+          port: 8096
+  tls:
+    certResolver: letsencrypt
