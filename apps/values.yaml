@@ -9,10 +9,6 @@ targetRevision: main
 #   3. Push — ArgoCD picks it up automatically
 #
 apps:
-  example-app:
-    namespace: example
-    path: manifests/example-app
-
   local-path-provisioner:
     namespace: local-path-storage
     path: manifests/local-path-provisioner
