@@ -27,7 +27,9 @@ spec:
             - --provider=webhook
             - --domain-filter=fedishark.eu
             - --policy=sync
-            - --registry=noop
+            - --registry=txt
+            - --txt-owner-id=sharkshere
+            - --txt-prefix=reg-%{record_type}-
             - --interval=1m
           ports:
             - name: http
