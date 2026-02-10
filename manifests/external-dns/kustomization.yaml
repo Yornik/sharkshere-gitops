@@ -7,4 +7,4 @@ resources:
   - clusterrolebinding.yaml
   - deployment.yaml
 generators:
-  - secret-generator.yaml
+  - desec-secret-generator.yaml
