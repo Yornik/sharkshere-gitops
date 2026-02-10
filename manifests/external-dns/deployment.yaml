@@ -70,6 +70,8 @@ spec:
                 secretKeyRef:
                   name: desec-credentials
                   key: api-key
+            - name: WEBHOOK_LOGLEVEL
+              value: "debug"
             - name: WEBHOOK_DOMAINFILTERS
               value: "fedishark.eu"
             - name: WEBHOOK_DEFAULTTTL
