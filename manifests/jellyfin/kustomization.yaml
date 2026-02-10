@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - service.yaml
+  - ingressroute.yaml
   - pv-movies.yaml
   - pv-series.yaml
   - pvc-config.yaml

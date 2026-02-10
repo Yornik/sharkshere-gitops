@@ -97,6 +97,92 @@ apps:
             mountOptions: []
         volumeSnapshotClasses: []
 
+  traefik:
+    namespace: traefik
+    helm:
+      repoURL: https://traefik.github.io/charts
+      chart: traefik
+      targetRevision: "39.*"
+      values: |
+        service:
+          type: ClusterIP
+          annotations:
+            tailscale.com/expose: "true"
+            tailscale.com/hostname: traefik
+        ports:
+          web:
+            port: 8000
+            exposedPort: 80
+            protocol: TCP
+            proxyProtocol:
+              trustedIPs:
+                - "10.0.0.0/8"
+                - "100.64.0.0/10"
+            forwardedHeaders:
+              trustedIPs:
+                - "10.0.0.0/8"
+                - "100.64.0.0/10"
+            redirectTo:
+              port: websecure
+          websecure:
+            port: 8443
+            exposedPort: 443
+            protocol: TCP
+            proxyProtocol:
+              trustedIPs:
+                - "10.0.0.0/8"
+                - "100.64.0.0/10"
+            forwardedHeaders:
+              trustedIPs:
+                - "10.0.0.0/8"
+                - "100.64.0.0/10"
+        certificatesResolvers:
+          letsencrypt:
+            acme:
+              email: yornik@yornik.nl
+              storage: /data/acme.json
+              httpChallenge:
+                entryPoint: web
+        persistence:
+          enabled: true
+          storageClass: truenas-nfs
+          size: 128Mi
+        additionalArguments:
+          - "--entrypoints.websecure.http.tls.options=hardened@file"
+        providers:
+          kubernetesCRD:
+            enabled: true
+            allowCrossNamespace: true
+          kubernetesIngress:
+            enabled: true
+          file:
+            enabled: true
+            content: |
+              tls:
+                options:
+                  hardened:
+                    minVersion: VersionTLS12
+                    cipherSuites:
+                      - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+                      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+                      - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+                      - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+                      - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+                    sniStrict: true
+        experimental:
+          plugins:
+            fail2ban:
+              moduleName: github.com/tomMoulard/fail2ban
+              version: v0.8.9
+        ingressClass:
+          enabled: true
+          isDefaultClass: true
+
+  traefik-config:
+    namespace: traefik
+    path: manifests/traefik-config
+
   tailscale:
     namespace: tailscale
     path: manifests/tailscale
