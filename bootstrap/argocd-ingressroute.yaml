@@ -5,6 +5,7 @@ metadata:
   namespace: argocd
 spec:
   entryPoints:
+    - web
     - websecure
   routes:
     - match: Host(`argocd.fedishark.eu`)
@@ -12,7 +13,7 @@ spec:
       services:
         - name: argocd-server
           port: 80
-    - match: Host(`argocd.fedishark.eu`) && Headers(`Content-Type`, `application/grpc`)
+    - match: Host(`argocd.fedishark.eu`) && Header(`Content-Type`, `application/grpc`)
       kind: Rule
       services:
         - name: argocd-server
