@@ -122,8 +122,11 @@ apps:
               trustedIPs:
                 - "10.0.0.0/8"
                 - "100.64.0.0/10"
-            redirectTo:
-              port: websecure
+            http:
+              redirections:
+                entryPoint:
+                  to: websecure
+                  scheme: https
           websecure:
             port: 8443
             exposedPort: 443
@@ -136,6 +139,9 @@ apps:
               trustedIPs:
                 - "10.0.0.0/8"
                 - "100.64.0.0/10"
+            http:
+              tls:
+                options: hardened@file
         certificatesResolvers:
           letsencrypt:
             acme:
@@ -147,8 +153,6 @@ apps:
           enabled: true
           storageClass: truenas-nfs
           size: 128Mi
-        additionalArguments:
-          - "--entrypoints.websecure.http.tls.options=hardened@file"
         providers:
           kubernetesCRD:
             enabled: true
