@@ -14,6 +14,8 @@ spec:
           namespace: traefik
         - name: fail2ban
           namespace: traefik
+        - name: security-headers
+          namespace: traefik
       services:
         - name: jellyfin
           port: 8096

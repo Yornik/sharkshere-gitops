@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - middleware-rate-limit.yaml
   - middleware-fail2ban.yaml
+  - middleware-hsts.yaml
