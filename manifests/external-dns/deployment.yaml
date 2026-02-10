@@ -32,6 +32,7 @@ spec:
             - --txt-owner-id=sharkshere
             - --txt-prefix=reg-%{record_type}-
             - --interval=1m
+            - --webhook-provider-url=http://127.0.0.1:8888
           ports:
             - name: http
               containerPort: 7979
