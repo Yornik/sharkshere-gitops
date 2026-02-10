@@ -27,7 +27,7 @@ spec:
             - --provider=webhook
             - --domain-filter=fedishark.eu
             - --policy=sync
-            - --managed-record-types=A,AAAA,CNAME
+            - --managed-record-types=A,AAAA,CNAME,TXT
             - --registry=txt
             - --txt-owner-id=sharkshere
             - --txt-prefix=reg-%{record_type}-
