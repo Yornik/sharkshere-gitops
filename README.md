@@ -25,7 +25,7 @@ manifests/      Per-application manifests and Kustomize overlays
 | **example-app** | `example` | Local manifests | Nginx demo deployment |
 | **local-path-provisioner** | `local-path-storage` | Local manifests | Default StorageClass using node-local storage |
 | **smb-csi-driver** | `kube-system` | Helm chart | CSI driver for mounting SMB/CIFS shares |
-| **external-dns** | `external-dns` | Local manifests | Hetzner Cloud DNS webhook for `fedishark.eu` |
+| **external-dns** | `external-dns` | Local manifests | deSEC DNS webhook for `fedishark.eu` |
 | **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
 
 All applications use automated sync with prune and self-heal enabled.
