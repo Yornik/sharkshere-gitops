@@ -1,0 +1,25 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: qbittorrent
+  namespace: jellyfin
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`qbittorrent.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: qbittorrent-auth
+          namespace: jellyfin
+        - name: rate-limit
+          namespace: traefik
+        - name: fail2ban
+          namespace: traefik
+        - name: security-headers
+          namespace: traefik
+      services:
+        - name: qbittorrent
+          port: 8080
+  tls:
+    certResolver: letsencrypt

@@ -3,6 +3,8 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
+  - ingressroute.yaml
+  - middleware-auth.yaml
   - pvc-config.yaml
   - pv-movies-rw.yaml
   - pvc-movies-rw.yaml
