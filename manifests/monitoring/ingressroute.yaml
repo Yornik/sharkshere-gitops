@@ -14,8 +14,6 @@ spec:
           namespace: traefik
         - name: fail2ban
           namespace: traefik
-        - name: rate-limit
-          namespace: traefik
       services:
         - name: kube-prometheus-stack-grafana
           port: 80
