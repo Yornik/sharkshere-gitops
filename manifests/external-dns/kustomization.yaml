@@ -8,4 +8,4 @@ resources:
   - deployment.yaml
   - dns-records.yaml
 generators:
-  - desec-secret-generator.yaml
+  - cloudflare-secret-generator.yaml
