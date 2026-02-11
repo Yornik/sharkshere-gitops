@@ -38,6 +38,8 @@ spec:
                 secretKeyRef:
                   name: cloudflare-credentials
                   key: api-token
+            - name: EXTERNAL_DNS_LOG_LEVEL
+              value: trace
           ports:
             - name: http
               containerPort: 7979
