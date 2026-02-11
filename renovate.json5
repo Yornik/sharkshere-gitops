@@ -1,41 +1,58 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "docker:enableMajor",
-    ":separateMultipleMajorReleases"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    'docker:enableMajor',
+    ':separateMultipleMajorReleases',
   ],
-  // PRs get created against main, require review before merge
-  "baseBranches": ["main"],
-  "labels": ["renovate", "dependencies"],
-  "packageRules": [
-    {
-      // Group all patch updates into one PR
-      "matchUpdateTypes": ["patch"],
-      "groupName": "patch updates",
-      "automerge": true
-    },
-    {
-      // Container image updates
-      "matchDatasources": ["docker"],
-      "matchUpdateTypes": ["minor"],
-      "automerge": true
-    },
-    {
-      // Major updates need manual review
-      "matchUpdateTypes": ["major"],
-      "automerge": false,
-      "labels": ["renovate", "major"]
-    },
-    {
-      // Helm chart version updates
-      "matchDatasources": ["helm"],
-      "automerge": false,
-      "labels": ["renovate", "helm"]
-    }
+  baseBranchPatterns: [
+    'main',
   ],
-  // Scan Kubernetes YAML for container image references
-  "kubernetes": {
-    "fileMatch": ["manifests/.+\\.yaml$"]
-  }
+  labels: [
+    'renovate',
+    'dependencies',
+  ],
+  packageRules: [
+    {
+      matchUpdateTypes: [
+        'patch',
+      ],
+      groupName: 'patch updates',
+      automerge: true,
+    },
+    {
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'minor',
+      ],
+      automerge: true,
+    },
+    {
+      matchUpdateTypes: [
+        'major',
+      ],
+      automerge: false,
+      labels: [
+        'renovate',
+        'major',
+      ],
+    },
+    {
+      matchDatasources: [
+        'helm',
+      ],
+      automerge: false,
+      labels: [
+        'renovate',
+        'helm',
+      ],
+    },
+  ],
+  kubernetes: {
+    managerFilePatterns: [
+      '/manifests/.+\\.yaml$/',
+    ],
+  },
 }
