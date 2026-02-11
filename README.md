@@ -30,6 +30,7 @@ manifests/      Per-application manifests and Kustomize overlays
 | **kube-prometheus-stack** | `monitoring` | Helm chart | Prometheus, Grafana, Alertmanager, node-exporter, kube-state-metrics |
 | **loki** | `monitoring` | Helm chart | Log storage backend for Grafana Explore |
 | **promtail** | `monitoring` | Helm chart | Log shipper (DaemonSet) that pushes logs to Loki |
+| **tibber-exporter** | `monitoring` | Local manifests | Tibber power metrics exporter with Grafana dashboard |
 | **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
 
 All applications use automated sync with prune and self-heal enabled.
