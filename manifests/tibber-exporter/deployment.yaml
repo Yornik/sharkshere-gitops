@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: tibber-exporter
-          image: ghcr.io/terjesannum/tibber-exporter:latest
+          image: ghcr.io/yornik/tibber-exporter:quarter-hourly-v1
           imagePullPolicy: IfNotPresent
           args:
             - --live
