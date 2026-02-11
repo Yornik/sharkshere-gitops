@@ -6,6 +6,7 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/hostname: jump.fedishark.eu
     external-dns.alpha.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
+    external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:
   type: ClusterIP
   ports:
@@ -21,6 +22,7 @@ metadata:
   annotations:
     external-dns.alpha.kubernetes.io/hostname: argocd.fedishark.eu
     external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:
   type: ClusterIP
   ports:
