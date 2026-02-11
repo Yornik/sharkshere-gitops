@@ -28,6 +28,8 @@ manifests/      Per-application manifests and Kustomize overlays
 | **external-dns** | `external-dns` | Local manifests | deSEC DNS webhook for `fedishark.eu` |
 | **monitoring** | `monitoring` | Local manifests | Namespace, Grafana ingress, and SOPS secrets |
 | **kube-prometheus-stack** | `monitoring` | Helm chart | Prometheus, Grafana, Alertmanager, node-exporter, kube-state-metrics |
+| **loki** | `monitoring` | Helm chart | Log storage backend for Grafana Explore |
+| **promtail** | `monitoring` | Helm chart | Log shipper (DaemonSet) that pushes logs to Loki |
 | **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
 
 All applications use automated sync with prune and self-heal enabled.
