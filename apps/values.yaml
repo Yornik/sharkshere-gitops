@@ -94,6 +94,41 @@ apps:
           extraArgs:
             - --no-collector.systemd
 
+  loki:
+    namespace: monitoring
+    helm:
+      repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: "6.*"
+      values: |
+        loki:
+          auth_enabled: false
+          commonConfig:
+            replication_factor: 1
+          storage:
+            type: filesystem
+        singleBinary:
+          replicas: 1
+          persistence:
+            enabled: true
+            storageClass: truenas-nfs
+            size: 20Gi
+        gateway:
+          enabled: false
+
+  promtail:
+    namespace: monitoring
+    helm:
+      repoURL: https://grafana.github.io/helm-charts
+      chart: promtail
+      targetRevision: "6.*"
+      values: |
+        config:
+          clients:
+            - url: http://loki.monitoring.svc:3100/loki/api/v1/push
+        tolerations:
+          - operator: Exists
+
   jellyfin:
     namespace: jellyfin
     path: manifests/jellyfin
