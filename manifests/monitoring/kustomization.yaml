@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - ingressroute.yaml
+  - middleware-fail2ban-grafana.yaml
   - grafana-datasource-loki.yaml
 generators:
   - secret-generator.yaml
