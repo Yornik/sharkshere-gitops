@@ -52,6 +52,8 @@ apps:
 
         # Grafana
         grafana:
+          plugins:
+            - marcusolsson-hourly-heatmap-panel
           admin:
             existingSecret: grafana-admin
             userKey: admin-user
