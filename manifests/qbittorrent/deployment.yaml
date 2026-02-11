@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  namespace: jellyfin
+  labels:
+    app: qbittorrent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      containers:
+        - name: gluetun
+          image: qmcgaw/gluetun:v3
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+            privileged: false
+          env:
+            - name: VPN_SERVICE_PROVIDER
+              value: mullvad
+            - name: VPN_TYPE
+              value: wireguard
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-vpn-secrets
+                  key: wireguard-private-key
+            - name: WIREGUARD_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-vpn-secrets
+                  key: wireguard-addresses
+            - name: SERVER_COUNTRIES
+              value: Netherlands
+            - name: FIREWALL_OUTBOUND_SUBNETS
+              value: 10.0.0.0/8,192.168.0.0/16
+            - name: FIREWALL_VPN_INPUT_PORTS
+              value: "6881"
+            - name: TZ
+              value: Europe/Amsterdam
+          ports:
+            - containerPort: 8080
+              name: webui
+            - containerPort: 6881
+              name: bittorrent
+            - containerPort: 6881
+              protocol: UDP
+              name: bittorrent-udp
+          volumeMounts:
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: qbittorrent
+          image: lscr.io/linuxserver/qbittorrent:latest
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: WEBUI_PORT
+              value: "8080"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: movies
+              mountPath: /media/movies
+            - name: series
+              mountPath: /media/series
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: qbittorrent-config
+        - name: movies
+          persistentVolumeClaim:
+            claimName: qbittorrent-movies-rw
+        - name: series
+          persistentVolumeClaim:
+            claimName: qbittorrent-series-rw
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice

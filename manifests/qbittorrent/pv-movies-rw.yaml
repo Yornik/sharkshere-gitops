@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: qbittorrent-movies-rw
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: smb-rw
+  mountOptions:
+    - dir_mode=0775
+    - file_mode=0664
+    - uid=1000
+    - gid=1000
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: qbittorrent-movies-rw
+    nodeStageSecretRef:
+      name: smb-credentials
+      namespace: jellyfin
+    volumeAttributes:
+      source: //192.168.1.42/lilnasx/shared_evreyone/movies
