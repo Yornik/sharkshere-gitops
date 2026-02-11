@@ -26,6 +26,7 @@ spec:
             - --source=ingress
             - --provider=cloudflare
             - --domain-filter=fedishark.eu
+            - --zone-id-filter=09239080e8959af0af33e01c0d3c6bdc
             - --policy=sync
             - --managed-record-types=A,AAAA,CNAME,TXT
             - --registry=txt
