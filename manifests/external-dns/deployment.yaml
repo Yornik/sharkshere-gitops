@@ -24,7 +24,7 @@ spec:
           args:
             - --source=service
             - --source=ingress
-            - --provider=webhook
+            - --provider=cloudflare
             - --domain-filter=fedishark.eu
             - --policy=sync
             - --managed-record-types=A,AAAA,CNAME,TXT
@@ -32,6 +32,12 @@ spec:
             - --txt-owner-id=sharkshere
             - --txt-prefix=reg-%{record_type}-
             - --interval=1m
+          env:
+            - name: CF_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-credentials
+                  key: api-token
           ports:
             - name: http
               containerPort: 7979
@@ -53,38 +59,3 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
-
-        - name: desec-webhook
-          image: ghcr.io/michelangelomo/external-dns-desec-provider:0.2.0
-          ports:
-            - name: http-webhook
-              containerPort: 8888
-              protocol: TCP
-            - name: http-metrics
-              containerPort: 8080
-              protocol: TCP
-          env:
-            - name: WEBHOOK_APITOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: desec-credentials
-                  key: api-key
-            - name: WEBHOOK_DOMAINFILTERS
-              value: "fedishark.eu"
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: http-metrics
-            initialDelaySeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: http-metrics
-            initialDelaySeconds: 10
-          resources:
-            requests:
-              cpu: 25m
-              memory: 132Mi
-            limits:
-              cpu: 100m
-              memory: 364Mi
