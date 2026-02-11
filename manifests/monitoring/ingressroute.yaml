@@ -12,8 +12,8 @@ spec:
       middlewares:
         - name: security-headers
           namespace: traefik
-        - name: fail2ban
-          namespace: traefik
+        - name: fail2ban-grafana
+          namespace: monitoring
       services:
         - name: kube-prometheus-stack-grafana
           port: 80
