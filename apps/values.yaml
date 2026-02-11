@@ -174,13 +174,26 @@ apps:
                   source: level
                   expression: '^warning$'
                   replace: 'warn'
+              - drop:
+                  longer_than: 16kb
               - labels:
                   level:
             extraRelabelConfigs:
               - action: drop
                 source_labels:
+                  - __meta_kubernetes_namespace
+                regex: argocd
+              - action: drop
+                source_labels:
                   - __meta_kubernetes_pod_name
                 regex: loki-canary.*
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
         tolerations:
           - operator: Exists
 
