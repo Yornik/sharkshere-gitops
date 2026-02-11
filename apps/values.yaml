@@ -27,6 +27,73 @@ apps:
     namespace: external-dns
     path: manifests/external-dns
 
+  monitoring:
+    namespace: monitoring
+    path: manifests/monitoring
+
+  kube-prometheus-stack:
+    namespace: monitoring
+    syncOptions:
+      - ServerSideApply=true
+    helm:
+      repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: "72.*"
+      values: |
+        # Talos Linux: control plane components not accessible via Omni
+        kubeEtcd:
+          enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeProxy:
+          enabled: false
+
+        # Grafana
+        grafana:
+          admin:
+            existingSecret: grafana-admin
+            userKey: admin-user
+            passwordKey: admin-password
+          persistence:
+            enabled: true
+            storageClassName: truenas-nfs
+            size: 2Gi
+          sidecar:
+            dashboards:
+              enabled: true
+            datasources:
+              enabled: true
+
+        # Prometheus
+        prometheus:
+          prometheusSpec:
+            retention: 15d
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: truenas-nfs
+                  resources:
+                    requests:
+                      storage: 20Gi
+
+        # Alertmanager
+        alertmanager:
+          alertmanagerSpec:
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: truenas-nfs
+                  resources:
+                    requests:
+                      storage: 2Gi
+
+        # Node exporter - Talos has no systemd
+        prometheus-node-exporter:
+          extraArgs:
+            - --no-collector.systemd
+
   jellyfin:
     namespace: jellyfin
     path: manifests/jellyfin
