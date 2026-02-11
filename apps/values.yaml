@@ -167,6 +167,10 @@ apps:
         tolerations:
           - operator: Exists
 
+  tibber-exporter:
+    namespace: monitoring
+    path: manifests/tibber-exporter
+
   jellyfin:
     namespace: jellyfin
     path: manifests/jellyfin

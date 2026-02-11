@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tibber-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: tibber-exporter
+    app.kubernetes.io/instance: tibber-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tibber-exporter
+      app.kubernetes.io/instance: tibber-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tibber-exporter
+        app.kubernetes.io/instance: tibber-exporter
+    spec:
+      containers:
+        - name: tibber-exporter
+          image: ghcr.io/terjesannum/tibber-exporter:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --live
+            - "8e35be0e-5303-40a1-920e-104eb9765346"
+          env:
+            - name: TIBBER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tibber-api
+                  key: token
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
