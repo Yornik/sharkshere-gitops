@@ -29,12 +29,6 @@ data:
           "version": "10.1.1"
         },
         {
-          "type": "panel",
-          "id": "marcusolsson-hourly-heatmap-panel",
-          "name": "Hourly heatmap",
-          "version": "2.0.1"
-        },
-        {
           "type": "datasource",
           "id": "prometheus",
           "name": "Prometheus",
@@ -515,12 +509,12 @@ data:
                 "type": "prometheus",
                 "uid": "$datasource"
               },
-              "expr": "sum(increase(tibber_power_consumption_day_total{home_id=\"$home\"}[1h])) * 1000",
+              "expr": "sum(increase(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 1000",
               "refId": "A"
             }
           ],
-          "title": "Power consumption pr. hour",
-          "type": "marcusolsson-hourly-heatmap-panel"
+          "title": "Power consumption per 15m",
+          "type": "timeseries"
         },
         {
           "datasource": {
@@ -891,12 +885,12 @@ data:
                 "type": "prometheus",
                 "uid": "$datasource"
               },
-              "expr": "sum(increase(tibber_power_cost_day_total{home_id=\"$home\"}[1h]))",
+              "expr": "sum(increase(tibber_power_cost_day_total{home_id=\"$home\"}[15m]))",
               "refId": "A"
             }
           ],
-          "title": "Cost pr. hour",
-          "type": "marcusolsson-hourly-heatmap-panel"
+          "title": "Cost per 15m",
+          "type": "timeseries"
         },
         {
           "datasource": {
@@ -1325,7 +1319,7 @@ data:
             }
           ],
           "title": "Price",
-          "type": "marcusolsson-hourly-heatmap-panel"
+          "type": "timeseries"
         },
         {
           "datasource": {
@@ -1459,6 +1453,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 4,
+      "version": 5,
       "weekStart": ""
     }

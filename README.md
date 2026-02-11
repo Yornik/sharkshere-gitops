@@ -61,6 +61,13 @@ Edit `apps/values.yaml` to add or remove applications.
 - **Local manifests:** add an entry with `path: manifests/<app>` and commit manifests under that directory.
 - **Helm charts:** add an entry under `apps.<name>.helm` with `repoURL`, `chart`, and `targetRevision`.
 
+## Tibber Notes
+
+- `tibber-exporter` metrics are scraped by Prometheus via `ServiceMonitor` in `manifests/tibber-exporter/servicemonitor.yaml`.
+- Dashboard panels use Grafana datasource variable `$datasource` (not hardcoded datasource UID).
+- Cost and consumption panels are configured for 15-minute buckets using Prometheus `increase(...[15m])`.
+- If you build a quarter-hour Tibber exporter fork, update `manifests/tibber-exporter/deployment.yaml` image to your fork tag and keep the same metric names for dashboard compatibility.
+
 ## Secrets
 
 Secrets are encrypted with [SOPS](https://github.com/getsops/sops) using age encryption. Encrypted files follow the `*.enc.yaml` naming convention.
