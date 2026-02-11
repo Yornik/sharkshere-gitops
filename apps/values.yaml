@@ -164,7 +164,7 @@ apps:
                   selector: '{app="tibber-exporter"}'
                   stages:
                     - drop:
-                        expression: 'liveMeasurement'
+                        expression: '"liveMeasurement":'
               - json:
                   expressions:
                     level: level
