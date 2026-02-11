@@ -149,6 +149,8 @@ apps:
           enabled: false
         lokiCanary:
           enabled: false
+        test:
+          enabled: false
 
   promtail:
     namespace: monitoring
