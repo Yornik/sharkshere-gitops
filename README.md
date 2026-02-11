@@ -26,6 +26,8 @@ manifests/      Per-application manifests and Kustomize overlays
 | **local-path-provisioner** | `local-path-storage` | Local manifests | Default StorageClass using node-local storage |
 | **smb-csi-driver** | `kube-system` | Helm chart | CSI driver for mounting SMB/CIFS shares |
 | **external-dns** | `external-dns` | Local manifests | deSEC DNS webhook for `fedishark.eu` |
+| **monitoring** | `monitoring` | Local manifests | Namespace, Grafana ingress, and SOPS secrets |
+| **kube-prometheus-stack** | `monitoring` | Helm chart | Prometheus, Grafana, Alertmanager, node-exporter, kube-state-metrics |
 | **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
 
 All applications use automated sync with prune and self-heal enabled.
