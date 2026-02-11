@@ -101,6 +101,7 @@ apps:
       chart: loki
       targetRevision: "6.*"
       values: |
+        deploymentMode: SingleBinary
         loki:
           auth_enabled: false
           commonConfig:
@@ -119,6 +120,12 @@ apps:
             enabled: true
             storageClass: truenas-nfs
             size: 20Gi
+        read:
+          replicas: 0
+        write:
+          replicas: 0
+        backend:
+          replicas: 0
         gateway:
           enabled: false
 
