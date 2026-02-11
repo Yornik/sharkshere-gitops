@@ -184,6 +184,18 @@ apps:
                   source: level
                   expression: '^warning$'
                   replace: 'warn'
+              - match:
+                  selector: '{stream="stderr"}'
+                  stages:
+                    - template:
+                        source: level
+                        template: '{{ if .Value }}{{ .Value }}{{ else }}error{{ end }}'
+              - match:
+                  selector: '{stream="stdout"}'
+                  stages:
+                    - template:
+                        source: level
+                        template: '{{ if .Value }}{{ .Value }}{{ else }}info{{ end }}'
               - drop:
                   longer_than: 16kb
               - labels:
