@@ -161,11 +161,46 @@ apps:
           clients:
             - url: http://loki.monitoring.svc:3100/loki/api/v1/push
           snippets:
+            pipelineStages:
+              - match:
+                  selector: '{app="tibber-exporter"}'
+                  stages:
+                    - drop:
+                        expression: '"liveMeasurement":'
+              - json:
+                  expressions:
+                    level: level
+                    severity: severity
+                    log_level: log_level
+              - regex:
+                  expression: '(?i)\\b(?P<level>trace|debug|info|warn|warning|error|fatal|panic)\\b'
+              - template:
+                  source: level
+                  template: '{{ ToLower .Value }}'
+              - replace:
+                  source: level
+                  expression: '^warning$'
+                  replace: 'warn'
+              - drop:
+                  longer_than: 16kb
+              - labels:
+                  level:
             extraRelabelConfigs:
+              - action: drop
+                source_labels:
+                  - __meta_kubernetes_namespace
+                regex: argocd
               - action: drop
                 source_labels:
                   - __meta_kubernetes_pod_name
                 regex: loki-canary.*
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
         tolerations:
           - operator: Exists
 
