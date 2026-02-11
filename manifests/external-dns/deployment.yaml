@@ -26,16 +26,12 @@ spec:
             - --source=ingress
             - --provider=webhook
             - --domain-filter=fedishark.eu
-            - --policy=upsert-only
+            - --policy=sync
             - --managed-record-types=A,AAAA,CNAME,TXT
             - --registry=txt
             - --txt-owner-id=sharkshere
             - --txt-prefix=reg-%{record_type}-
             - --interval=1m
-            - --webhook-provider-url=http://127.0.0.1:8888
-          env:
-            - name: EXTERNAL_DNS_LOG_LEVEL
-              value: debug
           ports:
             - name: http
               containerPort: 7979
@@ -73,12 +69,8 @@ spec:
                 secretKeyRef:
                   name: desec-credentials
                   key: api-key
-            - name: WEBHOOK_LOGLEVEL
-              value: "debug"
             - name: WEBHOOK_DOMAINFILTERS
               value: "fedishark.eu"
-            - name: WEBHOOK_DEFAULTTTL
-              value: "3600"
           livenessProbe:
             httpGet:
               path: /healthz
@@ -92,7 +84,7 @@ spec:
           resources:
             requests:
               cpu: 25m
-              memory: 32Mi
+              memory: 132Mi
             limits:
               cpu: 100m
-              memory: 64Mi
+              memory: 364Mi
