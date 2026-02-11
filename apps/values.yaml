@@ -147,6 +147,8 @@ apps:
           replicas: 0
         gateway:
           enabled: false
+        lokiCanary:
+          enabled: false
 
   promtail:
     namespace: monitoring
