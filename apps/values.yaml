@@ -160,6 +160,11 @@ apps:
             - url: http://loki.monitoring.svc:3100/loki/api/v1/push
           snippets:
             pipelineStages:
+              - match:
+                  selector: '{app="tibber-exporter"}'
+                  stages:
+                    - drop:
+                        expression: 'liveMeasurement'
               - json:
                   expressions:
                     level: level
