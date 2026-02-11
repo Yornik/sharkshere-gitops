@@ -8,3 +8,5 @@ metadata:
     app.kubernetes.io/part-of: argocd
 data:
   url: https://argocd.fedishark.eu
+  accounts.yornik: login,apiKey
+  accounts.yornik.enabled: "true"
