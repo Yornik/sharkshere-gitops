@@ -29,9 +29,7 @@ spec:
             - --zone-id-filter=09239080e8959af0af33e01c0d3c6bdc
             - --policy=sync
             - --managed-record-types=A,AAAA,CNAME,TXT
-            - --registry=txt
-            - --txt-owner-id=sharkshere
-            - --txt-prefix=reg-%{record_type}-
+            - --registry=noop
             - --interval=1m
           env:
             - name: CF_API_TOKEN
