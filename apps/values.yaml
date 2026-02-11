@@ -161,6 +161,11 @@ apps:
           snippets:
             pipelineStages:
               - match:
+                  selector: '{pod=~"loki-canary.*"}'
+                  stages:
+                    - drop:
+                        expression: '(?i)\\bppp{8,}\\b'
+              - match:
                   selector: '{app="tibber-exporter"}'
                   stages:
                     - drop:
@@ -179,6 +184,18 @@ apps:
                   source: level
                   expression: '^warning$'
                   replace: 'warn'
+              - match:
+                  selector: '{stream="stderr"}'
+                  stages:
+                    - template:
+                        source: level
+                        template: '{{ if .Value }}{{ .Value }}{{ else }}error{{ end }}'
+              - match:
+                  selector: '{stream="stdout"}'
+                  stages:
+                    - template:
+                        source: level
+                        template: '{{ if .Value }}{{ .Value }}{{ else }}info{{ end }}'
               - drop:
                   longer_than: 16kb
               - labels:
@@ -191,6 +208,10 @@ apps:
               - action: drop
                 source_labels:
                   - __meta_kubernetes_pod_name
+                regex: loki-canary.*
+              - action: drop
+                source_labels:
+                  - pod
                 regex: loki-canary.*
         resources:
           requests:
