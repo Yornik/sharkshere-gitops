@@ -28,12 +28,9 @@ spec:
             - --domain-filter=fedishark.eu
             - --policy=sync
             - --managed-record-types=A,AAAA,CNAME,TXT
-            - --registry=txt
-            - --txt-owner-id=sharkshere
-            - --txt-prefix=reg-%{record_type}-
+            - --registry=noop
             - --interval=1m
             - --webhook-provider-url=http://127.0.0.1:8888
-            - --dry-run
           env:
             - name: EXTERNAL_DNS_LOG_LEVEL
               value: trace
