@@ -1,14 +1,16 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tibber-dashboard
   namespace: monitoring
   labels:
-    grafana_dashboard: "1"
+    grafana_dashboard: '1'
 data:
-  dashboard.json: |
+  dashboard.json: |-
     {
-      "__elements": {},
+      "__elements": {
+      },
       "__requires": [
         {
           "type": "panel",
@@ -62,7 +64,9 @@ data:
             "target": {
               "limit": 100,
               "matchAny": false,
-              "tags": [],
+              "tags": [
+
+              ],
               "type": "dashboard"
             },
             "type": "dashboard"
@@ -73,7 +77,9 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
       "id": null,
-      "links": [],
+      "links": [
+
+      ],
       "liveNow": false,
       "panels": [
         {
@@ -86,7 +92,9 @@ data:
               "color": {
                 "mode": "thresholds"
               },
-              "mappings": [],
+              "mappings": [
+
+              ],
               "max": 14000,
               "min": 0,
               "thresholds": {
@@ -108,7 +116,9 @@ data:
               },
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 7,
@@ -128,7 +138,8 @@ data:
             },
             "showThresholdLabels": false,
             "showThresholdMarkers": true,
-            "text": {}
+            "text": {
+            }
           },
           "pluginVersion": "10.1.1",
           "targets": [
@@ -159,7 +170,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 1,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "max": 48,
               "min": 0,
               "noValue": "0",
@@ -178,7 +191,9 @@ data:
               },
               "unit": "A"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 7,
@@ -231,7 +246,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 1,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "max": 48,
               "min": 0,
               "noValue": "0",
@@ -250,7 +267,9 @@ data:
               },
               "unit": "A"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 7,
@@ -303,7 +322,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 1,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "max": 48,
               "min": 0,
               "noValue": "0",
@@ -322,7 +343,9 @@ data:
               },
               "unit": "A"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 7,
@@ -375,7 +398,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 2,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -387,7 +412,9 @@ data:
               },
               "unit": "currencyEUR"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 3,
@@ -408,7 +435,8 @@ data:
               "fields": "",
               "values": false
             },
-            "text": {},
+            "text": {
+            },
             "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
@@ -463,8 +491,10 @@ data:
                   ]
                 }
               },
-              "mappings": [],
-              "min": 1e-10,
+              "mappings": [
+
+              ],
+              "min": 1.0e-10,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -484,7 +514,9 @@ data:
               },
               "unit": "watth"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 7,
@@ -583,7 +615,9 @@ data:
                 ]
               }
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 4,
@@ -671,7 +705,9 @@ data:
                   "mode": "off"
                 }
               },
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -714,7 +750,9 @@ data:
           "id": 3,
           "options": {
             "legend": {
-              "calcs": [],
+              "calcs": [
+
+              ],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
@@ -751,7 +789,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 1,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -763,7 +803,9 @@ data:
               },
               "unit": "kwatth"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 4,
@@ -784,7 +826,8 @@ data:
               "fields": "",
               "values": false
             },
-            "text": {},
+            "text": {
+            },
             "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
@@ -839,8 +882,10 @@ data:
                   ]
                 }
               },
-              "mappings": [],
-              "min": 1e-10,
+              "mappings": [
+
+              ],
+              "min": 1.0e-10,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -860,7 +905,9 @@ data:
               },
               "unit": "currencyEUR"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 7,
@@ -903,7 +950,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 1,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -915,7 +964,9 @@ data:
               },
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 3,
@@ -936,7 +987,8 @@ data:
               "fields": "",
               "values": false
             },
-            "text": {},
+            "text": {
+            },
             "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
@@ -968,7 +1020,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 1,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -980,7 +1034,9 @@ data:
               },
               "unit": "watt"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 3,
@@ -1001,7 +1057,8 @@ data:
               "fields": "",
               "values": false
             },
-            "text": {},
+            "text": {
+            },
             "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
@@ -1064,7 +1121,9 @@ data:
                   "mode": "off"
                 }
               },
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -1089,25 +1148,6 @@ data:
                       "fixedColor": "dark-green",
                       "mode": "fixed"
                     }
-                  },
-                  {
-                    "id": "custom.fillBelowTo",
-                    "value": "Price per kWh"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "Price per kWh"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "semi-dark-orange",
-                      "mode": "fixed"
-                    }
                   }
                 ]
               }
@@ -1122,7 +1162,9 @@ data:
           "id": 4,
           "options": {
             "legend": {
-              "calcs": [],
+              "calcs": [
+
+              ],
               "displayMode": "list",
               "placement": "bottom",
               "showLegend": true
@@ -1143,18 +1185,6 @@ data:
               "legendFormat": "Price inc. tax (15m)",
               "range": true,
               "refId": "A"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"energy\"}[15m])",
-              "hide": false,
-              "legendFormat": "Energy price (15m)",
-              "range": true,
-              "refId": "B"
             }
           ],
           "title": "Price (15m)",
@@ -1171,7 +1201,9 @@ data:
                 "mode": "thresholds"
               },
               "decimals": 2,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -1191,7 +1223,9 @@ data:
               },
               "unit": "currencyEUR"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 3,
@@ -1212,7 +1246,8 @@ data:
               "fields": "",
               "values": false
             },
-            "text": {},
+            "text": {
+            },
             "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
@@ -1244,95 +1279,10 @@ data:
               "color": {
                 "mode": "thresholds"
               },
-              "custom": {
-                "calculation": "last",
-                "colorPalette": "interpolateYlOrRd",
-                "colorSpace": "rgb",
-                "groupBy": 60,
-                "invertPalette": false,
-                "nullValueColor": "rgb(155, 155, 155)",
-                "thresholds": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green"
-                    },
-                    {
-                      "color": "semi-dark-orange",
-                      "value": 3000
-                    },
-                    {
-                      "color": "semi-dark-red",
-                      "value": 6000
-                    }
-                  ]
-                }
-              },
-              "mappings": [],
-              "min": 1e-10,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "semi-dark-orange",
-                    "value": 3000
-                  },
-                  {
-                    "color": "red",
-                    "value": 6000
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 7,
-            "x": 17,
-            "y": 14
-          },
-          "id": 17,
-          "maxDataPoints": 10000,
-          "options": {
-            "from": "0",
-            "legendGradientQuality": "high",
-            "showCellBorder": false,
-            "showLegend": true,
-            "showTooltip": true,
-            "showValueIndicator": true,
-            "to": "0"
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])",
-              "refId": "A"
-            }
-          ],
-          "title": "Price trend (15m)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
               "decimals": 2,
-              "mappings": [],
+              "mappings": [
+
+              ],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -1344,7 +1294,9 @@ data:
               },
               "unit": "currencyEUR"
             },
-            "overrides": []
+            "overrides": [
+
+            ]
           },
           "gridPos": {
             "h": 4,
@@ -1365,7 +1317,8 @@ data:
               "fields": "",
               "values": false
             },
-            "text": {},
+            "text": {
+            },
             "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
@@ -1391,7 +1344,9 @@ data:
       "refresh": "1m",
       "schemaVersion": 38,
       "style": "dark",
-      "tags": [],
+      "tags": [
+
+      ],
       "templating": {
         "list": [
           {
@@ -1408,7 +1363,8 @@ data:
             }
           },
           {
-            "current": {},
+            "current": {
+            },
             "datasource": {
               "type": "prometheus",
               "uid": "$datasource"
@@ -1419,7 +1375,9 @@ data:
             "label": "Home",
             "multi": false,
             "name": "home",
-            "options": [],
+            "options": [
+
+            ],
             "query": {
               "query": "tibber_home_info",
               "refId": "StandardVariableQuery"
@@ -1453,6 +1411,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 6,
+      "version": 8,
       "weekStart": ""
     }
