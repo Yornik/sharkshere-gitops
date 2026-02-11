@@ -159,6 +159,23 @@ apps:
           clients:
             - url: http://loki.monitoring.svc:3100/loki/api/v1/push
           snippets:
+            pipelineStages:
+              - json:
+                  expressions:
+                    level: level
+                    severity: severity
+                    log_level: log_level
+              - regex:
+                  expression: '(?i)\\b(?P<level>trace|debug|info|warn|warning|error|fatal|panic)\\b'
+              - template:
+                  source: level
+                  template: '{{ ToLower .Value }}'
+              - replace:
+                  source: level
+                  expression: '^warning$'
+                  replace: 'warn'
+              - labels:
+                  level:
             extraRelabelConfigs:
               - action: drop
                 source_labels:
