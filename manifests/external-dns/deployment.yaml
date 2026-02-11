@@ -34,6 +34,9 @@ spec:
             - --interval=1m
             - --webhook-provider-url=http://127.0.0.1:8888
             - --dry-run
+          env:
+            - name: EXTERNAL_DNS_LOG_LEVEL
+              value: trace
           ports:
             - name: http
               containerPort: 7979
