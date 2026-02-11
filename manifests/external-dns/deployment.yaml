@@ -24,22 +24,14 @@ spec:
           args:
             - --source=service
             - --source=ingress
-            - --provider=cloudflare
+            - --provider=webhook
             - --domain-filter=fedishark.eu
-            - --zone-id-filter=09239080e8959af0af33e01c0d3c6bdc
             - --policy=upsert-only
             - --registry=txt
             - --txt-owner-id=sharkshere
             - --txt-prefix=reg-%{record_type}-
             - --interval=1m
-          env:
-            - name: CF_API_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: cloudflare-credentials
-                  key: api-token
-            - name: EXTERNAL_DNS_LOG_LEVEL
-              value: info
+            - --webhook-provider-url=http://127.0.0.1:8888
           ports:
             - name: http
               containerPort: 7979
@@ -61,3 +53,40 @@ spec:
             limits:
               cpu: 200m
               memory: 128Mi
+
+        - name: desec-webhook
+          image: ghcr.io/michelangelomo/external-dns-desec-provider:0.2.0
+          ports:
+            - name: http-webhook
+              containerPort: 8888
+              protocol: TCP
+            - name: http-metrics
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: WEBHOOK_APITOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: desec-credentials
+                  key: api-key
+            - name: WEBHOOK_DOMAINFILTERS
+              value: "fedishark.eu"
+            - name: WEBHOOK_DEFAULTTTL
+              value: "3600"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http-metrics
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http-metrics
+            initialDelaySeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
