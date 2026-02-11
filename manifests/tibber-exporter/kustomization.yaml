@@ -4,13 +4,6 @@ resources:
   - deployment.yaml
   - service.yaml
   - servicemonitor.yaml
+  - grafana-dashboard.yaml
 generators:
   - secret-generator.yaml
-configMapGenerator:
-  - name: tibber-dashboard
-    files:
-      - dashboard.json=tibber-dashboard.json
-generatorOptions:
-  disableNameSuffixHash: true
-  labels:
-    grafana_dashboard: "1"
