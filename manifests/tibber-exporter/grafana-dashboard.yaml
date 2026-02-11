@@ -1139,8 +1139,8 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
-              "expr": "avg(tibber_power_price{home_id=\"$home\",type=\"total\"})",
-              "legendFormat": "Price inc. tax",
+              "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])",
+              "legendFormat": "Price inc. tax (15m)",
               "range": true,
               "refId": "A"
             },
@@ -1150,14 +1150,14 @@ data:
                 "uid": "$datasource"
               },
               "editorMode": "code",
-              "expr": "avg(tibber_power_price{home_id=\"$home\",type=\"energy\"})",
+              "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"energy\"}[15m])",
               "hide": false,
-              "legendFormat": "Price per kWh",
+              "legendFormat": "Energy price (15m)",
               "range": true,
               "refId": "B"
             }
           ],
-          "title": "Price",
+          "title": "Price (15m)",
           "type": "timeseries"
         },
         {
@@ -1314,11 +1314,11 @@ data:
                 "type": "prometheus",
                 "uid": "$datasource"
               },
-              "expr": "avg(tibber_power_price{home_id=\"$home\",type=\"total\"})",
+              "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])",
               "refId": "A"
             }
           ],
-          "title": "Price",
+          "title": "Price trend (15m)",
           "type": "timeseries"
         },
         {
@@ -1453,6 +1453,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 5,
+      "version": 6,
       "weekStart": ""
     }
