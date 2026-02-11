@@ -160,6 +160,7 @@ apps:
             - url: http://loki.monitoring.svc:3100/loki/api/v1/push
           snippets:
             pipelineStages:
+              - cri: {}
               - match:
                   selector: '{pod=~"loki-canary.*"}'
                   stages:
