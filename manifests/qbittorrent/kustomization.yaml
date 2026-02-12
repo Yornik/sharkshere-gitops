@@ -4,7 +4,9 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingressroute.yaml
+  - ingressroute-web.yaml
   - middleware-auth.yaml
+  - middleware-redirect-https.yaml
   - pvc-config.yaml
   - pv-movies-rw.yaml
   - pvc-movies-rw.yaml
