@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: gotosocial
-          image: superseriousbusiness/gotosocial:v0.19.3
+          image: superseriousbusiness/gotosocial:latest
           env:
             - name: TZ
               value: Europe/Amsterdam
