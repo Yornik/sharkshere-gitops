@@ -10,3 +10,5 @@ resources:
   - pvc-sqlite.yaml
   - pvc-storage.yaml
   - pvc-cache.yaml
+generators:
+  - smtp-secret-generator.yaml
