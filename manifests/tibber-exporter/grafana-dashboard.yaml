@@ -471,7 +471,7 @@ data:
                 "calculation": "last",
                 "colorPalette": "interpolateYlOrRd",
                 "colorSpace": "rgb",
-                "groupBy": 60,
+                "groupBy": 900,
                 "invertPalette": false,
                 "nullValueColor": "rgb(155, 155, 155)",
                 "thresholds": {
@@ -546,7 +546,7 @@ data:
             }
           ],
           "title": "Power consumption per 15m",
-          "type": "timeseries"
+          "type": "heatmap"
         },
         {
           "datasource": {
@@ -847,97 +847,6 @@ data:
           ],
           "title": "Power consumption today",
           "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "calculation": "last",
-                "colorPalette": "interpolateYlOrRd",
-                "colorSpace": "rgb",
-                "groupBy": 60,
-                "invertPalette": false,
-                "nullValueColor": "rgb(155, 155, 155)",
-                "thresholds": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green"
-                    },
-                    {
-                      "color": "semi-dark-orange",
-                      "value": 3000
-                    },
-                    {
-                      "color": "semi-dark-red",
-                      "value": 6000
-                    }
-                  ]
-                }
-              },
-              "mappings": [
-
-              ],
-              "min": 1.0e-10,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "semi-dark-orange",
-                    "value": 3000
-                  },
-                  {
-                    "color": "red",
-                    "value": 6000
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": [
-
-            ]
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 7,
-            "x": 17,
-            "y": 7
-          },
-          "id": 13,
-          "maxDataPoints": 10000,
-          "options": {
-            "from": "0",
-            "legendGradientQuality": "high",
-            "showCellBorder": false,
-            "showLegend": true,
-            "showTooltip": true,
-            "showValueIndicator": true,
-            "to": "0"
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(increase(tibber_power_cost_day_total{home_id=\"$home\"}[15m]))",
-              "refId": "A"
-            }
-          ],
-          "title": "Cost per 15m",
-          "type": "timeseries"
         },
         {
           "datasource": {
