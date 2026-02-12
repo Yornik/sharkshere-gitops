@@ -289,9 +289,9 @@ apps:
               }
         controller:
           type: daemonset
+        tolerations:
+          - operator: Exists
         alloy:
-          tolerations:
-            - operator: Exists
           resources:
             requests:
               cpu: 50m
