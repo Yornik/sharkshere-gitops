@@ -3,6 +3,10 @@ kind: IngressRoute
 metadata:
   name: qbittorrent
   namespace: jellyfin
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: qbittorrent.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:
   entryPoints:
     - websecure
