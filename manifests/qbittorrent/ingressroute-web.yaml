@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: qbittorrent-web
+  namespace: jellyfin
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`qbittorrent.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: qbittorrent-redirect-https
+          namespace: jellyfin
+      services:
+        - name: qbittorrent
+          port: 8080
