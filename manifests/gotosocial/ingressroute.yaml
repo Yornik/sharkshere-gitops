@@ -1,0 +1,23 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gotosocial
+  namespace: gotosocial
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`pub.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: rate-limit
+          namespace: traefik
+        - name: fail2ban
+          namespace: traefik
+        - name: security-headers
+          namespace: traefik
+      services:
+        - name: gotosocial
+          port: 8080
+  tls:
+    certResolver: letsencrypt

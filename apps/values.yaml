@@ -232,6 +232,10 @@ apps:
     namespace: monitoring
     path: manifests/tibber-exporter
 
+  gotosocial:
+    namespace: gotosocial
+    path: manifests/gotosocial
+
   jellyfin:
     namespace: jellyfin
     path: manifests/jellyfin

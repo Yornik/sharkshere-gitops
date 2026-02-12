@@ -49,6 +49,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: dns-pub-fedishark-eu
+  namespace: external-dns
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: pub.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: dns-qbittorrent-fedishark-eu
   namespace: external-dns
   annotations:
