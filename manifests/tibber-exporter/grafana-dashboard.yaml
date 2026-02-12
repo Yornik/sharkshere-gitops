@@ -173,7 +173,7 @@ data:
               "mappings": [
 
               ],
-              "max": 25,
+              "max": 32,
               "min": 0,
               "noValue": "0",
               "thresholds": {
@@ -182,6 +182,10 @@ data:
                   {
                     "color": "semi-dark-green",
                     "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 20
                   },
                   {
                     "color": "red",
@@ -249,7 +253,7 @@ data:
               "mappings": [
 
               ],
-              "max": 25,
+              "max": 32,
               "min": 0,
               "noValue": "0",
               "thresholds": {
@@ -258,6 +262,10 @@ data:
                   {
                     "color": "semi-dark-green",
                     "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 20
                   },
                   {
                     "color": "red",
@@ -325,7 +333,7 @@ data:
               "mappings": [
 
               ],
-              "max": 25,
+              "max": 32,
               "min": 0,
               "noValue": "0",
               "thresholds": {
@@ -334,6 +342,10 @@ data:
                   {
                     "color": "semi-dark-green",
                     "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 20
                   },
                   {
                     "color": "red",
@@ -469,7 +481,7 @@ data:
               },
               "custom": {
                 "calculation": "last",
-                "colorPalette": "interpolateYlOrRd",
+                "colorPalette": "interpolateTurbo",
                 "colorSpace": "rgb",
                 "groupBy": 900,
                 "invertPalette": false,
@@ -481,8 +493,12 @@ data:
                       "color": "green"
                     },
                     {
+                      "color": "yellow",
+                      "value": 2000
+                    },
+                    {
                       "color": "semi-dark-orange",
-                      "value": 3000
+                      "value": 4000
                     },
                     {
                       "color": "semi-dark-red",
@@ -494,7 +510,7 @@ data:
               "mappings": [
 
               ],
-              "min": 1.0e-10,
+              "min": 0,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -503,8 +519,12 @@ data:
                     "value": null
                   },
                   {
+                    "color": "yellow",
+                    "value": 2000
+                  },
+                  {
                     "color": "semi-dark-orange",
-                    "value": 3000
+                    "value": 4000
                   },
                   {
                     "color": "red",
@@ -512,7 +532,7 @@ data:
                   }
                 ]
               },
-              "unit": "watth"
+              "unit": "watt"
             },
             "overrides": [
 
@@ -541,11 +561,12 @@ data:
                 "type": "prometheus",
                 "uid": "$datasource"
               },
-              "expr": "sum(increase(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 1000",
+              "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
+              "legendFormat": "Avg power",
               "refId": "A"
             }
           ],
-          "title": "Power consumption per 15m",
+          "title": "Avg power (15m heatmap)",
           "type": "heatmap"
         },
         {
