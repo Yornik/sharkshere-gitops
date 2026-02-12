@@ -29,9 +29,10 @@ manifests/      Per-application manifests and Kustomize overlays
 | **monitoring** | `monitoring` | Local manifests | Namespace, Grafana ingress, and SOPS secrets |
 | **kube-prometheus-stack** | `monitoring` | Helm chart | Prometheus, Grafana, Alertmanager, node-exporter, kube-state-metrics |
 | **loki** | `monitoring` | Helm chart | Log storage backend for Grafana Explore |
-| **promtail** | `monitoring` | Helm chart | Log shipper (DaemonSet) that pushes logs to Loki |
+| **alloy** | `monitoring` | Helm chart | Log and metrics agent (DaemonSet), shipping Kubernetes logs to Loki |
 | **tibber-exporter** | `monitoring` | Local manifests | Tibber power metrics exporter with Grafana dashboard |
 | **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
+| **gotosocial** | `gotosocial` | Local manifests | Federated social server published at `pub.fedishark.eu` |
 
 All applications use automated sync with prune and self-heal enabled.
 
