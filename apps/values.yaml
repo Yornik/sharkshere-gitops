@@ -168,7 +168,7 @@ apps:
                 role = "pod"
                 selectors {
                   role  = "pod"
-                  field = "spec.nodeName=" + constants.hostname
+                  field = "spec.nodeName=" + env("HOSTNAME")
                 }
               }
 
