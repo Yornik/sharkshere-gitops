@@ -38,7 +38,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: "72.*"
+      targetRevision: "81.*"
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
