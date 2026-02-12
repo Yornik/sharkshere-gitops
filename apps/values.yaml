@@ -232,6 +232,11 @@ apps:
                   expression = "successfully renewed lease"
                 }
 
+                stage.drop {
+                  # Noisy Kubernetes readiness probe access logs.
+                  expression = "userAgent=kube-probe.*uri=/readyz"
+                }
+
                 stage.match {
                   selector = "{app=\"tibber-exporter\"}"
                   stage.drop {
