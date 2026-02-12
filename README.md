@@ -72,7 +72,7 @@ Edit `apps/values.yaml` to add or remove applications.
 - `tibber-exporter` metrics are scraped by Prometheus via `ServiceMonitor` in `manifests/tibber-exporter/servicemonitor.yaml`.
 - Dashboard panels use Grafana datasource variable `$datasource` (not hardcoded datasource UID).
 - Cost and consumption panels are configured for 15-minute buckets using Prometheus `increase(...[15m])`.
-- Dashboard layout is optimized for observability (status strip -> trends -> daily summary). The `Avg power (15m heatmap)` panel is a 15-minute block heatmap, and phase currents (L1/L2/L3) are scaled for a typical NL `3x25A` connection.
+- Dashboard layout is optimized for observability (status strip -> trends -> daily summary). The `Power (15m heatmap)` panel is a 15-minute block heatmap, and phase currents (L1/L2/L3) are scaled for a typical NL `3x25A` connection.
 - If you build a quarter-hour Tibber exporter fork, update `manifests/tibber-exporter/deployment.yaml` image to your fork tag and keep the same metric names for dashboard compatibility.
 
 ## Secrets
