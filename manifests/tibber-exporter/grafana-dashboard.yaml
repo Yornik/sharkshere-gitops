@@ -399,142 +399,32 @@ data:
           "title": "L3",
           "type": "bargauge"
         },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 2,
-              "mappings": [
-
-              ],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": [
-
-            ]
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 5,
-            "x": 14,
-            "y": 0
-          },
-          "id": 14,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {
-            },
-            "textMode": "auto"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
             {
               "datasource": {
                 "type": "prometheus",
                 "uid": "$datasource"
               },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_power_price{home_id=\"$home\", type=\"total\"})",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Current power price",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "calculation": "last",
-                "colorPalette": "interpolateTurbo",
-                "colorSpace": "rgb",
-                "groupBy": 900,
-                "invertPalette": false,
-                "nullValueColor": "rgb(155, 155, 155)",
-                "thresholds": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green"
-                    },
-                    {
-                      "color": "yellow",
-                      "value": 2000
-                    },
-                    {
-                      "color": "semi-dark-orange",
-                      "value": 4000
-                    },
-                    {
-                      "color": "semi-dark-red",
-                      "value": 6000
-                    }
-                  ]
-                }
-              },
-              "mappings": [
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "continuous"
+                  },
+                  "custom": {
+                    "calculation": "last",
+                    "colorPalette": "interpolateBlues",
+                    "colorSpace": "rgb",
+                    "groupBy": 900,
+                    "invertPalette": false,
+                    "nullValueColor": "rgb(155, 155, 155)"
+                  },
+                  "displayName": "",
+                  "mappings": [
 
-              ],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 2000
-                  },
-                  {
-                    "color": "semi-dark-orange",
-                    "value": 4000
-                  },
-                  {
-                    "color": "red",
-                    "value": 6000
-                  }
-                ]
-              },
-              "unit": "watt"
-            },
-            "overrides": [
+                  ],
+                  "min": 0,
+                  "unit": "watt"
+                },
+                "overrides": [
 
             ]
           },
@@ -555,20 +445,19 @@ data:
             "showValueIndicator": true,
             "to": "0"
           },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
-              "legendFormat": "Avg power",
-              "refId": "A"
-            }
-          ],
-          "title": "Avg power (15m heatmap)",
-          "type": "heatmap"
-        },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "$datasource"
+                  },
+                  "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
+                  "refId": "A"
+                }
+              ],
+              "title": "Power (15m heatmap)",
+              "type": "heatmap"
+            },
         {
           "datasource": {
             "type": "prometheus",
