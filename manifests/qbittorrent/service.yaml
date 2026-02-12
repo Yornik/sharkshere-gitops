@@ -5,10 +5,6 @@ metadata:
   namespace: jellyfin
   labels:
     app: qbittorrent
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: qbittorrent.fedishark.eu
-    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
-    external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:
   selector:
     app: qbittorrent
