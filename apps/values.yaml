@@ -264,6 +264,14 @@ apps:
                 }
 
                 stage.match {
+                  selector = "{app=\"external-dns\"}"
+                  stage.drop {
+                    // ExternalDNS webhook access logs. Keep in pod logs, drop from Loki.
+                    expression = "msg=\"(started|completed) handling request\"|request=/(records|adjustendpoints)"
+                  }
+                }
+
+                stage.match {
                   selector = "{app=\"loki\"}"
                   stage.drop {
                     expression = "caller=(metrics\\.go|roundtrip\\.go):|source=grafana-lokiexplore-app|query_type=volume|api=detected_labels"
