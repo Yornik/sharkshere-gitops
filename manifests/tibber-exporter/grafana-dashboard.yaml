@@ -447,15 +447,16 @@ data:
           },
               "targets": [
                 {
-                  "datasource": {
-                    "type": "prometheus",
-                    "uid": "$datasource"
-                  },
-                  "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
-                  "refId": "A"
-                }
-              ],
-              "title": "Power (15m heatmap)",
+                      "datasource": {
+                        "type": "prometheus",
+                        "uid": "$datasource"
+                      },
+                      "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
+                      "legendFormat": "",
+                      "refId": "A"
+                    }
+                  ],
+                  "title": "Power (15m heatmap)",
               "type": "heatmap"
             },
         {
