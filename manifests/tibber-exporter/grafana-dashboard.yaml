@@ -411,7 +411,7 @@ data:
                   },
                   "custom": {
                     "calculation": "last",
-                    "colorPalette": "interpolateBlues",
+                    "colorPalette": "interpolateViridis",
                     "colorSpace": "rgb",
                     "groupBy": 900,
                     "invertPalette": false,
@@ -452,7 +452,7 @@ data:
                         "uid": "$datasource"
                       },
                       "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
-                      "legendFormat": "",
+                      "legendFormat": ".",
                       "refId": "A"
                     }
                   ],
@@ -1231,6 +1231,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 8,
+      "version": 9,
       "weekStart": ""
     }
