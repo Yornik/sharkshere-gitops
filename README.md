@@ -62,6 +62,11 @@ Edit `apps/values.yaml` to add or remove applications.
 - **Local manifests:** add an entry with `path: manifests/<app>` and commit manifests under that directory.
 - **Helm charts:** add an entry under `apps.<name>.helm` with `repoURL`, `chart`, and `targetRevision`.
 
+## Operational Notes
+
+- Alloy drops noisy Kubernetes leader-election heartbeat log lines matching `successfully renewed lease` before shipping to Loki.
+- Democratic CSI (NFS and iSCSI) runs with `controller.externalSnapshotter.enabled: false` because this cluster does not use CSI VolumeSnapshots.
+
 ## Tibber Notes
 
 - `tibber-exporter` metrics are scraped by Prometheus via `ServiceMonitor` in `manifests/tibber-exporter/servicemonitor.yaml`.

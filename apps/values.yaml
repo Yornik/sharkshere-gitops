@@ -227,6 +227,16 @@ apps:
               loki.process "pipeline" {
                 stage.cri {}
 
+                stage.drop {
+                  # Noisy Kubernetes leader-election heartbeat logs.
+                  expression = "successfully renewed lease"
+                }
+
+                stage.drop {
+                  # Noisy Kubernetes readiness probe access logs.
+                  expression = "userAgent=kube-probe.*uri=/readyz"
+                }
+
                 stage.match {
                   selector = "{app=\"tibber-exporter\"}"
                   stage.drop {
@@ -336,6 +346,9 @@ apps:
           existingConfigSecret: democratic-csi-nfs-driver-config
           config:
             driver: freenas-api-nfs
+        controller:
+          externalSnapshotter:
+            enabled: false
         storageClasses:
           - name: truenas-nfs
             defaultClass: true
@@ -371,6 +384,9 @@ apps:
           existingConfigSecret: democratic-csi-iscsi-driver-config
           config:
             driver: freenas-api-iscsi
+        controller:
+          externalSnapshotter:
+            enabled: false
         storageClasses:
           - name: truenas-iscsi
             defaultClass: false
