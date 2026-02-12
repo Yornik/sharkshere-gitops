@@ -5,6 +5,10 @@ metadata:
   namespace: gotosocial
   labels:
     app: gotosocial
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: pub.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:
   selector:
     app: gotosocial
