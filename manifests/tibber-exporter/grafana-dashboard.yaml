@@ -121,8 +121,8 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 10,
+            "h": 6,
+            "w": 8,
             "x": 0,
             "y": 0
           },
@@ -173,7 +173,7 @@ data:
               "mappings": [
 
               ],
-              "max": 48,
+              "max": 25,
               "min": 0,
               "noValue": "0",
               "thresholds": {
@@ -185,7 +185,7 @@ data:
                   },
                   {
                     "color": "red",
-                    "value": 40
+                    "value": 25
                   }
                 ]
               },
@@ -196,9 +196,9 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 1,
-            "x": 10,
+            "h": 6,
+            "w": 2,
+            "x": 8,
             "y": 0
           },
           "id": 21,
@@ -249,7 +249,7 @@ data:
               "mappings": [
 
               ],
-              "max": 48,
+              "max": 25,
               "min": 0,
               "noValue": "0",
               "thresholds": {
@@ -261,7 +261,7 @@ data:
                   },
                   {
                     "color": "red",
-                    "value": 40
+                    "value": 25
                   }
                 ]
               },
@@ -272,9 +272,9 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 1,
-            "x": 11,
+            "h": 6,
+            "w": 2,
+            "x": 10,
             "y": 0
           },
           "id": 23,
@@ -325,7 +325,7 @@ data:
               "mappings": [
 
               ],
-              "max": 48,
+              "max": 25,
               "min": 0,
               "noValue": "0",
               "thresholds": {
@@ -337,7 +337,7 @@ data:
                   },
                   {
                     "color": "red",
-                    "value": 40
+                    "value": 25
                   }
                 ]
               },
@@ -348,8 +348,8 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 1,
+            "h": 6,
+            "w": 2,
             "x": 12,
             "y": 0
           },
@@ -418,8 +418,8 @@ data:
           },
           "gridPos": {
             "h": 3,
-            "w": 4,
-            "x": 13,
+            "w": 5,
+            "x": 14,
             "y": 0
           },
           "id": 14,
@@ -471,7 +471,7 @@ data:
                 "calculation": "last",
                 "colorPalette": "interpolateYlOrRd",
                 "colorSpace": "rgb",
-                "groupBy": 60,
+                "groupBy": 900,
                 "invertPalette": false,
                 "nullValueColor": "rgb(155, 155, 155)",
                 "thresholds": {
@@ -519,9 +519,9 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 7,
-            "x": 17,
+            "h": 6,
+            "w": 5,
+            "x": 19,
             "y": 0
           },
           "id": 11,
@@ -546,7 +546,7 @@ data:
             }
           ],
           "title": "Power consumption per 15m",
-          "type": "timeseries"
+          "type": "heatmap"
         },
         {
           "datasource": {
@@ -620,9 +620,9 @@ data:
             ]
           },
           "gridPos": {
-            "h": 4,
-            "w": 4,
-            "x": 13,
+            "h": 3,
+            "w": 5,
+            "x": 14,
             "y": 3
           },
           "id": 16,
@@ -742,10 +742,10 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 13,
+            "h": 8,
+            "w": 14,
             "x": 0,
-            "y": 7
+            "y": 6
           },
           "id": 3,
           "options": {
@@ -808,10 +808,10 @@ data:
             ]
           },
           "gridPos": {
-            "h": 4,
-            "w": 4,
-            "x": 13,
-            "y": 7
+            "h": 3,
+            "w": 6,
+            "x": 0,
+            "y": 14
           },
           "id": 8,
           "options": {
@@ -858,97 +858,6 @@ data:
               "color": {
                 "mode": "thresholds"
               },
-              "custom": {
-                "calculation": "last",
-                "colorPalette": "interpolateYlOrRd",
-                "colorSpace": "rgb",
-                "groupBy": 60,
-                "invertPalette": false,
-                "nullValueColor": "rgb(155, 155, 155)",
-                "thresholds": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green"
-                    },
-                    {
-                      "color": "semi-dark-orange",
-                      "value": 3000
-                    },
-                    {
-                      "color": "semi-dark-red",
-                      "value": 6000
-                    }
-                  ]
-                }
-              },
-              "mappings": [
-
-              ],
-              "min": 1.0e-10,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "semi-dark-orange",
-                    "value": 3000
-                  },
-                  {
-                    "color": "red",
-                    "value": 6000
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": [
-
-            ]
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 7,
-            "x": 17,
-            "y": 7
-          },
-          "id": 13,
-          "maxDataPoints": 10000,
-          "options": {
-            "from": "0",
-            "legendGradientQuality": "high",
-            "showCellBorder": false,
-            "showLegend": true,
-            "showTooltip": true,
-            "showValueIndicator": true,
-            "to": "0"
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(increase(tibber_power_cost_day_total{home_id=\"$home\"}[15m]))",
-              "refId": "A"
-            }
-          ],
-          "title": "Cost per 15m",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
               "decimals": 1,
               "mappings": [
 
@@ -970,9 +879,9 @@ data:
           },
           "gridPos": {
             "h": 3,
-            "w": 2,
-            "x": 13,
-            "y": 11
+            "w": 6,
+            "x": 12,
+            "y": 14
           },
           "id": 25,
           "options": {
@@ -1040,9 +949,9 @@ data:
           },
           "gridPos": {
             "h": 3,
-            "w": 2,
-            "x": 15,
-            "y": 11
+            "w": 6,
+            "x": 18,
+            "y": 14
           },
           "id": 26,
           "options": {
@@ -1154,10 +1063,10 @@ data:
             ]
           },
           "gridPos": {
-            "h": 7,
-            "w": 13,
-            "x": 0,
-            "y": 14
+            "h": 8,
+            "w": 10,
+            "x": 14,
+            "y": 6
           },
           "id": 4,
           "options": {
@@ -1229,8 +1138,8 @@ data:
           },
           "gridPos": {
             "h": 3,
-            "w": 4,
-            "x": 13,
+            "w": 6,
+            "x": 6,
             "y": 14
           },
           "id": 9,
@@ -1299,9 +1208,9 @@ data:
             ]
           },
           "gridPos": {
-            "h": 4,
-            "w": 4,
-            "x": 13,
+            "h": 3,
+            "w": 24,
+            "x": 0,
             "y": 17
           },
           "id": 24,
