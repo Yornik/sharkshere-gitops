@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gotosocial-sqlite
+  namespace: gotosocial
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-nfs
+  resources:
+    requests:
+      storage: 5Gi

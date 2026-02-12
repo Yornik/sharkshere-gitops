@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotosocial
+  namespace: gotosocial
+  labels:
+    app: gotosocial
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gotosocial
+  template:
+    metadata:
+      labels:
+        app: gotosocial
+    spec:
+      containers:
+        - name: gotosocial
+          image: superseriousbusiness/gotosocial:v0.19.3
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: GTS_HOST
+              value: pub.fedishark.eu
+            - name: GTS_PROTOCOL
+              value: https
+            - name: GTS_BIND_ADDRESS
+              value: 0.0.0.0
+            - name: GTS_PORT
+              value: "8080"
+            - name: GTS_DB_TYPE
+              value: sqlite
+            - name: GTS_DB_ADDRESS
+              value: /gotosocial/data/sqlite.db
+            - name: GTS_STORAGE_BACKEND
+              value: local
+            - name: GTS_STORAGE_LOCAL_BASE_PATH
+              value: /gotosocial/storage
+            - name: GTS_WAZERO_COMPILATION_CACHE
+              value: /gotosocial/.cache
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: sqlite
+              mountPath: /gotosocial/data
+            - name: storage
+              mountPath: /gotosocial/storage
+            - name: cache
+              mountPath: /gotosocial/.cache
+      volumes:
+        - name: sqlite
+          persistentVolumeClaim:
+            claimName: gotosocial-sqlite
+        - name: storage
+          persistentVolumeClaim:
+            claimName: gotosocial-storage
+        - name: cache
+          persistentVolumeClaim:
+            claimName: gotosocial-cache
