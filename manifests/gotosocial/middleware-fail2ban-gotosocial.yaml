@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-gotosocial
+  namespace: gotosocial
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        # Match Grafana's less aggressive profile by counting auth failures only.
+        statuscode: "401-403"
+        maxretry: 15
+        findtime: 10m
+        bantime: 30m
+        enabled: "true"

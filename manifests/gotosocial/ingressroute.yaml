@@ -10,10 +10,10 @@ spec:
     - match: Host(`pub.fedishark.eu`)
       kind: Rule
       middlewares:
-        - name: rate-limit
-          namespace: traefik
-        - name: fail2ban
-          namespace: traefik
+        - name: rate-limit-gotosocial
+          namespace: gotosocial
+        - name: fail2ban-gotosocial
+          namespace: gotosocial
         - name: security-headers
           namespace: traefik
       services:

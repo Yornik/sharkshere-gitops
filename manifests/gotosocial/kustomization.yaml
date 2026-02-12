@@ -7,6 +7,8 @@ resources:
   - ingressroute.yaml
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
+  - middleware-rate-limit-gotosocial.yaml
+  - middleware-fail2ban-gotosocial.yaml
   - pvc-sqlite.yaml
   - pvc-storage.yaml
   - pvc-cache.yaml

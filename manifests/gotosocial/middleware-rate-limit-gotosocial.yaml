@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit-gotosocial
+  namespace: gotosocial
+spec:
+  rateLimit:
+    average: 150
+    burst: 300
