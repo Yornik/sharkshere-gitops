@@ -41,6 +41,8 @@ spec:
               value: /gotosocial/storage
             - name: GTS_WAZERO_COMPILATION_CACHE
               value: /gotosocial/.cache
+            - name: GTS_TRUSTED_PROXIES
+              value: 10.244.0.0/16
           ports:
             - name: http
               containerPort: 8080
