@@ -244,6 +244,13 @@ apps:
                   }
                 }
 
+                stage.match {
+                  selector = "{app=\"democratic-csi\"}"
+                  stage.drop {
+                    expression = "NodeGetVolumeStats|request headers map\\["
+                  }
+                }
+
                 stage.json {
                   expressions = {
                     level     = "level",
@@ -281,6 +288,12 @@ apps:
                     source   = "level"
                     template = "{{ "{{" }} if .Value {{ "}}" }}{{ "{{" }} .Value {{ "}}" }}{{ "{{" }} else {{ "}}" }}info{{ "{{" }} end {{ "}}" }}"
                   }
+                }
+
+                stage.match {
+                  selector            = "{app=\"democratic-csi\", level!~\"warn|error|fatal|panic\"}"
+                  action              = "drop"
+                  drop_counter_reason = "democratic_csi_non_error"
                 }
 
                 stage.drop {
