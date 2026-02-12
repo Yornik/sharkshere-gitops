@@ -135,6 +135,8 @@ apps:
             type: filesystem
         singleBinary:
           replicas: 1
+          extraArgs:
+            - -log.level=error
           persistence:
             enabled: true
             storageClass: truenas-nfs
