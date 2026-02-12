@@ -244,7 +244,7 @@ apps:
 
                 stage.template {
                   source   = "level"
-                  template = "{{ ToLower .Value }}"
+                  template = "{{ "{{" }} ToLower .Value {{ "}}" }}"
                 }
 
                 stage.replace {
@@ -257,7 +257,7 @@ apps:
                   selector = "{stream=\"stderr\"}"
                   stage.template {
                     source   = "level"
-                    template = "{{ if .Value }}{{ .Value }}{{ else }}error{{ end }}"
+                    template = "{{ "{{" }} if .Value {{ "}}" }}{{ "{{" }} .Value {{ "}}" }}{{ "{{" }} else {{ "}}" }}error{{ "{{" }} end {{ "}}" }}"
                   }
                 }
 
@@ -265,7 +265,7 @@ apps:
                   selector = "{stream=\"stdout\"}"
                   stage.template {
                     source   = "level"
-                    template = "{{ if .Value }}{{ .Value }}{{ else }}info{{ end }}"
+                    template = "{{ "{{" }} if .Value {{ "}}" }}{{ "{{" }} .Value {{ "}}" }}{{ "{{" }} else {{ "}}" }}info{{ "{{" }} end {{ "}}" }}"
                   }
                 }
 
