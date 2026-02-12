@@ -242,6 +242,9 @@ apps:
                   stage.drop {
                     expression = "\"liveMeasurement\":"
                   }
+                  stage.drop {
+                    expression = "Updating (DAILY|HOURLY) data|Updating prices"
+                  }
                 }
 
                 stage.match {
