@@ -228,12 +228,12 @@ apps:
                 stage.cri {}
 
                 stage.drop {
-                  # Noisy Kubernetes leader-election heartbeat logs.
+                  // Noisy Kubernetes leader-election heartbeat logs.
                   expression = "successfully renewed lease"
                 }
 
                 stage.drop {
-                  # Noisy Kubernetes readiness probe access logs.
+                  // Noisy Kubernetes readiness probe access logs.
                   expression = "userAgent=kube-probe.*uri=/readyz"
                 }
 
