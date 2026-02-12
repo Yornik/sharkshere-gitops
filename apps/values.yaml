@@ -236,6 +236,10 @@ apps:
     namespace: jellyfin
     path: manifests/jellyfin
 
+  qbittorrent:
+    namespace: jellyfin
+    path: manifests/qbittorrent
+
   democratic-csi:
     namespace: democratic-csi
     path: manifests/democratic-csi

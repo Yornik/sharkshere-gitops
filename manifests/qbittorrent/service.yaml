@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  namespace: jellyfin
+  labels:
+    app: qbittorrent
+spec:
+  selector:
+    app: qbittorrent
+  ports:
+    - name: webui
+      port: 8080
+      targetPort: webui
+      protocol: TCP
+    - name: bittorrent
+      port: 6881
+      targetPort: bittorrent
+      protocol: TCP
+    - name: bittorrent-udp
+      port: 6881
+      targetPort: bittorrent-udp
+      protocol: UDP

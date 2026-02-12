@@ -1,0 +1,8 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: qbittorrent-auth
+  namespace: jellyfin
+spec:
+  basicAuth:
+    secret: qbittorrent-basic-auth

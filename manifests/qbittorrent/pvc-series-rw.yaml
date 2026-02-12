@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbittorrent-series-rw
+  namespace: jellyfin
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: smb-rw
+  resources:
+    requests:
+      storage: 1Ti
+  volumeName: qbittorrent-series-rw
