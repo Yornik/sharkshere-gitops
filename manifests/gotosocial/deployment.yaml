@@ -43,6 +43,21 @@ spec:
               value: /gotosocial/.cache
             - name: GTS_TRUSTED_PROXIES
               value: 10.244.0.0/16
+            - name: GTS_SMTP_HOST
+              value: smtp.resend.com
+            - name: GTS_SMTP_PORT
+              value: "465"
+            - name: GTS_SMTP_USERNAME
+              value: resend
+            - name: GTS_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gotosocial-smtp
+                  key: smtp-password
+            - name: GTS_SMTP_FROM
+              value: noreply@send.fedishark.eu
+            - name: GTS_SMTP_DISCLOSE_RECIPIENTS
+              value: "false"
           ports:
             - name: http
               containerPort: 8080
