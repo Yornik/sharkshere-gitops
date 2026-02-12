@@ -254,6 +254,20 @@ apps:
                   }
                 }
 
+                stage.match {
+                  selector = "{app=\"grafana\"}"
+                  stage.drop {
+                    expression = "logger=tsdb\\.loki|endpoint=queryData pluginId=loki|Response (received|parsed) from loki"
+                  }
+                }
+
+                stage.match {
+                  selector = "{app=\"loki\"}"
+                  stage.drop {
+                    expression = "caller=(metrics\\.go|roundtrip\\.go):|source=grafana-lokiexplore-app|query_type=volume|api=detected_labels"
+                  }
+                }
+
                 stage.json {
                   expressions = {
                     level     = "level",
