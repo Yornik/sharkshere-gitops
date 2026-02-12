@@ -287,11 +287,6 @@ apps:
                   url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
                 }
               }
-        controller:
-          type: daemonset
-        tolerations:
-          - operator: Exists
-        alloy:
           resources:
             requests:
               cpu: 50m
@@ -299,6 +294,10 @@ apps:
             limits:
               cpu: 250m
               memory: 256Mi
+        controller:
+          type: daemonset
+        tolerations:
+          - operator: Exists
 
   tibber-exporter:
     namespace: monitoring
