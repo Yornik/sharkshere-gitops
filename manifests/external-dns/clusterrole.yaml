@@ -9,10 +9,6 @@ rules:
   - apiGroups: ["extensions", "networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "watch", "list"]
-  - apiGroups: ["traefik.io", "traefik.containo.us"]
-    resources:
-      ["ingressroutes", "ingressroutetcps", "ingressrouteudps", "middlewares"]
-    verbs: ["get", "watch", "list"]
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
     verbs: ["get", "watch", "list"]
