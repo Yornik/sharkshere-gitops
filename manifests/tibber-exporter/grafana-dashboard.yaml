@@ -398,13 +398,13 @@ data:
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 6,
-            "w": 5,
-            "x": 19,
-            "y": 0
-          },
-          "id": 11,
+      "gridPos": {
+        "h": 6,
+        "w": 10,
+        "x": 14,
+        "y": 0
+      },
+      "id": 11,
           "maxDataPoints": 10000,
           "options": {
             "calculate": false,
@@ -462,9 +462,9 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Power (15m heatmap)",
-          "type": "heatmap"
-        },
+      "title": "Heat Map",
+      "type": "heatmap"
+    },
         {
           "datasource": {
             "type": "prometheus",
@@ -1084,6 +1084,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 11,
+      "version": 12,
       "weekStart": ""
     }
