@@ -870,12 +870,12 @@ data:
               },
               "editorMode": "code",
               "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])",
-              "legendFormat": "Price inc. tax (15m)",
+              "legendFormat": "Price",
               "range": true,
               "refId": "A"
             }
           ],
-          "title": "Price (15m)",
+          "title": "Price per kWh",
           "type": "timeseries"
         },
         {
@@ -1084,6 +1084,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 12,
+      "version": 13,
       "weekStart": ""
     }
