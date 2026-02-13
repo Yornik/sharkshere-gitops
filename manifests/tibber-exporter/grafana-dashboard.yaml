@@ -399,34 +399,26 @@ data:
           "title": "L3",
           "type": "bargauge"
         },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "continuous"
-                  },
-                  "custom": {
-                    "calculation": "last",
-                    "colorPalette": "interpolateViridis",
-                    "colorSpace": "rgb",
-                    "groupBy": 900,
-                    "invertPalette": false,
-                    "nullValueColor": "rgb(155, 155, 155)"
-                  },
-                  "displayName": "",
-                  "mappings": [
-
-                  ],
-                  "min": 0,
-                  "unit": "watt"
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
                 },
-                "overrides": [
-
-            ]
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              },
+              "unit": "watt"
+            },
+            "overrides": []
           },
           "gridPos": {
             "h": 6,
@@ -437,28 +429,64 @@ data:
           "id": 11,
           "maxDataPoints": 10000,
           "options": {
+            "calculate": false,
+            "cellGap": 1,
+            "cellValues": {
+              "unit": "watt"
+            },
+            "color": {
+              "exponent": 0.5,
+              "fill": "dark-orange",
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Turbo",
+              "steps": 64
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-9
+            },
             "from": "0",
+            "legend": {
+              "show": false
+            },
             "legendGradientQuality": "high",
+            "rowsFrame": {
+              "layout": "auto"
+            },
             "showCellBorder": false,
-            "showLegend": true,
+            "showLegend": false,
             "showTooltip": true,
             "showValueIndicator": true,
-            "to": "0"
-          },
-              "targets": [
-                {
-                      "datasource": {
-                        "type": "prometheus",
-                        "uid": "$datasource"
-                      },
-                      "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
-                      "legendFormat": ".",
-                      "refId": "A"
-                    }
-                  ],
-                  "title": "Power (15m heatmap)",
-              "type": "heatmap"
+            "to": "0",
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": false,
+              "yHistogram": false
             },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false
+            }
+          },
+          "pluginVersion": "12.3.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "$datasource"
+              },
+              "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Power (15m heatmap)",
+          "type": "heatmap"
+        },
         {
           "datasource": {
             "type": "prometheus",
@@ -1231,6 +1259,6 @@ data:
       "timezone": "",
       "title": "Tibber",
       "uid": "5rT8QDiVk",
-      "version": 9,
+      "version": 10,
       "weekStart": ""
     }
