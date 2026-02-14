@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: muse
-          image: ghcr.io/museofficial/muse:v2.11.1
+          image: ghcr.io/museofficial/muse:2.9.4
           env:
             - name: DISCORD_TOKEN
               valueFrom:
