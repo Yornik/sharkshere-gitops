@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: asf
+  namespace: asf
+  labels:
+    app: asf
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: asf.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  selector:
+    app: asf
+  ports:
+    - name: ipc
+      port: 1242
+      targetPort: ipc
+      protocol: TCP

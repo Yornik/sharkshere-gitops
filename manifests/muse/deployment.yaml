@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: muse
+  namespace: muse
+  labels:
+    app: muse
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: muse
+  template:
+    metadata:
+      labels:
+        app: muse
+    spec:
+      containers:
+        - name: muse
+          image: ghcr.io/museofficial/muse:latest
+          env:
+            - name: DISCORD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: muse-secrets
+                  key: DISCORD_TOKEN
+            - name: YOUTUBE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: muse-secrets
+                  key: YOUTUBE_API_KEY
+            - name: SPOTIFY_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: muse-secrets
+                  key: SPOTIFY_CLIENT_ID
+            - name: SPOTIFY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: muse-secrets
+                  key: SPOTIFY_CLIENT_SECRET
+            - name: CACHE_LIMIT
+              value: "1GB"
+            - name: ENABLE_SPONSORBLOCK
+              value: "True"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: muse-data

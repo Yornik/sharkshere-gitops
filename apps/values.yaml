@@ -527,6 +527,22 @@ apps:
           enabled: true
           isDefaultClass: true
 
+  muse:
+    namespace: muse
+    path: manifests/muse
+
+  vaultwarden:
+    namespace: vaultwarden
+    path: manifests/vaultwarden
+
+  vikunja:
+    namespace: vikunja
+    path: manifests/vikunja
+
+  asf:
+    namespace: asf
+    path: manifests/asf
+
   traefik-config:
     namespace: traefik
     path: manifests/traefik-config

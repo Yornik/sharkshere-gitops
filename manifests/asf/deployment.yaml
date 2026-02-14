@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asf
+  namespace: asf
+  labels:
+    app: asf
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: asf
+  template:
+    metadata:
+      labels:
+        app: asf
+    spec:
+      containers:
+        - name: asf
+          image: justarchi/archisteamfarm:latest
+          ports:
+            - name: ipc
+              containerPort: 1242
+              protocol: TCP
+          env:
+            - name: ASF_IPCPassword
+              valueFrom:
+                secretKeyRef:
+                  name: asf-secrets
+                  key: ASF_IPCPassword
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: /swagger
+              port: ipc
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /swagger
+              port: ipc
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+            - name: ipc-config
+              mountPath: /app/config/IPC.config
+              subPath: IPC.config
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: asf-config
+        - name: ipc-config
+          configMap:
+            name: asf-ipc-config
