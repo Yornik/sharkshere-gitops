@@ -49,6 +49,10 @@ spec:
           volumeMounts:
             - name: files
               mountPath: /app/vikunja/files
+            - name: db
+              mountPath: /db
+            - name: cache
+              mountPath: /.cache
             - name: tmp
               mountPath: /tmp
           resources:
@@ -62,5 +66,10 @@ spec:
         - name: files
           persistentVolumeClaim:
             claimName: vikunja-files
+        - name: db
+          persistentVolumeClaim:
+            claimName: vikunja-db
+        - name: cache
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
