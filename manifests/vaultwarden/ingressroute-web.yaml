@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: vaultwarden-web
+  namespace: vaultwarden
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`vault.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: vaultwarden-redirect-https
+          namespace: vaultwarden
+      services:
+        - name: vaultwarden
+          port: 80

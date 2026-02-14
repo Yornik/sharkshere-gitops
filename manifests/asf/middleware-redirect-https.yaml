@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: asf-redirect-https
+  namespace: asf
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true

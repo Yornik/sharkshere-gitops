@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: vikunja-web
+  namespace: vikunja
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`vikunja.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: vikunja-redirect-https
+          namespace: vikunja
+      services:
+        - name: vikunja
+          port: 3456
