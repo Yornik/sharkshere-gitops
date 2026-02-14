@@ -8,5 +8,6 @@ resources:
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
   - pvc-files.yaml
+  - pvc-db.yaml
 generators:
   - secret-generator.yaml
