@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: omni-tools-web
+  namespace: omni-tools
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`omni.fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: omni-tools-redirect-https
+          namespace: omni-tools
+      services:
+        - name: omni-tools
+          port: 80

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omni-tools
+  namespace: omni-tools
+  labels:
+    app: omni-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omni-tools
+  template:
+    metadata:
+      labels:
+        app: omni-tools
+    spec:
+      containers:
+        - name: omni-tools
+          image: iib0011/omni-tools:latest
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
