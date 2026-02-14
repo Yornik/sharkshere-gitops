@@ -365,6 +365,10 @@ apps:
     namespace: jellyfin
     path: manifests/jellyfin
 
+  omni-tools:
+    namespace: omni-tools
+    path: manifests/omni-tools
+
   qbittorrent:
     namespace: jellyfin
     path: manifests/qbittorrent

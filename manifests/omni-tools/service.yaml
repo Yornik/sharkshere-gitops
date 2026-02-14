@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: omni-tools
+  namespace: omni-tools
+  labels:
+    app: omni-tools
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: omni.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  selector:
+    app: omni-tools
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
