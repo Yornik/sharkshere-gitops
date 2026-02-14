@@ -17,6 +17,26 @@ spec:
       labels:
         app: asf
     spec:
+      initContainers:
+        - name: write-asf-config
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              cat > /app/config/ASF.json <<EOFJ
+              {
+                "IPCPassword": "${ASF_IPCPassword}"
+              }
+              EOFJ
+          env:
+            - name: ASF_IPCPassword
+              valueFrom:
+                secretKeyRef:
+                  name: asf-secrets
+                  key: ASF_IPCPassword
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
       containers:
         - name: asf
           image: justarchi/archisteamfarm:6.3.3.0
@@ -24,13 +44,6 @@ spec:
             - name: ipc
               containerPort: 1242
               protocol: TCP
-          env:
-            - name: ASF_IPCPassword
-              valueFrom:
-                secretKeyRef:
-                  name: asf-secrets
-                  key: ASF_IPCPassword
-                  optional: true
           livenessProbe:
             httpGet:
               path: /swagger
