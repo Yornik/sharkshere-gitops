@@ -495,8 +495,6 @@ apps:
                 - "100.64.0.0/10"
             http:
               tls: {}
-        ocsp:
-          enabled: true
         certificatesResolvers:
           letsencrypt:
             acme:
