@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-txt
+  namespace: traefik
+data:
+  security.txt: |
+    Contact: mailto:yornik@yornik.nl
+    Expires: 2027-02-19T00:00:00.000Z
+    Preferred-Languages: en, nl
+    Canonical: https://fedishark.eu/.well-known/security.txt
