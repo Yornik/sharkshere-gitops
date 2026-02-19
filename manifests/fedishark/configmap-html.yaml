@@ -1,0 +1,455 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fedishark-html
+  namespace: fedishark
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>~*~ FediShark.eu ~*~ Welcome to the OCEAN ~*~</title>
+    <style>
+    body {
+      background-color: #000033;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='15' cy='25' r='1' fill='%23ffffff22'/%3E%3Ccircle cx='55' cy='15' r='0.8' fill='%23ffffff18'/%3E%3Ccircle cx='85' cy='65' r='1.2' fill='%23ffffff20'/%3E%3Ccircle cx='35' cy='75' r='0.6' fill='%23ffffff15'/%3E%3Ccircle cx='70' cy='45' r='0.9' fill='%23ffffff1a'/%3E%3C/svg%3E");
+      color: #00ffff;
+      font-family: "Comic Sans MS", "Chalkboard SE", cursive;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    a { color: #ff00ff; }
+    a:visited { color: #ff6600; }
+    a:hover { color: #ffff00; text-decoration: none; }
+
+    .marquee-top {
+      background: linear-gradient(90deg, #ff0000, #ff6600, #ffff00, #00ff00, #0066ff, #9900ff);
+      color: #000;
+      font-weight: bold;
+      font-size: 14px;
+      padding: 4px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .marquee-top span {
+      display: inline-block;
+      animation: marquee 15s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .ocean-bar {
+      height: 6px;
+      background: repeating-linear-gradient(90deg, #006699, #006699 10px, #003366 10px, #003366 20px);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    table.main-layout {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table.main-layout td {
+      vertical-align: top;
+      padding: 8px;
+    }
+
+    .sidebar {
+      width: 180px;
+      background-color: #000066;
+      border: 2px ridge #0099cc;
+      padding: 8px;
+    }
+    .sidebar h3 {
+      color: #ffff00;
+      text-align: center;
+      font-size: 13px;
+      margin: 4px 0;
+      text-shadow: 1px 1px #000;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0;
+    }
+    .sidebar li {
+      padding: 2px 0;
+      font-size: 12px;
+    }
+    .sidebar li::before {
+      content: "🦈 ";
+    }
+
+    .content {
+      background-color: #00004488;
+      border: 2px ridge #0099cc;
+      padding: 12px;
+    }
+
+    h1.title {
+      text-align: center;
+      font-size: 32px;
+      color: #00ffff;
+      text-shadow: 2px 2px #006699, 0 0 20px #0099ff;
+      margin: 10px 0;
+      letter-spacing: 3px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #66ccff;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .blink {
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .shark-ascii {
+      font-family: "Courier New", monospace;
+      color: #6699cc;
+      font-size: 10px;
+      line-height: 1.1;
+      white-space: pre;
+      text-align: center;
+      margin: 10px 0;
+    }
+
+    .swim {
+      display: inline-block;
+      animation: swim 8s ease-in-out infinite;
+      font-size: 28px;
+    }
+    @keyframes swim {
+      0%, 100% { transform: translateX(-200px) scaleX(1); }
+      45% { transform: translateX(calc(100vw - 300px)) scaleX(1); }
+      50% { transform: translateX(calc(100vw - 300px)) scaleX(-1); }
+      95% { transform: translateX(-200px) scaleX(-1); }
+    }
+
+    .wave {
+      font-size: 20px;
+      display: inline-block;
+      animation: wave-move 3s ease-in-out infinite;
+    }
+    @keyframes wave-move {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .guestbook {
+      background: #000066;
+      border: 3px double #0099cc;
+      padding: 10px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    .guestbook h3 {
+      color: #ffff00;
+      margin: 4px 0;
+    }
+
+    .counter {
+      text-align: center;
+      margin: 10px 0;
+      font-size: 11px;
+      color: #999;
+    }
+    .counter .digits {
+      font-family: monospace;
+      background: #000;
+      border: 1px inset #333;
+      padding: 2px 6px;
+      color: #00ff00;
+      letter-spacing: 2px;
+    }
+
+    .construction {
+      text-align: center;
+      margin: 8px 0;
+      font-size: 14px;
+      color: #ffff00;
+    }
+
+    .webring {
+      text-align: center;
+      border: 2px ridge #666;
+      background: #000044;
+      padding: 8px;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+
+    .badge-row {
+      text-align: center;
+      margin: 8px 0;
+    }
+    .badge {
+      display: inline-block;
+      border: 1px solid #666;
+      padding: 2px 8px;
+      margin: 2px;
+      font-size: 10px;
+      font-family: monospace;
+    }
+    .badge-blue { background: #003399; color: #fff; }
+    .badge-green { background: #006600; color: #0f0; }
+    .badge-red { background: #990000; color: #ff6; }
+    .badge-purple { background: #660066; color: #f0f; }
+
+    .facts td {
+      padding: 4px 8px;
+      font-size: 13px;
+      border-bottom: 1px dotted #006699;
+    }
+    .facts td:first-child {
+      color: #ffff00;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 10px;
+      color: #336699;
+      padding: 10px;
+      border-top: 1px solid #003366;
+      margin-top: 10px;
+    }
+
+    .bubble {
+      display: inline-block;
+      animation: bubble-rise 6s ease-in infinite;
+      position: fixed;
+      bottom: -20px;
+      font-size: 12px;
+      opacity: 0.3;
+    }
+    @keyframes bubble-rise {
+      0% { transform: translateY(0); opacity: 0.3; }
+      100% { transform: translateY(-110vh); opacity: 0; }
+    }
+    </style>
+    </head>
+    <body>
+
+    <!-- Bubbles -->
+    <div class="bubble" style="left:10%; animation-delay:0s">o</div>
+    <div class="bubble" style="left:30%; animation-delay:2s">o</div>
+    <div class="bubble" style="left:50%; animation-delay:4s; font-size:8px">o</div>
+    <div class="bubble" style="left:70%; animation-delay:1s">o</div>
+    <div class="bubble" style="left:90%; animation-delay:3s; font-size:6px">o</div>
+
+    <!-- Rainbow marquee -->
+    <div class="marquee-top"><span>*** WELCOME TO FEDISHARK.EU *** THE FEDIVERSE'S MOST JAWSOME HOME ON THE WEB *** BEST VIEWED WITH NETSCAPE NAVIGATOR 4.0 *** YOU ARE VISITOR #000001337 *** SHARKS RULE ***</span></div>
+    <div class="ocean-bar"></div>
+
+    <div class="container">
+
+    <!-- Swimming shark -->
+    <div style="height:40px; position:relative; overflow:hidden;">
+      <div class="swim">&#x1F988;</div>
+    </div>
+
+    <!-- Title -->
+    <h1 class="title">
+      <span class="wave" style="animation-delay:0s">~</span>
+      FediShark
+      <span class="wave" style="animation-delay:0.3s">~</span>
+    </h1>
+    <div class="subtitle">
+      <span class="blink">&#x2B50;</span> The Internet's Premier Shark-Powered Fediverse Hub <span class="blink">&#x2B50;</span>
+    </div>
+
+    <div class="shark-ascii">
+                          ___
+                     ____/   \____
+                    /              \
+               ___/    &gt;    &lt;       \___
+          ____/                         \
+      ___/          .--------.           \____
+     /             |  O    O  |               \
+    |               \   __   /                 |
+     \___            '------'             ____/
+         \____                       ____/
+              \_____________________/
+                        |  |
+                       _|  |_
+                      |______|
+    </div>
+
+    <!-- Main layout table -->
+    <table class="main-layout">
+    <tr>
+
+    <!-- Sidebar -->
+    <td class="sidebar">
+      <h3>&#x1F30A; NAVIGATE</h3>
+      <ul>
+        <li><a href="https://pub.fedishark.eu">Social Feed</a></li>
+        <li><a href="https://jelly.fedishark.eu">Media Cave</a></li>
+        <li><a href="https://grafana.fedishark.eu">Reef Monitor</a></li>
+        <li><a href="https://vikunja.fedishark.eu">Task Tides</a></li>
+        <li><a href="https://vault.fedishark.eu">Treasure Vault</a></li>
+      </ul>
+
+      <h3>&#x1F41F; FUN FACTS</h3>
+      <p style="font-size:11px; color:#99ccff;">
+        Did you know? Sharks have been around for over 450 million years &mdash; older than TREES!
+      </p>
+      <p style="font-size:11px; color:#99ccff;">
+        A group of sharks is called a &ldquo;shiver&rdquo; &#x1F976;
+      </p>
+
+      <h3>&#x1F3B5; NOW PLAYING</h3>
+      <p style="font-size:10px; color:#66ff66; text-align:center;">
+        &#x266B; Baby Shark (Metal Cover) &#x266B;
+      </p>
+
+      <div class="construction">
+        &#x1F6A7; UNDER<br>CONSTRUCTION &#x1F6A7;
+      </div>
+    </td>
+
+    <!-- Main content -->
+    <td class="content">
+
+      <p>
+        <span style="font-size:18px; color:#ff6600;">Ahoy, fellow netizen!</span><br><br>
+        Welcome to <b>FediShark.eu</b> &mdash; a self-hosted archipelago of services
+        swimming in the deep waters of the <b>Fediverse</b>! This humble corner of
+        the internet is powered by recycled electrons, open-source software, and
+        an unreasonable love for sharks.
+      </p>
+
+      <table class="facts" style="width:100%; margin:10px 0;">
+        <tr><td>&#x1F4BB; Powered by</td><td>Talos Linux on 4x Intel N150 nodes</td></tr>
+        <tr><td>&#x1F30A; Orchestrated by</td><td>Kubernetes (it's like a school of fish)</td></tr>
+        <tr><td>&#x1F512; TLS Version</td><td>1.3 ONLY &mdash; we don't do ancient protocols</td></tr>
+        <tr><td>&#x1F510; Certificates</td><td>ECDSA P-384 via Let's Encrypt</td></tr>
+        <tr><td>&#x1F3E0; Location</td><td>The deep end of a Dutch living room</td></tr>
+        <tr><td>&#x1F4CA; Uptime</td><td>As reliable as a great white's appetite</td></tr>
+        <tr><td>&#x2694;&#xFE0F; Security</td><td>NCSC NL &ldquo;Good&rdquo; on ALL categories</td></tr>
+      </table>
+
+      <!-- Services -->
+      <h2 style="color:#ffff00; text-align:center; text-shadow:1px 1px #000;">
+        &#x1F988; Our Services &#x1F988;
+      </h2>
+
+      <table style="width:100%; border-collapse:collapse;">
+        <tr style="background:#003366;">
+          <td style="padding:6px; border:1px solid #006699;">
+            <b style="color:#00ffcc;">GoToSocial</b><br>
+            <span style="font-size:12px;">
+              Our <a href="https://pub.fedishark.eu">ActivityPub server</a> &mdash;
+              federated social networking, shark-style. Follow us in the Fediverse!
+            </span>
+          </td>
+        </tr>
+        <tr style="background:#002244;">
+          <td style="padding:6px; border:1px solid #006699;">
+            <b style="color:#00ffcc;">Jellyfin</b><br>
+            <span style="font-size:12px;">
+              <a href="https://jelly.fedishark.eu">Media streaming</a> from the depths.
+              Like Netflix, but with more sharks and zero tracking.
+            </span>
+          </td>
+        </tr>
+        <tr style="background:#003366;">
+          <td style="padding:6px; border:1px solid #006699;">
+            <b style="color:#00ffcc;">Vaultwarden</b><br>
+            <span style="font-size:12px;">
+              <a href="https://vault.fedishark.eu">Password manager</a> &mdash;
+              because even sharks need to keep their secrets safe.
+            </span>
+          </td>
+        </tr>
+        <tr style="background:#002244;">
+          <td style="padding:6px; border:1px solid #006699;">
+            <b style="color:#00ffcc;">Grafana</b><br>
+            <span style="font-size:12px;">
+              <a href="https://grafana.fedishark.eu">Monitoring dashboard</a> &mdash;
+              watching over our reef 24/7 like a hammerhead on patrol.
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Guestbook -->
+      <div class="guestbook">
+        <h3>&#x1F4DD; GUESTBOOK</h3>
+        <p style="font-size:12px;">
+          Sign our guestbook! (just kidding, this is a static page)<br>
+          But you CAN find us on the Fediverse: <a href="https://pub.fedishark.eu">@shark@pub.fedishark.eu</a>
+        </p>
+      </div>
+
+      <!-- Badges -->
+      <div class="badge-row">
+        <span class="badge badge-blue">TLS 1.3</span>
+        <span class="badge badge-green">IPv4+IPv6</span>
+        <span class="badge badge-purple">Fediverse</span>
+        <span class="badge badge-red">No Cookies</span>
+        <span class="badge badge-blue">HSTS Preload</span>
+        <span class="badge badge-green">Self-Hosted</span>
+        <span class="badge badge-purple">100% Shark</span>
+      </div>
+
+      <!-- Webring -->
+      <div class="webring">
+        <b style="color:#ffff00;">&#x1F517; FediShark WebRing</b><br>
+        <a href="#">&lt;&lt; Prev</a> |
+        <a href="#">Random</a> |
+        <a href="#">Next &gt;&gt;</a><br>
+        <span style="font-size:10px; color:#666;">(we're the only member so far)</span>
+      </div>
+
+    </td>
+    </tr>
+    </table>
+
+    <!-- Visitor counter -->
+    <div class="counter">
+      You are visitor number: <span class="digits">001337</span><br>
+      (not really, we don't track you &#x1F60E;)
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      &copy; 2026 FediShark.eu &bull;
+      Made with &#x1F499; and &#x1F988; &bull;
+      No sharks were harmed in the making of this website &bull;
+      <a href="/.well-known/security.txt">security.txt</a><br>
+      <br>
+      Best viewed at 1024x768 &bull; 16-bit color &bull; Netscape Navigator 4.0+<br>
+      This site is <b>Yed Arrr Ell</b> compliant and W3C adjacent (we tried)<br>
+      <br>
+      <span style="color:#003366;">
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br>
+        &nbsp;&nbsp;&nbsp;the ocean is vast, the fediverse is vaster&nbsp;&nbsp;&nbsp;<br>
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      </span>
+    </div>
+
+    <!-- One more swimming shark at the bottom -->
+    <div style="height:30px; position:relative; overflow:hidden;">
+      <div class="swim" style="animation-delay:-4s; animation-duration:12s;">&#x1F988;</div>
+    </div>
+
+    <div class="ocean-bar"></div>
+
+    </div>
+    </body>
+    </html>
