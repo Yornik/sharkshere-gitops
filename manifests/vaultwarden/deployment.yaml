@@ -28,7 +28,7 @@ spec:
             - name: DOMAIN
               value: "https://vault.fedishark.eu"
             - name: SIGNUPS_ALLOWED
-              value: "true"
+              value: "false"
             - name: ADMIN_TOKEN
               valueFrom:
                 secretKeyRef:
