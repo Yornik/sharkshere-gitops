@@ -5,7 +5,38 @@ metadata:
   namespace: traefik
 data:
   security.txt: |
+    -----BEGIN PGP SIGNED MESSAGE-----
+    Hash: SHA256
+
     Contact: mailto:yornik@yornik.nl
+    Encryption: https://fedishark.eu/.well-known/pgp-key.txt
     Expires: 2027-02-19T00:00:00.000Z
     Preferred-Languages: en, nl
     Canonical: https://fedishark.eu/.well-known/security.txt
+    Canonical: https://pub.fedishark.eu/.well-known/security.txt
+    Canonical: https://jelly.fedishark.eu/.well-known/security.txt
+    Canonical: https://grafana.fedishark.eu/.well-known/security.txt
+    Canonical: https://vault.fedishark.eu/.well-known/security.txt
+    Canonical: https://vikunja.fedishark.eu/.well-known/security.txt
+    Canonical: https://asf.fedishark.eu/.well-known/security.txt
+    Canonical: https://qbittorrent.fedishark.eu/.well-known/security.txt
+    Canonical: https://omni.fedishark.eu/.well-known/security.txt
+    Canonical: https://argocd.fedishark.eu/.well-known/security.txt
+    -----BEGIN PGP SIGNATURE-----
+
+    iIcEARYIAC8WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaZd5EhEceW9ybmlrQHlv
+    cm5pay5ubAAKCRDt+zCFSkKz8P/aAQDCvcABG5XasN8iIZQw+TZL8031v5W3PxMc
+    ue68ry7VbQD+J1KW5KzPt9tzqMQpuGI/5OGzAcK917JqbIeg+EHrswY=
+    =3o+i
+    -----END PGP SIGNATURE-----
+  pgp-key.txt: |
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+    mDMEaZd5AxYJKwYBBAHaRw8BAQdA+F5FrdhHQYLTZJxmqTH5cUP+x0rkmEjZi4Em
+    ovZf21a0JUZlZGlTaGFyayBTZWN1cml0eSA8eW9ybmlrQHlvcm5pay5ubD6IlgQT
+    FggAPhYhBDBFpDkbqDAG0O7kB+37MIVKQrPwBQJpl3kDAhsDBQkB4TOABQsJCAcC
+    BhUKCQgLAgQWAgMBAh4BAheAAAoJEO37MIVKQrPwZnYBALJatQ8zxDPPaD7EZuKH
+    8PCmi/9agbqEvVM1joL9Nm/gAP9dxrg5bnWZqf8viggtKNff070PhEFBg9GJXCAA
+    HsZlAg==
+    =0uRZ
+    -----END PGP PUBLIC KEY BLOCK-----

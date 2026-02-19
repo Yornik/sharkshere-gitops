@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: PathPrefix(`/.well-known/security.txt`)
+    - match: Path(`/.well-known/security.txt`) || Path(`/.well-known/pgp-key.txt`)
       kind: Rule
       priority: 9999
       services:
