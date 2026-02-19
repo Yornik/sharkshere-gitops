@@ -34,6 +34,21 @@ spec:
                 secretKeyRef:
                   name: vaultwarden-secrets
                   key: ADMIN_TOKEN
+            - name: SMTP_HOST
+              value: "smtp.resend.com"
+            - name: SMTP_PORT
+              value: "465"
+            - name: SMTP_SECURITY
+              value: "force_tls"
+            - name: SMTP_USERNAME
+              value: "resend"
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secrets
+                  key: SMTP_PASSWORD
+            - name: SMTP_FROM
+              value: "noreply@send.fedishark.eu"
           livenessProbe:
             httpGet:
               path: /alive
