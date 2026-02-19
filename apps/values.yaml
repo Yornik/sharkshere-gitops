@@ -495,7 +495,7 @@ apps:
                 - "100.64.0.0/10"
             http:
               tls:
-                options: hardened@file
+                options: default@file
         ocsp:
           enabled: true
         certificatesResolvers:
@@ -521,7 +521,7 @@ apps:
             content: |
               tls:
                 options:
-                  hardened:
+                  default:
                     minVersion: VersionTLS13
                     sniStrict: true
         experimental:
