@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`fedishark.eu`)
+    - match: Host(`fedishark.eu`) || Host(`www.fedishark.eu`)
       kind: Rule
       middlewares:
         - name: security-headers
