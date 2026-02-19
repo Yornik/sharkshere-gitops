@@ -503,6 +503,7 @@ apps:
             acme:
               email: yornik@yornik.nl
               storage: /data/acme.json
+              keyType: EC384
               httpChallenge:
                 entryPoint: web
         persistence:
