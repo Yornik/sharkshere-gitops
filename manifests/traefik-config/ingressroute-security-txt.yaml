@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: security-txt
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: PathPrefix(`/.well-known/security.txt`)
+      kind: Rule
+      priority: 9999
+      services:
+        - name: security-txt
+          port: 80
+  tls:
+    certResolver: letsencrypt
