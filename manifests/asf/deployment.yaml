@@ -25,7 +25,8 @@ spec:
             - |
               cat > /app/config/ASF.json <<EOFJ
               {
-                "IPCPassword": "${ASF_IPCPassword}"
+                "IPCPassword": "${ASF_IPCPassword}",
+                "Headless": true
               }
               EOFJ
           env:
