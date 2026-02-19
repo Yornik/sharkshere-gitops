@@ -13,5 +13,5 @@ spec:
     contentTypeNosniff: true
     browserXssFilter: true
     frameDeny: true
-    referrerPolicy: "no-referrer-when-downgrade"
+    referrerPolicy: "no-referrer"
 
