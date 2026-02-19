@@ -494,8 +494,7 @@ apps:
                 - "10.0.0.0/8"
                 - "100.64.0.0/10"
             http:
-              tls:
-                options: default@file
+              tls: {}
         ocsp:
           enabled: true
         certificatesResolvers:
@@ -517,13 +516,7 @@ apps:
           kubernetesIngress:
             enabled: true
           file:
-            enabled: true
-            content: |
-              tls:
-                options:
-                  default:
-                    minVersion: VersionTLS13
-                    sniStrict: true
+            enabled: false
         experimental:
           plugins:
             fail2ban:

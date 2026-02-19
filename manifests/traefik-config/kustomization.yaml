@@ -8,3 +8,4 @@ resources:
   - deployment-security-txt.yaml
   - service-security-txt.yaml
   - ingressroute-security-txt.yaml
+  - tlsoption-default.yaml
