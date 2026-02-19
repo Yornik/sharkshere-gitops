@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fedishark
+  namespace: fedishark
+  labels:
+    app: fedishark
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: fedishark.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  selector:
+    app: fedishark
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

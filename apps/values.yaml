@@ -542,6 +542,10 @@ apps:
     namespace: asf
     path: manifests/asf
 
+  fedishark:
+    namespace: fedishark
+    path: manifests/fedishark
+
   traefik-config:
     namespace: traefik
     path: manifests/traefik-config

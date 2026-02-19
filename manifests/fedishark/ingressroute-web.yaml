@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: fedishark-web
+  namespace: fedishark
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`fedishark.eu`)
+      kind: Rule
+      middlewares:
+        - name: redirect-https
+          namespace: fedishark
+      services:
+        - name: fedishark
+          port: 80
