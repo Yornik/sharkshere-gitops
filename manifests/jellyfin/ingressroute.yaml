@@ -10,6 +10,8 @@ spec:
     - match: Host(`jelly.fedishark.eu`)
       kind: Rule
       middlewares:
+        - name: rate-limit
+          namespace: traefik
         - name: fail2ban
           namespace: traefik
         - name: security-headers
