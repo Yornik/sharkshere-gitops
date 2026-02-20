@@ -6,3 +6,4 @@ metadata:
 spec:
   basicAuth:
     secret: qbittorrent-basic-auth
+    removeHeader: true
