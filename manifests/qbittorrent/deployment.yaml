@@ -34,6 +34,10 @@ spec:
               else
                 echo "Reverse proxy settings already present, skipping"
               fi
+              # Set default save path to /media/movies
+              sed -i "s|Downloads\\\\SavePath=.*|Downloads\\\\SavePath=/media/movies/|" "$CONF"
+              sed -i "s|Session\\\\DefaultSavePath=.*|Session\\\\DefaultSavePath=/media/movies/|" "$CONF"
+              echo "Set default download path to /media/movies"
           volumeMounts:
             - name: config
               mountPath: /config
