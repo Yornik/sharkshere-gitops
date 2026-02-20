@@ -5,5 +5,5 @@ metadata:
   namespace: traefik
 spec:
   rateLimit:
-    average: 50
-    burst: 100
+    average: 300
+    burst: 600
