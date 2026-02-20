@@ -34,6 +34,11 @@ spec:
               else
                 echo "Reverse proxy settings already present, skipping"
               fi
+              # Disable CSRF — Origin: null on file upload/form submit breaks it behind reverse proxy
+              if ! grep -q "CSRFProtection" "$CONF"; then
+                sed -i "s/WebUI\\\\Username=/WebUI\\\\CSRFProtection=false\nWebUI\\\\Username=/" "$CONF"
+                echo "Disabled CSRF protection"
+              fi
               # Set default save path to /media/movies
               sed -i "s|Downloads\\\\SavePath=.*|Downloads\\\\SavePath=/media/movies/|" "$CONF"
               sed -i "s|Session\\\\DefaultSavePath=.*|Session\\\\DefaultSavePath=/media/movies/|" "$CONF"
