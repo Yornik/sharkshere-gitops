@@ -17,6 +17,26 @@ spec:
       labels:
         app: qbittorrent
     spec:
+      initContainers:
+        - name: patch-config
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              CONF=/config/qBittorrent/qBittorrent.conf
+              if [ ! -f "$CONF" ]; then
+                echo "Config not found yet, skipping patch"
+                exit 0
+              fi
+              if ! grep -q "ReverseProxySupportEnabled" "$CONF"; then
+                sed -i "s/WebUI\\\\Username=/WebUI\\\\ReverseProxySupportEnabled=true\nWebUI\\\\TrustedReverseProxiesList=10.244.0.0\/16\nWebUI\\\\Username=/" "$CONF"
+                echo "Patched reverse proxy settings into qBittorrent config"
+              else
+                echo "Reverse proxy settings already present, skipping"
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
       containers:
         - name: gluetun
           image: qmcgaw/gluetun:v3.41.1
