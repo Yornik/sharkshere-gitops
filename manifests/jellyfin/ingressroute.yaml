@@ -7,11 +7,21 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`jelly.fedishark.eu`)
+    - match: Host(`jelly.fedishark.eu`) && (PathPrefix(`/Users/AuthenticateByName`) || PathPrefix(`/Users/AuthenticateWithQuickConnect`) || PathPrefix(`/QuickConnect`))
       kind: Rule
+      priority: 10
       middlewares:
         - name: fail2ban
           namespace: traefik
+        - name: security-headers
+          namespace: traefik
+      services:
+        - name: jellyfin
+          port: 8096
+    - match: Host(`jelly.fedishark.eu`)
+      kind: Rule
+      priority: 1
+      middlewares:
         - name: security-headers
           namespace: traefik
       services:

@@ -262,6 +262,14 @@ apps:
                 }
 
                 stage.match {
+                  selector = "{app=\"traefik\"}"
+                  stage.drop {
+                    // Traefik JSON access log: Kubernetes health probe requests to /ping.
+                    expression = "\"UserAgent\":\"kube-probe"
+                  }
+                }
+
+                stage.match {
                   selector = "{app=\"grafana\"}"
                   stage.drop {
                     expression = "logger=tsdb\\.loki|endpoint=queryData pluginId=loki|Response (received|parsed) from loki"
@@ -518,6 +526,13 @@ apps:
             fail2ban:
               moduleName: github.com/tomMoulard/fail2ban
               version: v0.8.9
+        logs:
+          general:
+            format: json
+            level: INFO
+          access:
+            enabled: true
+            format: json
         ingressClass:
           enabled: true
           isDefaultClass: true
