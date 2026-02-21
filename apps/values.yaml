@@ -461,9 +461,9 @@ apps:
       chart: traefik
       targetRevision: "39.*"
       values: |
-        deployment:
-          strategy:
-            type: Recreate
+        rollingUpdate:
+          maxUnavailable: 1
+          maxSurge: 0
         service:
           type: ClusterIP
           annotations:
