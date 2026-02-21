@@ -24,6 +24,7 @@ spec:
           args:
             - |
               CONF=/config/config/network.xml
+              KNOWN_PROXY_CIDR=10.244.0.0/16
               if [ ! -f "$CONF" ]; then exit 0; fi
               # Force all clients (LAN + remote) to use the external URL for streams.
               # The env var only sets this in memory; patching the XML persists it.
@@ -32,9 +33,10 @@ spec:
               # Disable LAN AutoDiscovery — broadcasting the pod IP causes Apple TV
               # to store the internal pod address and bypass Traefik for streams.
               sed -i 's|<AutoDiscovery>true</AutoDiscovery>|<AutoDiscovery>false</AutoDiscovery>|' "$CONF"
-              # Trust Traefik as known proxy so X-Forwarded headers are honoured.
-              sed -i 's|<KnownProxies />|<KnownProxies>traefik.traefik.svc.cluster.local</KnownProxies>|' "$CONF"
-              sed -i 's|<KnownProxies></KnownProxies>|<KnownProxies>traefik.traefik.svc.cluster.local</KnownProxies>|' "$CONF"
+              # Trust only the cluster pod subnet that Traefik comes from.
+              sed -i "s|<KnownProxies />|<KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>|" "$CONF"
+              sed -i "s|<KnownProxies></KnownProxies>|<KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>|" "$CONF"
+              sed -i "/<KnownProxies>/,/<\\/KnownProxies>/c\\  <KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>" "$CONF"
               # Set public HTTPS port to 443 (Traefik terminates TLS)
               sed -i 's|<PublicHttpsPort>.*</PublicHttpsPort>|<PublicHttpsPort>443</PublicHttpsPort>|' "$CONF"
               sed -i 's|<PublicHttpPort>.*</PublicHttpPort>|<PublicHttpPort>443</PublicHttpPort>|' "$CONF"
@@ -66,6 +68,8 @@ spec:
             - name: series
               mountPath: /media/series
               readOnly: true
+            - name: cache
+              mountPath: /cache
             - name: dri
               mountPath: /dev/dri
           livenessProbe:
@@ -90,6 +94,8 @@ spec:
         - name: series
           persistentVolumeClaim:
             claimName: jellyfin-series
+        - name: cache
+          emptyDir: {}
         - name: dri
           hostPath:
             path: /dev/dri
