@@ -29,6 +29,12 @@ spec:
               # The env var only sets this in memory; patching the XML persists it.
               sed -i 's|<PublishedServerUriBySubnet />|<PublishedServerUriBySubnet><string>all=https://jelly.fedishark.eu</string></PublishedServerUriBySubnet>|' "$CONF"
               sed -i 's|<PublishedServerUriBySubnet></PublishedServerUriBySubnet>|<PublishedServerUriBySubnet><string>all=https://jelly.fedishark.eu</string></PublishedServerUriBySubnet>|' "$CONF"
+              # Disable LAN AutoDiscovery — broadcasting the pod IP causes Apple TV
+              # to store the internal pod address and bypass Traefik for streams.
+              sed -i 's|<AutoDiscovery>true</AutoDiscovery>|<AutoDiscovery>false</AutoDiscovery>|' "$CONF"
+              # Trust Traefik as known proxy so X-Forwarded headers are honoured.
+              sed -i 's|<KnownProxies />|<KnownProxies>traefik.traefik.svc.cluster.local</KnownProxies>|' "$CONF"
+              sed -i 's|<KnownProxies></KnownProxies>|<KnownProxies>traefik.traefik.svc.cluster.local</KnownProxies>|' "$CONF"
               # Set public HTTPS port to 443 (Traefik terminates TLS)
               sed -i 's|<PublicHttpsPort>.*</PublicHttpsPort>|<PublicHttpsPort>443</PublicHttpsPort>|' "$CONF"
               sed -i 's|<PublicHttpPort>.*</PublicHttpPort>|<PublicHttpPort>443</PublicHttpPort>|' "$CONF"
