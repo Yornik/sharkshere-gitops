@@ -17,6 +17,24 @@ spec:
       labels:
         app: jellyfin
     spec:
+      initContainers:
+        - name: patch-network-config
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              CONF=/config/config/network.xml
+              if [ ! -f "$CONF" ]; then exit 0; fi
+              # Set KnownProxies to trust Traefik pod network for X-Forwarded headers
+              sed -i 's|<KnownProxies />|<KnownProxies>10.244.0.0/16</KnownProxies>|' "$CONF"
+              sed -i 's|<KnownProxies></KnownProxies>|<KnownProxies>10.244.0.0/16</KnownProxies>|' "$CONF"
+              # Set public HTTPS port to 443 (Traefik terminates TLS)
+              sed -i 's|<PublicHttpsPort>.*</PublicHttpsPort>|<PublicHttpsPort>443</PublicHttpsPort>|' "$CONF"
+              # Set public HTTP port to 443 as well (all traffic is HTTPS via Traefik)
+              sed -i 's|<PublicHttpPort>.*</PublicHttpPort>|<PublicHttpPort>443</PublicHttpPort>|' "$CONF"
+          volumeMounts:
+            - name: config
+              mountPath: /config
       containers:
         - name: jellyfin
           image: jellyfin/jellyfin:10.11.6
@@ -25,7 +43,7 @@ spec:
               name: http
           env:
             - name: JELLYFIN_PublishedServerUrl
-              value: "http://jellyfin.jellyfin.svc.cluster.local"
+              value: "https://jelly.fedishark.eu"
           resources:
             requests:
               cpu: 500m
