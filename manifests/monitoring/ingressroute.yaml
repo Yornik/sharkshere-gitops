@@ -12,6 +12,8 @@ spec:
       middlewares:
         - name: security-headers
           namespace: traefik
+        - name: no-compression
+          namespace: traefik
         - name: fail2ban-grafana
           namespace: monitoring
       services:

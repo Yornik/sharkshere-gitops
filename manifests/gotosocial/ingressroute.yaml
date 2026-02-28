@@ -16,6 +16,8 @@ spec:
           namespace: gotosocial
         - name: security-headers
           namespace: traefik
+        - name: no-compression
+          namespace: traefik
       services:
         - name: gotosocial
           port: 8080
