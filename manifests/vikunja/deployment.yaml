@@ -34,6 +34,23 @@ spec:
                 secretKeyRef:
                   name: vikunja-secrets
                   key: VIKUNJA_SERVICE_JWTSECRET
+            - name: VIKUNJA_MAILER_ENABLED
+              value: "true"
+            - name: VIKUNJA_MAILER_HOST
+              value: "smtp.resend.com"
+            - name: VIKUNJA_MAILER_PORT
+              value: "465"
+            - name: VIKUNJA_MAILER_USERNAME
+              value: "resend"
+            - name: VIKUNJA_MAILER_FROMEMAIL
+              value: "noreply@fedishark.eu"
+            - name: VIKUNJA_MAILER_FORCESSL
+              value: "true"
+            - name: VIKUNJA_MAILER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vikunja-secrets
+                  key: VIKUNJA_MAILER_PASSWORD
           livenessProbe:
             httpGet:
               path: /health
