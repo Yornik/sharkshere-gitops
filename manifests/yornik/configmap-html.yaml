@@ -15,192 +15,7 @@ data:
         name="description"
         content="Yornik Heyl - platform engineering, Kubernetes, GitOps, observability, and resilient self-hosted systems."
       />
-      <style>
-        :root {
-          --bg: #07131f;
-          --bg-soft: #0d2336;
-          --surface: rgba(12, 34, 54, 0.72);
-          --text: #dce9f7;
-          --muted: #9db1c8;
-          --line: rgba(157, 177, 200, 0.26);
-          --accent: #27d3b8;
-          --accent-2: #49a8ff;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          color: var(--text);
-          background:
-            radial-gradient(1200px 500px at 20% -10%, rgba(73, 168, 255, 0.22), transparent 60%),
-            radial-gradient(800px 420px at 90% 0%, rgba(39, 211, 184, 0.14), transparent 65%),
-            linear-gradient(165deg, var(--bg) 0%, var(--bg-soft) 100%);
-          font-family: "Manrope", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-          min-height: 100vh;
-        }
-
-        .shell {
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 44px 20px 64px;
-        }
-
-        .card {
-          background: var(--surface);
-          border: 1px solid var(--line);
-          border-radius: 20px;
-          backdrop-filter: blur(5px);
-          box-shadow: 0 22px 50px rgba(1, 7, 14, 0.4);
-        }
-
-        .hero {
-          padding: 36px;
-          display: grid;
-          gap: 22px;
-          animation: rise 0.6s ease-out;
-        }
-
-        h1 {
-          margin: 0;
-          font-size: clamp(2rem, 4.5vw, 3.3rem);
-          line-height: 1.06;
-          letter-spacing: -0.03em;
-          max-width: 760px;
-        }
-
-        .lede {
-          margin: 0;
-          color: var(--muted);
-          font-size: clamp(1.03rem, 2.1vw, 1.26rem);
-          max-width: 760px;
-          line-height: 1.6;
-        }
-
-        .tagline {
-          color: var(--accent);
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          font-size: 0.82rem;
-        }
-
-        .links {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .btn {
-          display: inline-block;
-          text-decoration: none;
-          color: var(--text);
-          border: 1px solid var(--line);
-          padding: 10px 14px;
-          border-radius: 12px;
-          transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
-          background: rgba(7, 19, 31, 0.45);
-          font-weight: 600;
-          font-size: 0.95rem;
-        }
-
-        .btn:hover {
-          transform: translateY(-2px);
-          border-color: rgba(39, 211, 184, 0.8);
-          background: rgba(39, 211, 184, 0.08);
-        }
-
-        .grid {
-          display: grid;
-          gap: 16px;
-          margin-top: 18px;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .panel {
-          padding: 20px;
-          border: 1px solid var(--line);
-          border-radius: 16px;
-          background: rgba(7, 19, 31, 0.48);
-          min-height: 170px;
-        }
-
-        .panel h2 {
-          margin: 0 0 10px;
-          font-size: 1.02rem;
-          letter-spacing: 0.02em;
-        }
-
-        .panel p {
-          margin: 0;
-          color: var(--muted);
-          line-height: 1.56;
-          font-size: 0.95rem;
-        }
-
-        .stack {
-          margin-top: 26px;
-          padding: 28px;
-          animation: rise 0.8s ease-out;
-        }
-
-        .stack h2 {
-          margin: 0 0 14px;
-          font-size: 1.2rem;
-        }
-
-        .chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 9px;
-        }
-
-        .chip {
-          padding: 8px 10px;
-          border-radius: 999px;
-          border: 1px solid var(--line);
-          color: var(--text);
-          font-size: 0.86rem;
-          background: rgba(73, 168, 255, 0.08);
-        }
-
-        .footer {
-          margin-top: 22px;
-          color: var(--muted);
-          font-size: 0.92rem;
-        }
-
-        .footer a {
-          color: var(--accent-2);
-        }
-
-        @keyframes rise {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @media (max-width: 900px) {
-          .grid {
-            grid-template-columns: 1fr;
-          }
-
-          .hero {
-            padding: 26px;
-          }
-
-          .stack {
-            padding: 22px;
-          }
-        }
-      </style>
+      <link rel="stylesheet" href="/styles.css" />
     </head>
     <body>
       <main class="shell">
@@ -264,3 +79,189 @@ data:
       </main>
     </body>
     </html>
+
+  styles.css: |
+    :root {
+      --bg: #07131f;
+      --bg-soft: #0d2336;
+      --surface: rgba(12, 34, 54, 0.72);
+      --text: #dce9f7;
+      --muted: #9db1c8;
+      --line: rgba(157, 177, 200, 0.26);
+      --accent: #27d3b8;
+      --accent-2: #49a8ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 500px at 20% -10%, rgba(73, 168, 255, 0.22), transparent 60%),
+        radial-gradient(800px 420px at 90% 0%, rgba(39, 211, 184, 0.14), transparent 65%),
+        linear-gradient(165deg, var(--bg) 0%, var(--bg-soft) 100%);
+      font-family: "Manrope", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 44px 20px 64px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 22px 50px rgba(1, 7, 14, 0.4);
+    }
+
+    .hero {
+      padding: 36px;
+      display: grid;
+      gap: 22px;
+      animation: rise 0.6s ease-out;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4.5vw, 3.3rem);
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+      max-width: 760px;
+    }
+
+    .lede {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1.03rem, 2.1vw, 1.26rem);
+      max-width: 760px;
+      line-height: 1.6;
+    }
+
+    .tagline {
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.82rem;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--line);
+      padding: 10px 14px;
+      border-radius: 12px;
+      transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+      background: rgba(7, 19, 31, 0.45);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(39, 211, 184, 0.8);
+      background: rgba(39, 211, 184, 0.08);
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .panel {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(7, 19, 31, 0.48);
+      min-height: 170px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 1.02rem;
+      letter-spacing: 0.02em;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.56;
+      font-size: 0.95rem;
+    }
+
+    .stack {
+      margin-top: 26px;
+      padding: 28px;
+      animation: rise 0.8s ease-out;
+    }
+
+    .stack h2 {
+      margin: 0 0 14px;
+      font-size: 1.2rem;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 0.86rem;
+      background: rgba(73, 168, 255, 0.08);
+    }
+
+    .footer {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .footer a {
+      color: var(--accent-2);
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding: 26px;
+      }
+
+      .stack {
+        padding: 22px;
+      }
+    }
