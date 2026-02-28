@@ -15,6 +15,7 @@ data:
     Canonical: https://fedishark.eu/.well-known/security.txt
     Canonical: https://pub.fedishark.eu/.well-known/security.txt
     Canonical: https://jelly.yornik.eu/.well-known/security.txt
+    Canonical: https://secrets.yornik.eu/.well-known/security.txt
     Canonical: https://grafana.fedishark.eu/.well-known/security.txt
     Canonical: https://vault.fedishark.eu/.well-known/security.txt
     Canonical: https://todo.yornik.eu/.well-known/security.txt
@@ -24,10 +25,10 @@ data:
     Canonical: https://argocd.fedishark.eu/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaaL84wAKCRDt+zCFSkKz
-    8FLVAP9CvmPG2a+E0N/t01eyPn77DOC0ElvS0m3ZT6bHzrptrAD8CWCHRNvWW7l/
-    Jwze7HQ2wKoRqhQeDNOCUCbRwCqKzgk=
-    =E/QF
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaaMA8gAKCRDt+zCFSkKz
+    8BISAP9qi/h2jPCIq1EREhynEsyM94lT7cfTHa+4aRpIeQheAAD+ObfuDys+PbTb
+    sLQsgNZdx0rD4AGngpUafi/HkmsV2Qs=
+    =ztVL
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
