@@ -11,12 +11,16 @@ data:
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Yornik Heyl | Cloud Reliability Engineer</title>
+      <meta name="author" content="Yornik Heyl" />
       <meta
         name="description"
         content="Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business). Kubernetes, GitOps, observability, and resilient platform operations."
       />
+      <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineering, Kubernetes, GitOps, SRE, Mendix, Siemens" />
       <meta name="robots" content="index,follow,max-image-preview:large" />
+      <meta name="theme-color" content="#0b1117" />
       <link rel="canonical" href="https://yornik.eu/" />
+      <link rel="alternate" hreflang="en" href="https://yornik.eu/" />
       <meta property="og:type" content="website" />
       <meta property="og:url" content="https://yornik.eu/" />
       <meta property="og:title" content="Yornik Heyl | Cloud Reliability Engineer" />
@@ -25,6 +29,7 @@ data:
         content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
       />
       <meta property="og:site_name" content="Yornik Heyl" />
+      <meta property="og:locale" content="en_US" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="Yornik Heyl | Cloud Reliability Engineer" />
       <meta
@@ -37,7 +42,6 @@ data:
         "@type": "Person",
         "name": "Yornik Heyl",
         "url": "https://yornik.eu/",
-        "email": "mailto:yornik@yornik.nl",
         "jobTitle": "Cloud Reliability Engineer",
         "worksFor": {
           "@type": "Organization",
@@ -51,6 +55,26 @@ data:
           "https://github.com/Yornik",
           "https://www.linkedin.com/in/yornik/"
         ]
+      }
+      </script>
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Yornik Heyl",
+        "url": "https://yornik.eu/"
+      }
+      </script>
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "name": "Yornik Heyl - Cloud Reliability Engineer",
+        "url": "https://yornik.eu/",
+        "mainEntity": {
+          "@type": "Person",
+          "name": "Yornik Heyl"
+        }
       }
       </script>
       <link rel="stylesheet" href="/styles.css" />
@@ -117,6 +141,33 @@ data:
           </div>
         </section>
 
+        <section class="impact">
+          <h2>Impact and Working Model</h2>
+          <div class="impact-grid">
+            <article class="impact-panel">
+              <h3>Reliability Outcomes</h3>
+              <p>
+                Build systems that are understandable during incidents, recover quickly, and keep customer-facing
+                services stable through controlled change.
+              </p>
+            </article>
+            <article class="impact-panel">
+              <h3>AI-Assisted Engineering</h3>
+              <p>
+                Use AI agents to improve implementation speed, reduce repetitive mistakes, and enforce safer
+                operational defaults without sacrificing engineering quality.
+              </p>
+            </article>
+            <article class="impact-panel">
+              <h3>Security by Default</h3>
+              <p>
+                Integrate security controls into platform workflows early, so hardening is continuous and does not
+                depend on manual one-off actions.
+              </p>
+            </article>
+          </div>
+        </section>
+
         <section class="stack">
           <h2>Current Focus</h2>
           <div class="chips">
@@ -130,7 +181,11 @@ data:
             <span class="chip">Media + Stateful Workloads</span>
           </div>
           <p class="footer">
-            Based in Schiedam, NL. Open to impactful Cloud/Platform/Reliability engineering conversations.
+            Based in the Rotterdam area, Netherlands. Open to impactful Cloud/Platform/Reliability engineering conversations.
+          </p>
+          <p class="trust">
+            Certifications: <a href="https://www.credly.com/users/yornik-heyl">Credly</a>. Security posture:
+            100% website score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
           </p>
           <p class="contact">
             Contact: <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
@@ -179,6 +234,7 @@ data:
     .hero,
     .stats,
     .showcase,
+    .impact,
     .stack {
       border: 1px solid var(--line);
       border-radius: 18px;
@@ -291,6 +347,7 @@ data:
     }
 
     .showcase h2,
+    .impact h2,
     .stack h2 {
       margin: 0;
       font-size: 1.2rem;
@@ -322,6 +379,37 @@ data:
       font-size: 0.95rem;
     }
 
+    .impact {
+      padding: 1.4rem;
+      animation: fade-up 0.9s ease-out;
+    }
+
+    .impact-grid {
+      margin-top: 0.72rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .impact-panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      background: rgba(8, 15, 24, 0.68);
+      min-height: 170px;
+    }
+
+    .impact-panel h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .impact-panel p {
+      margin: 0.45rem 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
     .stack {
       padding: 1.4rem;
       animation: fade-up 0.95s ease-out;
@@ -346,6 +434,21 @@ data:
       margin: 0.9rem 0 0;
       color: var(--muted);
       font-size: 0.93rem;
+    }
+
+    .trust {
+      margin: 0.45rem 0 0;
+      font-size: 0.93rem;
+      color: var(--text);
+    }
+
+    .trust a {
+      color: var(--accent-2);
+      text-decoration: none;
+    }
+
+    .trust a:hover {
+      text-decoration: underline;
     }
 
     .contact {
@@ -376,13 +479,49 @@ data:
 
     @media (max-width: 900px) {
       .stats,
-      .grid {
+      .grid,
+      .impact-grid {
         grid-template-columns: 1fr;
       }
 
       .hero,
       .showcase,
+      .impact,
       .stack {
         padding: 1.2rem;
       }
     }
+
+  robots.txt: |
+    User-agent: *
+    Allow: /
+
+    Sitemap: https://yornik.eu/sitemap.xml
+
+  sitemap.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url>
+        <loc>https://yornik.eu/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+      </url>
+    </urlset>
+
+  llms.txt: |
+    # yornik.eu
+    > Professional profile of Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business).
+
+    ## Primary URL
+    - https://yornik.eu/
+
+    ## Profile Summary
+    - Cloud Reliability Engineering with Kubernetes, GitOps, observability, and secure-by-default platform operations.
+    - Strong practical focus on AI-assisted and agent-driven workflows to reduce human error and improve delivery quality.
+
+    ## Contact
+    - yornik@yornik.nl
+
+    ## Credentials and Security
+    - Credly profile: https://www.credly.com/users/yornik-heyl
+    - Website security benchmark: 100% website score on Internet.nl
