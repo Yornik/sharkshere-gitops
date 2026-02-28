@@ -4,6 +4,7 @@ resources:
   - middleware-rate-limit.yaml
   - middleware-fail2ban.yaml
   - middleware-hsts.yaml
+  - middleware-no-compression.yaml
   - configmap-security-txt.yaml
   - deployment-security-txt.yaml
   - service-security-txt.yaml
