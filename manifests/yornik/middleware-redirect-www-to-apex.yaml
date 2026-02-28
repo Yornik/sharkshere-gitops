@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-www-to-apex
+  namespace: yornik
+spec:
+  redirectRegex:
+    regex: ^https?://www\.yornik\.eu/(.*)
+    replacement: https://yornik.eu/${1}
+    permanent: true

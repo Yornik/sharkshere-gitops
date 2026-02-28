@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: yornik-web
+  namespace: yornik
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`yornik.eu`) || Host(`www.yornik.eu`)
+      kind: Rule
+      middlewares:
+        - name: redirect-www-to-apex
+          namespace: yornik
+        - name: redirect-https
+          namespace: yornik
+      services:
+        - name: yornik
+          port: 80
