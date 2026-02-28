@@ -6,7 +6,7 @@ metadata:
   labels:
     app: jellyfin
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: jelly.fedishark.eu
+    external-dns.alpha.kubernetes.io/hostname: jelly.yornik.eu
     external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
     external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:

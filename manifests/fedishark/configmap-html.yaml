@@ -298,7 +298,7 @@ data:
       <h3>&#x1F30A; NAVIGATE</h3>
       <ul>
         <li><a href="https://pub.fedishark.eu">Social Feed</a></li>
-        <li><a href="https://jelly.fedishark.eu">Media Cave</a></li>
+        <li><a href="https://jelly.yornik.eu">Media Cave</a></li>
         <li><a href="https://grafana.fedishark.eu">Reef Monitor</a></li>
         <li><a href="https://vikunja.fedishark.eu">Task Tides</a></li>
         <li><a href="https://vault.fedishark.eu">Treasure Vault</a></li>
@@ -362,7 +362,7 @@ data:
           <td style="padding:6px; border:1px solid #006699;">
             <b style="color:#00ffcc;">Jellyfin</b><br>
             <span style="font-size:12px;">
-              <a href="https://jelly.fedishark.eu">Media streaming</a> from the depths.
+              <a href="https://jelly.yornik.eu">Media streaming</a> from the depths.
               Like Netflix, but with more sharks and zero tracking.
             </span>
           </td>

@@ -28,8 +28,8 @@ spec:
               if [ ! -f "$CONF" ]; then exit 0; fi
               # Force all clients (LAN + remote) to use the external URL for streams.
               # The env var only sets this in memory; patching the XML persists it.
-              sed -i 's|<PublishedServerUriBySubnet />|<PublishedServerUriBySubnet><string>all=https://jelly.fedishark.eu</string></PublishedServerUriBySubnet>|' "$CONF"
-              sed -i 's|<PublishedServerUriBySubnet></PublishedServerUriBySubnet>|<PublishedServerUriBySubnet><string>all=https://jelly.fedishark.eu</string></PublishedServerUriBySubnet>|' "$CONF"
+              sed -i 's|<PublishedServerUriBySubnet />|<PublishedServerUriBySubnet><string>all=https://jelly.yornik.eu</string></PublishedServerUriBySubnet>|' "$CONF"
+              sed -i 's|<PublishedServerUriBySubnet></PublishedServerUriBySubnet>|<PublishedServerUriBySubnet><string>all=https://jelly.yornik.eu</string></PublishedServerUriBySubnet>|' "$CONF"
               # Disable LAN AutoDiscovery — broadcasting the pod IP causes Apple TV
               # to store the internal pod address and bypass Traefik for streams.
               sed -i 's|<AutoDiscovery>true</AutoDiscovery>|<AutoDiscovery>false</AutoDiscovery>|' "$CONF"
@@ -51,7 +51,7 @@ spec:
               name: http
           env:
             - name: JELLYFIN_PublishedServerUrl
-              value: "https://jelly.fedishark.eu"
+              value: "https://jelly.yornik.eu"
           resources:
             requests:
               cpu: 500m
