@@ -43,7 +43,7 @@ spec:
             - name: VIKUNJA_MAILER_USERNAME
               value: "resend"
             - name: VIKUNJA_MAILER_FROMEMAIL
-              value: "noreply@fedishark.eu"
+              value: "noreply@yornik.eu"
             - name: VIKUNJA_MAILER_FORCESSL
               value: "true"
             - name: VIKUNJA_MAILER_PASSWORD
