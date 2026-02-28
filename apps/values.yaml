@@ -557,6 +557,10 @@ apps:
     namespace: fedishark
     path: manifests/fedishark
 
+  yornik:
+    namespace: yornik
+    path: manifests/yornik
+
   traefik-config:
     namespace: traefik
     path: manifests/traefik-config
