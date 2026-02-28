@@ -28,7 +28,7 @@ spec:
             - name: VIKUNJA_SERVICE_PUBLICURL
               value: "https://todo.yornik.eu"
             - name: VIKUNJA_SERVICE_ENABLEREGISTRATION
-              value: "true"
+              value: "false"
             - name: VIKUNJA_SERVICE_JWTSECRET
               valueFrom:
                 secretKeyRef:

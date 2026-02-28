@@ -24,10 +24,10 @@ data:
     Canonical: https://argocd.fedishark.eu/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iIcEARYIAC8WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaZd5EhEceW9ybmlrQHlv
-    cm5pay5ubAAKCRDt+zCFSkKz8P/aAQDCvcABG5XasN8iIZQw+TZL8031v5W3PxMc
-    ue68ry7VbQD+J1KW5KzPt9tzqMQpuGI/5OGzAcK917JqbIeg+EHrswY=
-    =3o+i
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaaL84wAKCRDt+zCFSkKz
+    8FLVAP9CvmPG2a+E0N/t01eyPn77DOC0ElvS0m3ZT6bHzrptrAD8CWCHRNvWW7l/
+    Jwze7HQ2wKoRqhQeDNOCUCbRwCqKzgk=
+    =E/QF
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
