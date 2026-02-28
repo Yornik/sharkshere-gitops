@@ -14,7 +14,7 @@ data:
     Preferred-Languages: en, nl
     Canonical: https://fedishark.eu/.well-known/security.txt
     Canonical: https://pub.fedishark.eu/.well-known/security.txt
-    Canonical: https://jelly.fedishark.eu/.well-known/security.txt
+    Canonical: https://jelly.yornik.eu/.well-known/security.txt
     Canonical: https://grafana.fedishark.eu/.well-known/security.txt
     Canonical: https://vault.fedishark.eu/.well-known/security.txt
     Canonical: https://vikunja.fedishark.eu/.well-known/security.txt
