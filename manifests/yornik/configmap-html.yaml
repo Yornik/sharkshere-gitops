@@ -10,70 +10,130 @@ data:
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Yornik Heyl | Platform Engineer</title>
+      <title>Yornik Heyl | Cloud Reliability Engineer</title>
       <meta
         name="description"
-        content="Yornik Heyl - platform engineering, Kubernetes, GitOps, observability, and resilient self-hosted systems."
+        content="Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business). Kubernetes, GitOps, observability, and resilient platform operations."
       />
+      <meta name="robots" content="index,follow,max-image-preview:large" />
+      <link rel="canonical" href="https://yornik.eu/" />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content="https://yornik.eu/" />
+      <meta property="og:title" content="Yornik Heyl | Cloud Reliability Engineer" />
+      <meta
+        property="og:description"
+        content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
+      />
+      <meta property="og:site_name" content="Yornik Heyl" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="Yornik Heyl | Cloud Reliability Engineer" />
+      <meta
+        name="twitter:description"
+        content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
+      />
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Yornik Heyl",
+        "url": "https://yornik.eu/",
+        "email": "mailto:yornik@yornik.nl",
+        "jobTitle": "Cloud Reliability Engineer",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "Mendix",
+          "parentOrganization": {
+            "@type": "Organization",
+            "name": "Siemens"
+          }
+        },
+        "sameAs": [
+          "https://github.com/Yornik",
+          "https://www.linkedin.com/in/yornik/"
+        ]
+      }
+      </script>
       <link rel="stylesheet" href="/styles.css" />
     </head>
     <body>
       <main class="shell">
-        <section class="card hero">
-          <p class="tagline">Platform Engineering • Kubernetes • GitOps</p>
+        <section class="hero">
+          <p class="eyebrow">Cloud Reliability Engineering • Kubernetes • GitOps</p>
           <h1>Yornik Heyl</h1>
+          <p class="role">Cloud Reliability Engineer at Mendix, a Siemens business</p>
           <p class="lede">
-            Building and operating reliable, observable infrastructure with Kubernetes and GitOps.
-            Current work centers on a production-style self-hosted platform: hardened ingress, media services,
-            DNS automation, and end-to-end monitoring, all managed from Git.
+            I design and operate reliable cloud platforms with production-first engineering standards: measurable SLOs,
+            resilient service architecture, strict automation, and fast recovery under pressure.
+          </p>
+          <p class="ai-note">
+            Strong focus on AI and agent-driven workflows to improve engineering efficiency, reduce human error,
+            strengthen security posture, and increase delivery output.
           </p>
           <div class="links">
-            <a class="btn" href="https://github.com/Yornik">GitHub</a>
-            <a class="btn" href="https://yornik.nl">Blog</a>
-            <a class="btn" href="https://pub.fedishark.eu/@shark">Fediverse</a>
-            <a class="btn" href="https://todo.yornik.eu">Todo (Vikunja)</a>
+            <a class="btn primary" href="https://github.com/Yornik">GitHub</a>
+            <a class="btn" href="https://www.linkedin.com/in/yornik/">LinkedIn</a>
           </div>
+        </section>
 
+        <section class="stats">
+          <article>
+            <h2>Reliability Mindset</h2>
+            <p>Change is safe only when rollback is boring. I optimize for clarity, observability, and repeatability.</p>
+          </article>
+          <article>
+            <h2>Platform Scope</h2>
+            <p>Talos + Kubernetes stack with GitOps, ingress hardening, identity, logs, metrics, and DNS automation.</p>
+          </article>
+          <article>
+            <h2>Execution Style</h2>
+            <p>Pragmatic, incident-driven iteration: reduce toil, ship safer defaults, and keep systems explainable.</p>
+          </article>
+        </section>
+
+        <section class="showcase">
+          <h2>What I Deliver</h2>
           <div class="grid">
             <article class="panel">
-              <h2>What I Build</h2>
+              <h3>Cloud Reliability Engineering</h3>
               <p>
-                Declarative platform operations for containerized workloads: ingress/routing, secure defaults,
-                workload isolation, storage strategy, and repeatable deploy pipelines.
+                Incident response, preventive hardening, and operational standards that keep services stable while
+                product velocity stays high.
               </p>
             </article>
             <article class="panel">
-              <h2>What I Operate</h2>
+              <h3>GitOps-Native Operations</h3>
               <p>
-                A continuously improving homelab platform running real services (media, monitoring, identity,
-                collaboration) with practical SRE guardrails and incident feedback loops.
+                Declarative infrastructure and applications with auditable changes, reproducible rollouts,
+                and clean ownership boundaries.
               </p>
             </article>
             <article class="panel">
-              <h2>What I Value</h2>
+              <h3>Observability that Drives Action</h3>
               <p>
-                Clean architecture, measurable reliability, and pragmatic delivery. Infrastructure should be easy
-                to reason about, recoverable under pressure, and straightforward to evolve.
+                Logs, metrics, and traces shaped into practical signal. Alerting tuned for response quality,
+                not alert noise.
               </p>
             </article>
           </div>
         </section>
 
-        <section class="card stack">
-          <h2>Current Focus Areas</h2>
+        <section class="stack">
+          <h2>Current Focus</h2>
           <div class="chips">
             <span class="chip">Kubernetes</span>
             <span class="chip">Talos Linux</span>
+            <span class="chip">Argo CD</span>
             <span class="chip">Traefik</span>
-            <span class="chip">Argo CD / GitOps</span>
             <span class="chip">Grafana + Loki + Alloy</span>
             <span class="chip">ExternalDNS + deSEC</span>
-            <span class="chip">Storage / Media Workloads</span>
-            <span class="chip">Operational Hardening</span>
+            <span class="chip">Security Hardening</span>
+            <span class="chip">Media + Stateful Workloads</span>
           </div>
           <p class="footer">
-            Based in Schiedam, NL. Open to conversations about platform, cloud, and reliability engineering roles.
-            Recruiters can reach out via GitHub profile contact details.
+            Based in Schiedam, NL. Open to impactful Cloud/Platform/Reliability engineering conversations.
+          </p>
+          <p class="contact">
+            Contact: <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
           </p>
         </section>
       </main>
@@ -82,14 +142,14 @@ data:
 
   styles.css: |
     :root {
-      --bg: #07131f;
-      --bg-soft: #0d2336;
-      --surface: rgba(12, 34, 54, 0.72);
-      --text: #dce9f7;
-      --muted: #9db1c8;
-      --line: rgba(157, 177, 200, 0.26);
-      --accent: #27d3b8;
-      --accent-2: #49a8ff;
+      --bg: #0b1117;
+      --bg-2: #132233;
+      --card: rgba(10, 18, 28, 0.74);
+      --line: rgba(143, 179, 210, 0.26);
+      --text: #ecf3fb;
+      --muted: #b5c5d8;
+      --accent: #ff6b2c;
+      --accent-2: #50d7ff;
     }
 
     * {
@@ -98,150 +158,212 @@ data:
 
     body {
       margin: 0;
+      min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(1200px 500px at 20% -10%, rgba(73, 168, 255, 0.22), transparent 60%),
-        radial-gradient(800px 420px at 90% 0%, rgba(39, 211, 184, 0.14), transparent 65%),
-        linear-gradient(165deg, var(--bg) 0%, var(--bg-soft) 100%);
-      font-family: "Manrope", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-      min-height: 100vh;
+        radial-gradient(860px 460px at -5% 0%, rgba(255, 107, 44, 0.24), transparent 65%),
+        radial-gradient(1000px 600px at 110% -10%, rgba(80, 215, 255, 0.24), transparent 62%),
+        linear-gradient(160deg, var(--bg) 0%, var(--bg-2) 100%);
+      font-family: "Manrope", "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.5;
     }
 
     .shell {
-      max-width: 1100px;
+      width: min(1080px, 100% - 2rem);
       margin: 0 auto;
-      padding: 44px 20px 64px;
+      padding: 2.4rem 0 3.5rem;
+      display: grid;
+      gap: 1rem;
     }
 
-    .card {
-      background: var(--surface);
+    .hero,
+    .stats,
+    .showcase,
+    .stack {
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 18px;
+      background: var(--card);
       backdrop-filter: blur(5px);
-      box-shadow: 0 22px 50px rgba(1, 7, 14, 0.4);
+      box-shadow: 0 20px 48px rgba(2, 7, 13, 0.35);
     }
 
     .hero {
-      padding: 36px;
-      display: grid;
-      gap: 22px;
-      animation: rise 0.6s ease-out;
+      padding: 2rem;
+      animation: fade-up 0.55s ease-out;
+    }
+
+    .eyebrow {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.77rem;
+      color: var(--accent-2);
+      font-weight: 700;
     }
 
     h1 {
-      margin: 0;
-      font-size: clamp(2rem, 4.5vw, 3.3rem);
-      line-height: 1.06;
+      margin: 0.35rem 0 0;
+      font-size: clamp(2rem, 5vw, 3.55rem);
+      line-height: 1.03;
       letter-spacing: -0.03em;
-      max-width: 760px;
+    }
+
+    .role {
+      margin: 0.3rem 0 0;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: clamp(1rem, 2vw, 1.2rem);
     }
 
     .lede {
-      margin: 0;
+      margin: 0.8rem 0 0;
+      max-width: 780px;
       color: var(--muted);
-      font-size: clamp(1.03rem, 2.1vw, 1.26rem);
-      max-width: 760px;
-      line-height: 1.6;
+      font-size: clamp(1rem, 1.9vw, 1.16rem);
     }
 
-    .tagline {
-      color: var(--accent);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.82rem;
+    .ai-note {
+      margin: 0.65rem 0 0;
+      max-width: 780px;
+      color: #d4e3f3;
+      font-size: 0.98rem;
+      border-left: 3px solid rgba(255, 107, 44, 0.75);
+      padding-left: 0.7rem;
     }
 
     .links {
+      margin-top: 1.1rem;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 0.55rem;
     }
 
     .btn {
-      display: inline-block;
       text-decoration: none;
       color: var(--text);
+      padding: 0.62rem 0.9rem;
+      border-radius: 11px;
       border: 1px solid var(--line);
-      padding: 10px 14px;
-      border-radius: 12px;
-      transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
-      background: rgba(7, 19, 31, 0.45);
+      background: rgba(7, 14, 23, 0.66);
       font-weight: 600;
-      font-size: 0.95rem;
+      transition: 0.18s ease;
     }
 
     .btn:hover {
       transform: translateY(-2px);
-      border-color: rgba(39, 211, 184, 0.8);
-      background: rgba(39, 211, 184, 0.08);
+      border-color: rgba(80, 215, 255, 0.75);
+    }
+
+    .btn.primary {
+      background: linear-gradient(120deg, rgba(255, 107, 44, 0.24), rgba(80, 215, 255, 0.2));
+      border-color: rgba(255, 107, 44, 0.65);
+    }
+
+    .stats {
+      padding: 1.2rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      animation: fade-up 0.68s ease-out;
+    }
+
+    .stats article {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      background: rgba(8, 15, 24, 0.68);
+    }
+
+    .stats h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .stats p {
+      margin: 0.45rem 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .showcase {
+      padding: 1.5rem;
+      animation: fade-up 0.82s ease-out;
+    }
+
+    .showcase h2,
+    .stack h2 {
+      margin: 0;
+      font-size: 1.2rem;
     }
 
     .grid {
+      margin-top: 0.85rem;
       display: grid;
-      gap: 16px;
-      margin-top: 18px;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
     }
 
     .panel {
-      padding: 20px;
       border: 1px solid var(--line);
-      border-radius: 16px;
-      background: rgba(7, 19, 31, 0.48);
-      min-height: 170px;
+      border-radius: 12px;
+      padding: 1rem;
+      background: rgba(8, 15, 24, 0.68);
+      min-height: 165px;
     }
 
-    .panel h2 {
-      margin: 0 0 10px;
-      font-size: 1.02rem;
-      letter-spacing: 0.02em;
+    .panel h3 {
+      margin: 0;
+      font-size: 1rem;
     }
 
     .panel p {
-      margin: 0;
+      margin: 0.45rem 0 0;
       color: var(--muted);
-      line-height: 1.56;
       font-size: 0.95rem;
     }
 
     .stack {
-      margin-top: 26px;
-      padding: 28px;
-      animation: rise 0.8s ease-out;
-    }
-
-    .stack h2 {
-      margin: 0 0 14px;
-      font-size: 1.2rem;
+      padding: 1.4rem;
+      animation: fade-up 0.95s ease-out;
     }
 
     .chips {
+      margin-top: 0.72rem;
       display: flex;
       flex-wrap: wrap;
-      gap: 9px;
+      gap: 0.5rem;
     }
 
     .chip {
-      padding: 8px 10px;
-      border-radius: 999px;
       border: 1px solid var(--line);
-      color: var(--text);
-      font-size: 0.86rem;
-      background: rgba(73, 168, 255, 0.08);
+      border-radius: 999px;
+      padding: 0.42rem 0.72rem;
+      font-size: 0.85rem;
+      background: rgba(80, 215, 255, 0.09);
     }
 
     .footer {
-      margin-top: 22px;
+      margin: 0.9rem 0 0;
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: 0.93rem;
     }
 
-    .footer a {
+    .contact {
+      margin: 0.45rem 0 0;
+      font-size: 0.93rem;
+      color: var(--text);
+    }
+
+    .contact a {
       color: var(--accent-2);
+      text-decoration: none;
     }
 
-    @keyframes rise {
+    .contact a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fade-up {
       from {
         opacity: 0;
         transform: translateY(8px);
@@ -253,15 +375,14 @@ data:
     }
 
     @media (max-width: 900px) {
+      .stats,
       .grid {
         grid-template-columns: 1fr;
       }
 
-      .hero {
-        padding: 26px;
-      }
-
+      .hero,
+      .showcase,
       .stack {
-        padding: 22px;
+        padding: 1.2rem;
       }
     }
