@@ -13,6 +13,7 @@ data:
     Expires: 2027-02-19T00:00:00.000Z
     Preferred-Languages: en, nl
     Canonical: https://fedishark.eu/.well-known/security.txt
+    Canonical: https://yornik.eu/.well-known/security.txt
     Canonical: https://pub.fedishark.eu/.well-known/security.txt
     Canonical: https://jelly.yornik.eu/.well-known/security.txt
     Canonical: https://secrets.yornik.eu/.well-known/security.txt
@@ -25,10 +26,10 @@ data:
     Canonical: https://argocd.fedishark.eu/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaaMA8gAKCRDt+zCFSkKz
-    8BISAP9qi/h2jPCIq1EREhynEsyM94lT7cfTHa+4aRpIeQheAAD+ObfuDys+PbTb
-    sLQsgNZdx0rD4AGngpUafi/HkmsV2Qs=
-    =ztVL
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaaNYUAAKCRDt+zCFSkKz
+    8OzEAP9rxm96Uw5WNkU5xulxiHetOZAg5mf46GmNVNoQsArhrgD+IMs/Iw6jM3lB
+    I3XqYK/tznZdW458xUkn46LOTReewgI=
+    =gmwc
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
