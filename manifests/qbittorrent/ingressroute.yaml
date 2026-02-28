@@ -18,6 +18,8 @@ spec:
           namespace: traefik
         - name: security-headers
           namespace: traefik
+        - name: no-compression
+          namespace: traefik
       services:
         - name: qbittorrent
           port: 8080
