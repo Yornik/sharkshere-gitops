@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dane-updater-script
+  namespace: external-dns
+data:
+  update-tlsa.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${DESEC_API_TOKEN:?DESEC_API_TOKEN is required}"
+    : "${DESEC_ZONE:?DESEC_ZONE is required}"
+    : "${TARGET_HOST:?TARGET_HOST is required}"
+    : "${TLSA_SUBNAME:?TLSA_SUBNAME is required}"
+    : "${TLSA_TTL:=3600}"
+
+    echo "Computing SPKI hash for ${TARGET_HOST}:443"
+    HASH="$(
+      echo | openssl s_client -connect "${TARGET_HOST}:443" -servername "${TARGET_HOST}" 2>/dev/null \
+      | openssl x509 -pubkey -noout \
+      | openssl pkey -pubin -outform DER 2>/dev/null \
+      | openssl dgst -sha256 -binary \
+      | hexdump -v -e '/1 "%02x"'
+    )"
+
+    if [ -z "${HASH}" ]; then
+      echo "Failed to compute TLSA hash for ${TARGET_HOST}"
+      exit 1
+    fi
+
+    echo "Updating TLSA ${TLSA_SUBNAME}.${DESEC_ZONE} to 3 1 1 ${HASH}"
+    BODY="$(printf '[{"subname":"%s","type":"TLSA","records":["3 1 1 %s"],"ttl":%s}]' "${TLSA_SUBNAME}" "${HASH}" "${TLSA_TTL}")"
+
+    curl -fsS -X PATCH \
+      "https://desec.io/api/v1/domains/${DESEC_ZONE}/rrsets/" \
+      -H "Authorization: Token ${DESEC_API_TOKEN}" \
+      -H "Content-Type: application/json" \
+      --data "${BODY}" >/dev/null
+
+    echo "TLSA update succeeded"
