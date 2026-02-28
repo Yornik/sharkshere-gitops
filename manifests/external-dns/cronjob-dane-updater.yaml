@@ -4,7 +4,7 @@ metadata:
   name: dane-updater
   namespace: external-dns
 spec:
-  schedule: "13 * * * *"
+  schedule: "13 3 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
