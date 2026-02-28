@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: privatebin
+  namespace: privatebin
+  labels:
+    app: privatebin
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: secrets.yornik.eu
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  selector:
+    app: privatebin
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

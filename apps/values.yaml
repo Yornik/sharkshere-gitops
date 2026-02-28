@@ -562,6 +562,10 @@ apps:
     namespace: yornik
     path: manifests/yornik
 
+  privatebin:
+    namespace: privatebin
+    path: manifests/privatebin
+
   traefik-config:
     namespace: traefik
     path: manifests/traefik-config
