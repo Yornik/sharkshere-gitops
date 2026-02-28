@@ -8,3 +8,4 @@ resources:
   - ingressroute.yaml
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
+  - middleware-security-headers.yaml
