@@ -7,7 +7,7 @@ data:
   security.txt: |
     -----BEGIN PGP SIGNED MESSAGE-----
     Hash: SHA256
-    
+
     Contact: mailto:yornik@yornik.nl
     Encryption: https://fedishark.eu/.well-known/pgp-key.txt
     Expires: 2027-02-19T00:00:00.000Z
@@ -23,7 +23,7 @@ data:
     Canonical: https://omni.fedishark.eu/.well-known/security.txt
     Canonical: https://argocd.fedishark.eu/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
-    
+
     iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaaL84wAKCRDt+zCFSkKz
     8FLVAP9CvmPG2a+E0N/t01eyPn77DOC0ElvS0m3ZT6bHzrptrAD8CWCHRNvWW7l/
     Jwze7HQ2wKoRqhQeDNOCUCbRwCqKzgk=
