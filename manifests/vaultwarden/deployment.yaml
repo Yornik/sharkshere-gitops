@@ -48,7 +48,7 @@ spec:
                   name: vaultwarden-secrets
                   key: SMTP_PASSWORD
             - name: SMTP_FROM
-              value: "vault@fedishark.eu"
+              value: "vault@yornik.eu"
           livenessProbe:
             httpGet:
               path: /alive

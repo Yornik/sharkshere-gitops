@@ -55,7 +55,7 @@ spec:
                   name: gotosocial-smtp
                   key: smtp-password
             - name: GTS_SMTP_FROM
-              value: noreply@send.fedishark.eu
+              value: noreply@yornik.eu
             - name: GTS_SMTP_DISCLOSE_RECIPIENTS
               value: "false"
           ports:
