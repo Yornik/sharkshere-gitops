@@ -33,6 +33,9 @@ manifests/      Per-application manifests and Kustomize overlays
 | **tibber-exporter** | `monitoring` | Local manifests | Tibber power metrics exporter with Grafana dashboard |
 | **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
 | **gotosocial** | `gotosocial` | Local manifests | Federated social server published at `pub.fedishark.eu` |
+| **vikunja** | `vikunja` | Local manifests | Task management app published at `todo.yornik.eu` with SMTP mailer enabled |
+| **fedishark** | `fedishark` | Local manifests | Fun static landing page for `fedishark.eu` |
+| **yornik** | `yornik` | Local manifests | Professional profile/portfolio site for `yornik.eu` (`www` redirects to apex) |
 
 All applications use automated sync with prune and self-heal enabled.
 
@@ -61,6 +64,12 @@ Edit `apps/values.yaml` to add or remove applications.
 
 - **Local manifests:** add an entry with `path: manifests/<app>` and commit manifests under that directory.
 - **Helm charts:** add an entry under `apps.<name>.helm` with `repoURL`, `chart`, and `targetRevision`.
+
+## Domain Notes
+
+- `external-dns` manages records for both `fedishark.eu` and `yornik.eu`.
+- `yornik.eu` apex A/AAAA records are managed manually in deSEC; subdomains can be managed by ExternalDNS.
+- `www.yornik.eu` is redirected to `https://yornik.eu` via Traefik middleware.
 
 ## Operational Notes
 
