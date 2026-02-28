@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`vikunja.fedishark.eu`)
+    - match: Host(`todo.yornik.eu`)
       kind: Rule
       middlewares:
         - name: vikunja-redirect-https

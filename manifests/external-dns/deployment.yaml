@@ -26,6 +26,7 @@ spec:
             - --source=ingress
             - --provider=webhook
             - --domain-filter=fedishark.eu
+            - --domain-filter=yornik.eu
             - --policy=upsert-only
             - --registry=txt
             - --txt-owner-id=sharkshere
@@ -70,7 +71,7 @@ spec:
                   name: desec-credentials
                   key: api-key
             - name: WEBHOOK_DOMAINFILTERS
-              value: "fedishark.eu"
+              value: "fedishark.eu,yornik.eu"
             - name: WEBHOOK_DEFAULTTTL
               value: "3600"
           livenessProbe:
