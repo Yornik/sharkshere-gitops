@@ -9,3 +9,4 @@ resources:
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
   - middleware-redirect-www-to-apex.yaml
+  - middleware-csp.yaml

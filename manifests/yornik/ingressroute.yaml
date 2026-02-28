@@ -12,6 +12,8 @@ spec:
       middlewares:
         - name: redirect-www-to-apex
           namespace: yornik
+        - name: csp
+          namespace: yornik
         - name: security-headers
           namespace: traefik
         - name: rate-limit

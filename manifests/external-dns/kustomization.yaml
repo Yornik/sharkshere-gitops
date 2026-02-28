@@ -9,5 +9,6 @@ resources:
   - dns-records.yaml
   - configmap-dane-updater-script.yaml
   - cronjob-dane-updater.yaml
+  - cronjob-dane-updater-yornik.yaml
 generators:
   - desec-secret-generator.yaml
