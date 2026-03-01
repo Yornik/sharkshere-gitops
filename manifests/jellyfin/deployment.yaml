@@ -24,6 +24,7 @@ spec:
           args:
             - |
               CONF=/config/config/network.xml
+              ENCODING=/config/config/encoding.xml
               KNOWN_PROXY_CIDR=10.244.0.0/16
               if [ ! -f "$CONF" ]; then exit 0; fi
               # Force all clients (LAN + remote) to use the external URL for streams.
@@ -40,18 +41,33 @@ spec:
               # Set public HTTPS port to 443 (Traefik terminates TLS)
               sed -i 's|<PublicHttpsPort>.*</PublicHttpsPort>|<PublicHttpsPort>443</PublicHttpsPort>|' "$CONF"
               sed -i 's|<PublicHttpPort>.*</PublicHttpPort>|<PublicHttpPort>443</PublicHttpPort>|' "$CONF"
+              # Configure Intel QSV explicitly for single-GPU systems.
+              if [ -f "$ENCODING" ]; then
+                sed -i 's|<HardwareAccelerationType>.*</HardwareAccelerationType>|<HardwareAccelerationType>qsv</HardwareAccelerationType>|' "$ENCODING"
+                sed -i 's|<QsvDevice />|<QsvDevice>/dev/dri/renderD128</QsvDevice>|' "$ENCODING"
+                sed -i 's|<QsvDevice>.*</QsvDevice>|<QsvDevice>/dev/dri/renderD128</QsvDevice>|' "$ENCODING"
+                sed -i 's|<VaapiDevice>.*</VaapiDevice>|<VaapiDevice>/dev/dri/renderD128</VaapiDevice>|' "$ENCODING"
+                sed -i 's|<EnableHardwareEncoding>false</EnableHardwareEncoding>|<EnableHardwareEncoding>true</EnableHardwareEncoding>|' "$ENCODING"
+                sed -i 's|<PreferSystemNativeHwDecoder>false</PreferSystemNativeHwDecoder>|<PreferSystemNativeHwDecoder>true</PreferSystemNativeHwDecoder>|' "$ENCODING"
+              fi
           volumeMounts:
             - name: config
               mountPath: /config
       containers:
         - name: jellyfin
           image: jellyfin/jellyfin:10.11.6
+          securityContext:
+            privileged: true
           ports:
             - containerPort: 8096
               name: http
           env:
             - name: JELLYFIN_PublishedServerUrl
               value: "https://jelly.yornik.eu"
+            - name: LIBVA_DRIVERS_PATH
+              value: /usr/lib/jellyfin-ffmpeg/lib/dri
+            - name: LIBVA_DRIVER_NAME
+              value: iHD
           resources:
             requests:
               cpu: 500m
