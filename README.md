@@ -1,53 +1,105 @@
 # sharkshere-gitops
 
-GitOps repository for the **sharkshere** Kubernetes cluster — a 4-node Talos Linux cluster managed via Sidero Omni. Argo CD bootstraps itself and deploys all workloads through an app-of-apps Helm chart.
+GitOps workload control plane for the sharkshere Kubernetes platform.
 
-## Cluster
+This repo is the application/policy layer in a 3-repo architecture:
 
-| Nodes | CPU | RAM | Storage | OS |
-|-------|-----|-----|---------|----|
-| 4x Intel N150 | 4 cores each | 32 GB each | ~475 GB each | Talos Linux |
+1. `jumpingsharks`: provisions edge infrastructure and DNS/rDNS
+2. `sharkshere-ansible`: hardens/configures edge hosts
+3. `sharkshere-gitops` (this repo): reconciles cluster workloads and runtime policy
 
-3 control-plane nodes (scheduling enabled) + 1 worker. All 4 nodes accept workloads and each has an Intel iGPU available for hardware transcoding.
+## Cluster Profile
+
+| Item | Value |
+|------|-------|
+| Nodes | 4x Intel N150 |
+| Topology | 3 control-plane + 1 worker (all schedulable) |
+| Memory | 32 GB per node |
+| Storage | ~475 GB per node |
+| OS | Talos Linux |
+| GPU | Intel iGPU on all nodes |
 
 ## Repository Layout
 
+```text
+apps/           app-of-apps chart producing Argo CD Applications
+bootstrap/      Argo CD bootstrap manifests
+manifests/      per-app manifests and Kustomize overlays
 ```
-apps/           Helm chart that renders Argo CD Application resources (app-of-apps)
-bootstrap/      Manifests to install Argo CD and seed the root application
-manifests/      Per-application manifests and Kustomize overlays
-```
 
-## Deployed Applications
+## Reconciliation Model
 
-| Application | Namespace | Source | Description |
-|-------------|-----------|--------|-------------|
-| **example-app** | `example` | Local manifests | Nginx demo deployment |
-| **local-path-provisioner** | `local-path-storage` | Local manifests | Default StorageClass using node-local storage |
-| **smb-csi-driver** | `kube-system` | Helm chart | CSI driver for mounting SMB/CIFS shares |
-| **external-dns** | `external-dns` | Local manifests | deSEC DNS webhook for `fedishark.eu` |
-| **monitoring** | `monitoring` | Local manifests | Namespace, Grafana ingress, and SOPS secrets |
-| **kube-prometheus-stack** | `monitoring` | Helm chart | Prometheus, Grafana, Alertmanager, node-exporter, kube-state-metrics |
-| **loki** | `monitoring` | Helm chart | Log storage backend for Grafana Explore |
-| **alloy** | `monitoring` | Helm chart | Log and metrics agent (DaemonSet), shipping Kubernetes logs to Loki |
-| **tibber-exporter** | `monitoring` | Local manifests | Tibber power metrics exporter with Grafana dashboard |
-| **jellyfin** | `jellyfin` | Local manifests | Media server with VAAPI transcoding and SMB-backed storage |
-| **gotosocial** | `gotosocial` | Local manifests | Federated social server published at `pub.fedishark.eu` |
-| **vikunja** | `vikunja` | Local manifests | Task management app published at `todo.yornik.eu` with SMTP mailer enabled |
-| **fedishark** | `fedishark` | Local manifests | Fun static landing page for `fedishark.eu` |
-| **yornik** | `yornik` | Local manifests | Professional profile/portfolio site for `yornik.eu` (`www` redirects to apex) |
+1. Bootstrap installs Argo CD and root app.
+2. Root app renders one `Application` per entry in `apps/values.yaml`.
+3. Argo CD continuously enforces desired state (prune + self-heal).
 
-All applications use automated sync with prune and self-heal enabled.
+## Application Inventory
 
-## How It Works
+### Local manifests
 
-1. Bootstrap manifests install Argo CD and create the root application.
-2. The root application points at `apps/` and renders one `Application` per entry in `apps/values.yaml`.
-3. Argo CD continuously syncs each application from this repo or from external Helm charts.
+| App | Namespace | Purpose |
+|-----|-----------|---------|
+| `local-path-provisioner` | `local-path-storage` | node-local default storage class |
+| `external-dns` | `external-dns` | DNS automation for `fedishark.eu` + `yornik.eu` |
+| `monitoring` | `monitoring` | monitoring namespace, ingress, secrets |
+| `tibber-exporter` | `monitoring` | energy metrics exporter |
+| `gotosocial` | `gotosocial` | fediverse service (`pub.fedishark.eu`) |
+| `jellyfin` | `jellyfin` | media service (`jelly.yornik.eu`) |
+| `omni-tools` | `omni-tools` | utility services |
+| `qbittorrent` | `jellyfin` | torrent workload |
+| `democratic-csi` | `democratic-csi` | CSI config bootstrap |
+| `muse` | `muse` | app workload |
+| `vaultwarden` | `vaultwarden` | password manager |
+| `vikunja` | `vikunja` | task management (`todo.yornik.eu`) |
+| `asf` | `asf` | app workload |
+| `fedishark` | `fedishark` | public landing site |
+| `yornik` | `yornik` | professional site (`yornik.eu`) |
+| `privatebin` | `privatebin` | secure paste service (`secrets.yornik.eu`) |
+| `traefik-config` | `traefik` | shared edge middleware and `security.txt` |
+| `tailscale` | `tailscale` | cluster-side tailscale resources |
+
+### Helm apps
+
+| App | Namespace | Chart |
+|-----|-----------|-------|
+| `smb-csi-driver` | `kube-system` | `csi-driver-smb` |
+| `kube-prometheus-stack` | `monitoring` | `kube-prometheus-stack` |
+| `loki` | `monitoring` | `loki` |
+| `alloy` | `monitoring` | `alloy` |
+| `democratic-csi-nfs` | `democratic-csi` | `democratic-csi` |
+| `democratic-csi-iscsi` | `democratic-csi` | `democratic-csi` |
+| `traefik` | `traefik` | `traefik` |
+| `tailscale-operator` | `tailscale` | `tailscale-operator` |
+
+## Engineering Signals
+
+- Git-driven reconciliation as the source of truth.
+- Split between local manifests and chart-managed components where appropriate.
+- Centralized logging pipeline (`Alloy -> Loki`) with noise filtering at ingestion.
+- Shared edge hardening (`CSP`, selective `no-compression`, centralized `security.txt`).
+- Explicit sender-domain alignment for app mailers (`@yornik.eu`).
+- Registration controls for public apps (`Vikunja` registration disabled).
+
+## Homelab Constraints
+
+Known single points of failure in this environment:
+
+- Single residential power feed
+- Single residential internet uplink
+- Shared NAS-backed storage dependency for part of the stateful workload set
+
+These risks are intentional tradeoffs for a homelab budget/complexity envelope. Full mitigation (dual power path, dual WAN with proper edge failover, fully independent replicated storage domains) is possible, but currently disproportionate in cost and operational overhead for this environment.
+
+## Domain and Edge Notes
+
+- ExternalDNS manages subdomains for `fedishark.eu` and `yornik.eu`.
+- `yornik.eu` apex records are intentionally managed manually in deSEC.
+- `www.yornik.eu` redirects to apex.
+- Shared edge policy lives in `manifests/traefik-config/`.
 
 ## Bootstrap
 
-Prerequisites: `kubectl` with cluster access.
+Prerequisite: `kubectl` context with cluster access.
 
 ```sh
 kubectl apply -f bootstrap/argocd-namespace.yaml
@@ -56,49 +108,19 @@ kubectl apply -f bootstrap/argocd-project.yaml
 kubectl apply -f bootstrap/root-app.yaml
 ```
 
-After the root application is created, Argo CD takes over and deploys everything else.
-
-## Managing Apps
-
-Edit `apps/values.yaml` to add or remove applications.
-
-- **Local manifests:** add an entry with `path: manifests/<app>` and commit manifests under that directory.
-- **Helm charts:** add an entry under `apps.<name>.helm` with `repoURL`, `chart`, and `targetRevision`.
-
-## Domain Notes
-
-- `external-dns` manages records for both `fedishark.eu` and `yornik.eu`.
-- `yornik.eu` apex A/AAAA records are managed manually in deSEC; subdomains can be managed by ExternalDNS.
-- `www.yornik.eu` is redirected to `https://yornik.eu` via Traefik middleware.
-
-## Operational Notes
-
-- Alloy drops noisy Kubernetes leader-election heartbeat log lines matching `successfully renewed lease` before shipping to Loki.
-- Democratic CSI (NFS and iSCSI) runs with `controller.externalSnapshotter.enabled: false` because this cluster does not use CSI VolumeSnapshots.
-
-## Tibber Notes
-
-- `tibber-exporter` metrics are scraped by Prometheus via `ServiceMonitor` in `manifests/tibber-exporter/servicemonitor.yaml`.
-- Dashboard panels use Grafana datasource variable `$datasource` (not hardcoded datasource UID).
-- Cost and consumption panels are configured for 15-minute buckets using Prometheus `increase(...[15m])`.
-- Dashboard layout is optimized for observability (status strip -> trends -> daily summary). The `Power (15m heatmap)` panel is a 15-minute block heatmap, and phase currents (L1/L2/L3) are scaled for a typical NL `3x25A` connection.
-- If you build a quarter-hour Tibber exporter fork, update `manifests/tibber-exporter/deployment.yaml` image to your fork tag and keep the same metric names for dashboard compatibility.
-
 ## Secrets
 
-Secrets are encrypted with [SOPS](https://github.com/getsops/sops) using age encryption. Encrypted files follow the `*.enc.yaml` naming convention.
-
-At sync time, Argo CD decrypts secrets via [KSOPS](https://github.com/viaductoss/ksops) generators (`secret-generator.yaml` in each app that needs secrets).
+Secrets are encrypted with SOPS (`*.enc.yaml`) and decrypted during sync via KSOPS.
 
 ## CI
 
-Every pull request runs four checks:
+PR checks:
 
-1. **YAML lint** — validates manifests and bootstrap files
-2. **Helm template** — renders the app-of-apps chart
-3. **Kubeconform** — schema validation on raw manifests
-4. **Helm + Kubeconform** — schema validation on rendered Helm output
+1. YAML lint
+2. Helm template
+3. Kubeconform (raw manifests)
+4. Kubeconform on rendered Helm output
 
 ## Dependency Updates
 
-[Renovate](https://docs.renovatebot.com/) monitors this repo for dependency updates. Patch and minor container image updates are auto-merged; major updates and Helm chart bumps require manual review.
+Renovate is enabled. Patch/minor image updates are auto-merged; major bumps require review.
