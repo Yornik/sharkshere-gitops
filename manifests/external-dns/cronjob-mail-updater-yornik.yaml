@@ -24,7 +24,6 @@ spec:
                 - |
                   set -eu
                   apk add --no-cache curl jq >/dev/null
-                  chmod +x /scripts/update-mail.sh
                   /scripts/update-mail.sh
               env:
                 - name: CF_ZONE_NAME
