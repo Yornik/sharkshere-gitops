@@ -45,15 +45,38 @@ data:
       exit 1
     fi
 
-    CONTENT="3 1 1 ${HASH}"
+    MANAGED_COMMENT="managed-by: sharkshere-tlsa"
     RECORD_ID="$(
       api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=TLSA&name=${TLSA_RECORD_NAME}" \
-      | jq -r '.result[0].id // empty'
+      | jq -r --arg comment "${MANAGED_COMMENT}" '
+          .result[]
+          | select(.comment == $comment)
+          | .id
+        ' \
+      | head -n 1
     )"
 
-    BODY="$(printf '{"type":"TLSA","name":"%s","content":"%s","ttl":%s}' "${TLSA_RECORD_NAME}" "${CONTENT}" "${TLSA_TTL}")"
+    BODY="$(
+      jq -cn \
+        --arg name "${TLSA_RECORD_NAME}" \
+        --arg comment "${MANAGED_COMMENT}" \
+        --arg certificate "${HASH}" \
+        --argjson ttl "${TLSA_TTL}" \
+        '{
+          type: "TLSA",
+          name: $name,
+          ttl: $ttl,
+          comment: $comment,
+          data: {
+            usage: 3,
+            selector: 1,
+            matching_type: 1,
+            certificate: $certificate
+          }
+        }'
+    )"
 
-    echo "Updating TLSA ${TLSA_RECORD_NAME} to ${CONTENT}"
+    echo "Updating TLSA ${TLSA_RECORD_NAME} to 3 1 1 ${HASH}"
 
     if [ -n "${RECORD_ID}" ]; then
       api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${RECORD_ID}" --data "${BODY}" >/dev/null
