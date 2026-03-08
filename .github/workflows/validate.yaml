@@ -19,6 +19,15 @@ jobs:
           yamllint -d '{extends: relaxed, rules: {line-length: {max: 200}}}' \
             manifests/ bootstrap/
 
+  security-txt:
+    name: Validate security.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate signed security.txt
+        run: .github/scripts/validate-security-txt.sh
+
   helm-template:
     name: Helm Template Check
     runs-on: ubuntu-latest
