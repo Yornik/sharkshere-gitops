@@ -6,7 +6,7 @@ metadata:
   labels:
     app: vaultwarden
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: vault.fedishark.eu
+    external-dns.alpha.kubernetes.io/hostname: passwords.yornik.eu
     external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
     external-dns.alpha.kubernetes.io/ttl: "3600"
 spec:

@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`vault.fedishark.eu`)
+    - match: Host(`passwords.yornik.eu`)
       kind: Rule
       middlewares:
         - name: security-headers
