@@ -5,13 +5,16 @@ resources:
   - serviceaccount.yaml
   - clusterrole.yaml
   - clusterrolebinding.yaml
-  - secret-cloudflare-placeholder.yaml
   - deployment.yaml
   - dns-records.yaml
   - configmap-caa-updater-script.yaml
   - configmap-dane-updater-script.yaml
+  - configmap-mail-updater-script.yaml
   - cronjob-caa-updater-fedishark.yaml
   - cronjob-caa-updater-yornik.yaml
   - cronjob-dane-updater.yaml
   - cronjob-dane-updater-passwords.yaml
   - cronjob-dane-updater-yornik.yaml
+  - cronjob-mail-updater-yornik.yaml
+generators:
+  - cloudflare-secret-generator.yaml
