@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caa-updater-script
+  namespace: external-dns
+data:
+  update-caa.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${CF_API_TOKEN:?CF_API_TOKEN is required}"
+    : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
+    : "${CAA_RECORD_NAME:?CAA_RECORD_NAME is required}"
+    : "${CAA_REPORT_EMAIL:?CAA_REPORT_EMAIL is required}"
+    : "${CAA_TTL:=3600}"
+
+    MANAGED_COMMENT="managed-by: sharkshere-caa"
+
+    api() {
+      curl -fsS \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "$@"
+    }
+
+    ZONE_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones?name=${CF_ZONE_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
+
+    if [ -z "${ZONE_ID}" ]; then
+      echo "Failed to resolve Cloudflare zone id for ${CF_ZONE_NAME}"
+      exit 1
+    fi
+
+    upsert_caa() {
+      tag="$1"
+      value="$2"
+
+      record_id="$(
+        api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=CAA&name=${CAA_RECORD_NAME}" \
+        | jq -r --arg comment "${MANAGED_COMMENT}" --arg tag "${tag}" '
+            .result[]
+            | select(.comment == $comment and .data.tag == $tag)
+            | .id
+          ' \
+        | head -n 1
+      )"
+
+      body="$(
+        jq -cn \
+          --arg name "${CAA_RECORD_NAME}" \
+          --arg comment "${MANAGED_COMMENT}" \
+          --arg tag "${tag}" \
+          --arg value "${value}" \
+          --argjson ttl "${CAA_TTL}" \
+          '{
+            type: "CAA",
+            name: $name,
+            ttl: $ttl,
+            comment: $comment,
+            data: {
+              flags: 0,
+              tag: $tag,
+              value: $value
+            }
+          }'
+      )"
+
+      if [ -n "${record_id}" ]; then
+        api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${record_id}" --data "${body}" >/dev/null
+      else
+        api -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" --data "${body}" >/dev/null
+      fi
+
+      echo "Ensured CAA ${tag} ${value} on ${CAA_RECORD_NAME}"
+    }
+
+    upsert_caa issue "letsencrypt.org"
+    upsert_caa issuewild ";"
+    upsert_caa iodef "mailto:${CAA_REPORT_EMAIL}"
+
+    echo "CAA update succeeded for ${CAA_RECORD_NAME}"

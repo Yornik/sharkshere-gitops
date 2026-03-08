@@ -8,11 +8,18 @@ data:
     #!/bin/sh
     set -eu
 
-    : "${DESEC_API_TOKEN:?DESEC_API_TOKEN is required}"
-    : "${DESEC_ZONE:?DESEC_ZONE is required}"
+    : "${CF_API_TOKEN:?CF_API_TOKEN is required}"
+    : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
     : "${TARGET_HOST:?TARGET_HOST is required}"
-    : "${TLSA_SUBNAME:?TLSA_SUBNAME is required}"
+    : "${TLSA_RECORD_NAME:?TLSA_RECORD_NAME is required}"
     : "${TLSA_TTL:=3600}"
+
+    api() {
+      curl -fsS \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "$@"
+    }
 
     echo "Computing SPKI hash for ${TARGET_HOST}:443"
     HASH="$(
@@ -28,13 +35,30 @@ data:
       exit 1
     fi
 
-    echo "Updating TLSA ${TLSA_SUBNAME}.${DESEC_ZONE} to 3 1 1 ${HASH}"
-    BODY="$(printf '[{"subname":"%s","type":"TLSA","records":["3 1 1 %s"],"ttl":%s}]' "${TLSA_SUBNAME}" "${HASH}" "${TLSA_TTL}")"
+    ZONE_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones?name=${CF_ZONE_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
 
-    curl -fsS -X PATCH \
-      "https://desec.io/api/v1/domains/${DESEC_ZONE}/rrsets/" \
-      -H "Authorization: Token ${DESEC_API_TOKEN}" \
-      -H "Content-Type: application/json" \
-      --data "${BODY}" >/dev/null
+    if [ -z "${ZONE_ID}" ]; then
+      echo "Failed to resolve Cloudflare zone id for ${CF_ZONE_NAME}"
+      exit 1
+    fi
+
+    CONTENT="3 1 1 ${HASH}"
+    RECORD_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=TLSA&name=${TLSA_RECORD_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
+
+    BODY="$(printf '{"type":"TLSA","name":"%s","content":"%s","ttl":%s}' "${TLSA_RECORD_NAME}" "${CONTENT}" "${TLSA_TTL}")"
+
+    echo "Updating TLSA ${TLSA_RECORD_NAME} to ${CONTENT}"
+
+    if [ -n "${RECORD_ID}" ]; then
+      api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${RECORD_ID}" --data "${BODY}" >/dev/null
+    else
+      api -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" --data "${BODY}" >/dev/null
+    fi
 
     echo "TLSA update succeeded"
