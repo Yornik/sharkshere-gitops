@@ -1,0 +1,136 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mail-updater-script
+  namespace: external-dns
+data:
+  update-mail.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${CF_API_TOKEN:?CF_API_TOKEN is required}"
+    : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
+    : "${MAIL_TTL:=3600}"
+
+    MANAGED_COMMENT="managed-by: sharkshere-mail"
+
+    api() {
+      curl -fsS \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "$@"
+    }
+
+    ZONE_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones?name=${CF_ZONE_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
+
+    if [ -z "${ZONE_ID}" ]; then
+      echo "Failed to resolve Cloudflare zone id for ${CF_ZONE_NAME}"
+      exit 1
+    fi
+
+    upsert_record() {
+      type="$1"
+      name="$2"
+      body="$3"
+
+      record_id="$(
+        api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=${type}&name=${name}" \
+        | jq -r --arg comment "${MANAGED_COMMENT}" '
+            .result[]
+            | select(.comment == $comment)
+            | .id
+          ' \
+        | head -n 1
+      )"
+
+      if [ -n "${record_id}" ]; then
+        api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${record_id}" --data "${body}" >/dev/null
+      else
+        api -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" --data "${body}" >/dev/null
+      fi
+    }
+
+    upsert_record "MX" "yornik.eu" "$(
+      jq -cn \
+        --arg comment "${MANAGED_COMMENT}" \
+        --argjson ttl "${MAIL_TTL}" \
+        '{
+          type: "MX",
+          name: "yornik.eu",
+          ttl: $ttl,
+          comment: $comment,
+          content: "inbound-smtp.eu-west-1.amazonaws.com",
+          priority: 10
+        }'
+    )"
+
+    upsert_record "TXT" "yornik.eu" "$(
+      jq -cn \
+        --arg comment "${MANAGED_COMMENT}" \
+        --argjson ttl "${MAIL_TTL}" \
+        '{
+          type: "TXT",
+          name: "yornik.eu",
+          ttl: $ttl,
+          comment: $comment,
+          content: "v=spf1 include:amazonses.com ~all"
+        }'
+    )"
+
+    upsert_record "MX" "send.yornik.eu" "$(
+      jq -cn \
+        --arg comment "${MANAGED_COMMENT}" \
+        --argjson ttl "${MAIL_TTL}" \
+        '{
+          type: "MX",
+          name: "send.yornik.eu",
+          ttl: $ttl,
+          comment: $comment,
+          content: "feedback-smtp.eu-west-1.amazonses.com",
+          priority: 10
+        }'
+    )"
+
+    upsert_record "TXT" "send.yornik.eu" "$(
+      jq -cn \
+        --arg comment "${MANAGED_COMMENT}" \
+        --argjson ttl "${MAIL_TTL}" \
+        '{
+          type: "TXT",
+          name: "send.yornik.eu",
+          ttl: $ttl,
+          comment: $comment,
+          content: "v=spf1 include:amazonses.com ~all"
+        }'
+    )"
+
+    upsert_record "TXT" "resend._domainkey.yornik.eu" "$(
+      jq -cn \
+        --arg comment "${MANAGED_COMMENT}" \
+        --argjson ttl "${MAIL_TTL}" \
+        '{
+          type: "TXT",
+          name: "resend._domainkey.yornik.eu",
+          ttl: $ttl,
+          comment: $comment,
+          content: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCgi13p6s7kFsja5MWatvqRmYfV58jqRi7bo8IdsA0B6NFQv8STZ3yj4jlBex07o/Yh5DPWVMgTNwID+JNfXoCFcLDlaAZ4yZ2QZg0XZtuf9qpNyOmGMziGH9gT0RfDD/H7+dTtG2iZg67y0R7A2ZjE8dbz2yi05MsVkgtQsQXHmwIDAQAB"
+        }'
+    )"
+
+    upsert_record "TXT" "_dmarc.yornik.eu" "$(
+      jq -cn \
+        --arg comment "${MANAGED_COMMENT}" \
+        --argjson ttl "${MAIL_TTL}" \
+        '{
+          type: "TXT",
+          name: "_dmarc.yornik.eu",
+          ttl: $ttl,
+          comment: $comment,
+          content: "v=DMARC1; p=quarantine;"
+        }'
+    )"
+
+    echo "Mail DNS update succeeded for ${CF_ZONE_NAME}"

@@ -23,23 +23,23 @@ spec:
                 - -c
                 - |
                   set -eu
-                  apk add --no-cache curl openssl >/dev/null
+                  apk add --no-cache curl jq openssl >/dev/null
                   chmod +x /scripts/update-tlsa.sh
                   /scripts/update-tlsa.sh
               env:
-                - name: DESEC_ZONE
+                - name: CF_ZONE_NAME
                   value: yornik.eu
                 - name: TARGET_HOST
                   value: yornik.eu
-                - name: TLSA_SUBNAME
-                  value: _443._tcp
+                - name: TLSA_RECORD_NAME
+                  value: _443._tcp.yornik.eu
                 - name: TLSA_TTL
                   value: "3600"
-                - name: DESEC_API_TOKEN
+                - name: CF_API_TOKEN
                   valueFrom:
                     secretKeyRef:
-                      name: desec-credentials
-                      key: api-key
+                      name: cloudflare-credentials
+                      key: api-token
               volumeMounts:
                 - name: script
                   mountPath: /scripts

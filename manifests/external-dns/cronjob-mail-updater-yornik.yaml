@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dane-updater
+  name: mail-updater-yornik
   namespace: external-dns
 spec:
-  schedule: "13 3 * * *"
+  schedule: "3 5 * * 0"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
@@ -15,7 +15,7 @@ spec:
         spec:
           restartPolicy: OnFailure
           containers:
-            - name: dane-updater
+            - name: mail-updater
               image: alpine:3.23
               imagePullPolicy: IfNotPresent
               command:
@@ -23,17 +23,13 @@ spec:
                 - -c
                 - |
                   set -eu
-                  apk add --no-cache curl jq openssl >/dev/null
-                  chmod +x /scripts/update-tlsa.sh
-                  /scripts/update-tlsa.sh
+                  apk add --no-cache curl jq >/dev/null
+                  chmod +x /scripts/update-mail.sh
+                  /scripts/update-mail.sh
               env:
                 - name: CF_ZONE_NAME
                   value: yornik.eu
-                - name: TARGET_HOST
-                  value: secrets.yornik.eu
-                - name: TLSA_RECORD_NAME
-                  value: _443._tcp.secrets.yornik.eu
-                - name: TLSA_TTL
+                - name: MAIL_TTL
                   value: "3600"
                 - name: CF_API_TOKEN
                   valueFrom:
@@ -47,5 +43,5 @@ spec:
           volumes:
             - name: script
               configMap:
-                name: dane-updater-script
+                name: mail-updater-script
                 defaultMode: 0555

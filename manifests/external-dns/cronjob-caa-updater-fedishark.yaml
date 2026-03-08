@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dane-updater
+  name: caa-updater-fedishark
   namespace: external-dns
 spec:
-  schedule: "13 3 * * *"
+  schedule: "43 4 * * 0"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
@@ -15,7 +15,7 @@ spec:
         spec:
           restartPolicy: OnFailure
           containers:
-            - name: dane-updater
+            - name: caa-updater
               image: alpine:3.23
               imagePullPolicy: IfNotPresent
               command:
@@ -23,17 +23,17 @@ spec:
                 - -c
                 - |
                   set -eu
-                  apk add --no-cache curl jq openssl >/dev/null
-                  chmod +x /scripts/update-tlsa.sh
-                  /scripts/update-tlsa.sh
+                  apk add --no-cache curl jq >/dev/null
+                  chmod +x /scripts/update-caa.sh
+                  /scripts/update-caa.sh
               env:
                 - name: CF_ZONE_NAME
-                  value: yornik.eu
-                - name: TARGET_HOST
-                  value: secrets.yornik.eu
-                - name: TLSA_RECORD_NAME
-                  value: _443._tcp.secrets.yornik.eu
-                - name: TLSA_TTL
+                  value: fedishark.eu
+                - name: CAA_RECORD_NAME
+                  value: fedishark.eu
+                - name: CAA_REPORT_EMAIL
+                  value: yornik@yornik.nl
+                - name: CAA_TTL
                   value: "3600"
                 - name: CF_API_TOKEN
                   valueFrom:
@@ -47,5 +47,5 @@ spec:
           volumes:
             - name: script
               configMap:
-                name: dane-updater-script
+                name: caa-updater-script
                 defaultMode: 0555
