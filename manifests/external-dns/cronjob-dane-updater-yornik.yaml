@@ -24,7 +24,6 @@ spec:
                 - |
                   set -eu
                   apk add --no-cache curl jq openssl >/dev/null
-                  chmod +x /scripts/update-tlsa.sh
                   /scripts/update-tlsa.sh
               env:
                 - name: CF_ZONE_NAME

@@ -24,7 +24,6 @@ spec:
                 - |
                   set -eu
                   apk add --no-cache curl jq >/dev/null
-                  chmod +x /scripts/update-caa.sh
                   /scripts/update-caa.sh
               env:
                 - name: CF_ZONE_NAME
