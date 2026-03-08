@@ -301,7 +301,6 @@ data:
         <li><a href="https://jelly.yornik.eu">Media Cave</a></li>
         <li><a href="https://grafana.fedishark.eu">Reef Monitor</a></li>
         <li><a href="https://vikunja.fedishark.eu">Task Tides</a></li>
-        <li><a href="https://vault.fedishark.eu">Treasure Vault</a></li>
       </ul>
 
       <h3>&#x1F41F; FUN FACTS</h3>
@@ -364,15 +363,6 @@ data:
             <span style="font-size:12px;">
               <a href="https://jelly.yornik.eu">Media streaming</a> from the depths.
               Like Netflix, but with more sharks and zero tracking.
-            </span>
-          </td>
-        </tr>
-        <tr style="background:#003366;">
-          <td style="padding:6px; border:1px solid #006699;">
-            <b style="color:#00ffcc;">Vaultwarden</b><br>
-            <span style="font-size:12px;">
-              <a href="https://vault.fedishark.eu">Password manager</a> &mdash;
-              because even sharks need to keep their secrets safe.
             </span>
           </td>
         </tr>

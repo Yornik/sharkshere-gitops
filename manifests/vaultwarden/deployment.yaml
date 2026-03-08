@@ -26,7 +26,7 @@ spec:
               protocol: TCP
           env:
             - name: DOMAIN
-              value: "https://vault.fedishark.eu"
+              value: "https://passwords.yornik.eu"
             - name: SIGNUPS_ALLOWED
               value: "false"
             - name: ADMIN_TOKEN
