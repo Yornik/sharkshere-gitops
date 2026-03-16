@@ -6,3 +6,4 @@ metadata:
 spec:
   minVersion: VersionTLS13
   sniStrict: true
+  disableSessionTickets: true
