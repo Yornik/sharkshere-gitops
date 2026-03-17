@@ -108,13 +108,12 @@ data:
           <h1>Yornik Heyl <span class="h1-role">Cloud Reliability Engineer</span></h1>
           <p class="role">Cloud Reliability Engineer at Mendix (Siemens)</p>
           <p class="lede">
-            I've spent 5 years keeping cloud platforms running at Mendix — handling incidents, hardening infrastructure,
-            and making sure deployments don't ruin anyone's weekend.
+            I've been keeping cloud platforms running at Mendix for 5 years. Incident response, infrastructure
+            hardening, and making sure deployments don't break things on a Friday evening.
           </p>
           <p class="lede">
-            At home I run the same stack for fun: a 4-node Talos Linux Kubernetes cluster, fully GitOps'd with Argo CD,
-            complete with observability, ingress hardening, and DNS automation. Not because someone told me to — because
-            I wanted to understand it end to end.
+            At home I run the same stack because I want to: a 4-node Talos Linux Kubernetes cluster, fully GitOps'd
+            with Argo CD, with observability, ingress hardening, and DNS automation. All self-built, all in Git.
           </p>
           <div class="links">
             <a class="btn primary" href="https://github.com/Yornik">GitHub</a>
@@ -128,17 +127,17 @@ data:
             <article class="panel">
               <h3>Production reliability</h3>
               <p>
-                I make production safer to change. That means incident response, rollout design, observability that tells
-                you something useful at 3 AM, and alerting that doesn't cry wolf. I care about systems being explainable
-                under pressure, not just working on a good day.
+                I make production safer to change. Incident response, rollout design, observability that actually
+                tells you something at 3 AM, and alerting that doesn't go off for nothing. Systems should be
+                explainable under pressure, not just work when everything is fine.
               </p>
             </article>
             <article class="panel">
               <h3>How I work</h3>
               <p>
-                Declarative everything. If it's not in Git, it didn't happen. I push for reproducible rollouts, clean
-                ownership, and security baked into the platform — not bolted on after the fact. I use AI tooling where it
-                genuinely helps (automating the boring parts, catching mistakes early), not as a buzzword.
+                Declarative everything. If it's not in Git, it didn't happen. Reproducible rollouts, clear ownership,
+                and security that's part of the platform, not added afterwards. I use AI tooling where it actually
+                helps (automating the boring parts, catching mistakes early), not as a buzzword.
               </p>
             </article>
           </div>
@@ -447,7 +446,7 @@ data:
 
     ## Profile Summary
     - Cloud Reliability & Platform Engineer (SRE / DevOps / Site Reliability Engineer)
-    - Based in Rotterdam, Netherlands — available across the Netherlands and Europe
+    - Based in Rotterdam, Netherlands. Available across the Netherlands and Europe
     - Kubernetes, Docker, Terraform, Helm, CI/CD, Infrastructure as Code
     - Observability: Prometheus, Grafana, Loki
     - Cloud platforms: AWS, Azure, GCP
