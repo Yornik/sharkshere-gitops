@@ -213,8 +213,7 @@ data:
     }
 
     html {
-      background: linear-gradient(180deg, #0b1117 0%, #1a0a2e 100%);
-      min-height: 100%;
+      background: #0b1117;
     }
 
     body {
