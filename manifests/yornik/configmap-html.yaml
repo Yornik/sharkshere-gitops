@@ -198,14 +198,14 @@ data:
 
   styles.css: |
     :root {
-      --bg: #0b1117;
-      --bg-2: #132233;
-      --card: rgba(10, 18, 28, 0.74);
-      --line: rgba(143, 179, 210, 0.26);
-      --text: #ecf3fb;
-      --muted: #b5c5d8;
-      --accent: #ff6b2c;
-      --accent-2: #50d7ff;
+      --bg: #0a0f1a;
+      --bg-2: #0d1320;
+      --card: rgba(12, 16, 28, 0.72);
+      --line: rgba(148, 163, 194, 0.14);
+      --text: #f0f4fa;
+      --muted: #94a3b8;
+      --accent: #a855f7;
+      --accent-2: #38bdf8;
     }
 
     * {
@@ -213,7 +213,7 @@ data:
     }
 
     html {
-      background: #1a0a2e;
+      background: #080c14;
     }
 
     body {
@@ -221,9 +221,12 @@ data:
       min-height: 100vh;
       color: var(--text);
       background:
-        radial-gradient(860px 460px at -5% 0%, rgba(255, 107, 44, 0.24), transparent 65%),
-        radial-gradient(1000px 600px at 110% -10%, rgba(80, 215, 255, 0.24), transparent 62%),
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 50%, #1a0a2e 100%);
+        radial-gradient(900px 500px at 15% -5%, rgba(56, 189, 248, 0.12), transparent 70%),
+        radial-gradient(800px 500px at 85% 5%, rgba(168, 85, 247, 0.10), transparent 70%),
+        radial-gradient(600px 400px at 50% 50%, rgba(56, 189, 248, 0.04), transparent 70%),
+        radial-gradient(900px 500px at 80% 95%, rgba(168, 85, 247, 0.12), transparent 70%),
+        radial-gradient(700px 400px at 10% 100%, rgba(236, 72, 153, 0.08), transparent 70%),
+        linear-gradient(180deg, #0a0f1a 0%, #0d1320 40%, #0f1228 70%, #120e24 100%);
       font-family: "Manrope", "Segoe UI", Helvetica, Arial, sans-serif;
       line-height: 1.5;
     }
@@ -244,8 +247,8 @@ data:
       border: 1px solid var(--line);
       border-radius: 18px;
       background: var(--card);
-      backdrop-filter: blur(5px);
-      box-shadow: 0 20px 48px rgba(2, 7, 13, 0.35);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 1px 0 0 rgba(148, 163, 194, 0.06) inset, 0 24px 48px rgba(0, 0, 0, 0.4);
     }
 
     .hero {
@@ -288,7 +291,7 @@ data:
       max-width: 780px;
       color: #d4e3f3;
       font-size: 0.98rem;
-      border-left: 3px solid rgba(255, 107, 44, 0.75);
+      border-left: 3px solid rgba(168, 85, 247, 0.6);
       padding-left: 0.7rem;
     }
 
@@ -312,12 +315,12 @@ data:
 
     .btn:hover {
       transform: translateY(-2px);
-      border-color: rgba(80, 215, 255, 0.75);
+      border-color: rgba(168, 85, 247, 0.55);
     }
 
     .btn.primary {
-      background: linear-gradient(120deg, rgba(255, 107, 44, 0.24), rgba(80, 215, 255, 0.2));
-      border-color: rgba(255, 107, 44, 0.65);
+      background: linear-gradient(120deg, rgba(168, 85, 247, 0.2), rgba(56, 189, 248, 0.15));
+      border-color: rgba(168, 85, 247, 0.5);
     }
 
     .stats {
@@ -332,7 +335,7 @@ data:
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 1rem;
-      background: rgba(8, 15, 24, 0.68);
+      background: rgba(10, 14, 26, 0.65);
     }
 
     .stats h2 {
@@ -369,7 +372,7 @@ data:
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 1rem;
-      background: rgba(8, 15, 24, 0.68);
+      background: rgba(10, 14, 26, 0.65);
       min-height: 165px;
     }
 
@@ -400,7 +403,7 @@ data:
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 1rem;
-      background: rgba(8, 15, 24, 0.68);
+      background: rgba(10, 14, 26, 0.65);
       min-height: 170px;
     }
 
@@ -432,7 +435,7 @@ data:
       border-radius: 999px;
       padding: 0.42rem 0.72rem;
       font-size: 0.85rem;
-      background: rgba(80, 215, 255, 0.09);
+      background: rgba(56, 189, 248, 0.08);
     }
 
     .footer {
