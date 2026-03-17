@@ -443,7 +443,7 @@ data:
     </div>
 
     <!-- Pride flag with BLÅHAJ -->
-    <div style="width:100%; line-height:0; margin-top:4px;">
+    <div style="max-width:800px; margin:4px auto 0; line-height:0;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" style="width:100%; height:auto; display:block;">
         <rect fill="#E40303" width="600" height="66.67"/>
         <rect fill="#FF8C00" y="66.67" width="600" height="66.67"/>
