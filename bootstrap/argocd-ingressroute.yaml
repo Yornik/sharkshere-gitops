@@ -11,6 +11,12 @@ spec:
     - match: Host(`argocd.fedishark.eu`)
       kind: Rule
       middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: fail2ban-argocd
+          namespace: argocd
+        - name: rate-limit
+          namespace: traefik
         - name: no-compression
           namespace: traefik
       services:
@@ -19,6 +25,10 @@ spec:
     - match: Host(`argocd.fedishark.eu`) && Header(`Content-Type`, `application/grpc`)
       kind: Rule
       middlewares:
+        - name: fail2ban-argocd
+          namespace: argocd
+        - name: rate-limit
+          namespace: traefik
         - name: no-compression
           namespace: traefik
       services:
