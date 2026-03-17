@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-vikunja
+  namespace: vikunja
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        statuscode: "401-403"
+        maxretry: 10
+        findtime: 10m
+        bantime: 30m
+        enabled: "true"

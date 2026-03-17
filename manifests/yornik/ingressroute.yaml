@@ -10,12 +10,12 @@ spec:
     - match: Host(`yornik.eu`) || Host(`www.yornik.eu`)
       kind: Rule
       middlewares:
+        - name: security-headers
+          namespace: traefik
         - name: redirect-www-to-apex
           namespace: yornik
         - name: csp
           namespace: yornik
-        - name: security-headers
-          namespace: traefik
         - name: rate-limit
           namespace: traefik
       services:

@@ -441,5 +441,32 @@ data:
     <div class="ocean-bar"></div>
 
     </div>
+
+    <!-- Pride flag with BLÅHAJ -->
+    <div style="max-width:800px; margin:4px auto 0; line-height:0;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" style="width:100%; height:auto; display:block;">
+        <rect fill="#E40303" width="600" height="66.67"/>
+        <rect fill="#FF8C00" y="66.67" width="600" height="66.67"/>
+        <rect fill="#FFED00" y="133.33" width="600" height="66.67"/>
+        <rect fill="#008026" y="200" width="600" height="66.67"/>
+        <rect fill="#004DFF" y="266.67" width="600" height="66.67"/>
+        <rect fill="#750787" y="333.33" width="600" height="66.67"/>
+        <polygon fill="#000000" points="0,0 200,200 0,400"/>
+        <polygon fill="#613915" points="0,40 160,200 0,360"/>
+        <polygon fill="#73D7EE" points="0,80 120,200 0,320"/>
+        <polygon fill="#FFAFC8" points="0,120 80,200 0,280"/>
+        <polygon fill="#FFFFFF" points="0,160 40,200 0,240"/>
+        <g opacity="0.4" transform="translate(250,120)">
+          <ellipse cx="120" cy="80" rx="130" ry="42" fill="#5B9BB5"/>
+          <ellipse cx="130" cy="90" rx="100" ry="22" fill="#D4E8F0"/>
+          <polygon points="85,38 110,-5 125,38" fill="#5B9BB5"/>
+          <polygon points="-15,50 -55,15 5,75 -55,145 -15,110" fill="#5B9BB5"/>
+          <polygon points="85,122 60,165 115,122" fill="#5B9BB5"/>
+          <circle cx="215" cy="68" r="9" fill="#1a1a1a"/>
+          <circle cx="218" cy="65" r="3.5" fill="#fff"/>
+        </g>
+      </svg>
+    </div>
+
     </body>
     </html>

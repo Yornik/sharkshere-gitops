@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-argocd
+  namespace: argocd
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        statuscode: "401-403"
+        maxretry: 5
+        findtime: 10m
+        bantime: 30m
+        enabled: "true"
