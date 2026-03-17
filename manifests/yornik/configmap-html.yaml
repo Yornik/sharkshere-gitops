@@ -108,12 +108,12 @@ data:
           <h1>Yornik Heyl <span class="h1-role">Cloud Reliability Engineer</span></h1>
           <p class="role">Cloud Reliability Engineer at Mendix (Siemens)</p>
           <p class="lede">
-            I've spent 5 years keeping cloud platforms running at Mendix — handling incidents, hardening infrastructure,
+            I've spent 5 years keeping cloud platforms running at Mendix, handling incidents, hardening infrastructure,
             and making sure deployments don't ruin anyone's weekend.
           </p>
           <p class="lede">
             At home I run the same stack for fun: a 4-node Talos Linux Kubernetes cluster, fully GitOps'd with Argo CD,
-            complete with observability, ingress hardening, and DNS automation. Not because someone told me to — because
+            complete with observability, ingress hardening, and DNS automation. Not because someone told me to, but because
             I wanted to understand it end to end.
           </p>
           <div class="links">
@@ -137,7 +137,7 @@ data:
               <h3>How I work</h3>
               <p>
                 Declarative everything. If it's not in Git, it didn't happen. I push for reproducible rollouts, clean
-                ownership, and security baked into the platform — not bolted on after the fact. I use AI tooling where it
+                ownership, and security baked into the platform, not bolted on after the fact. I use AI tooling where it
                 genuinely helps (automating the boring parts, catching mistakes early), not as a buzzword.
               </p>
             </article>
@@ -447,7 +447,7 @@ data:
 
     ## Profile Summary
     - Cloud Reliability & Platform Engineer (SRE / DevOps / Site Reliability Engineer)
-    - Based in Rotterdam, Netherlands — available across the Netherlands and Europe
+    - Based in Rotterdam, Netherlands. Available across the Netherlands and Europe
     - Kubernetes, Docker, Terraform, Helm, CI/CD, Infrastructure as Code
     - Observability: Prometheus, Grafana, Loki
     - Cloud platforms: AWS, Azure, GCP
