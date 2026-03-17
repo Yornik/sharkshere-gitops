@@ -10,71 +10,94 @@ data:
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Yornik Heyl | Cloud Reliability Engineer</title>
+      <title>Yornik Heyl – Cloud & Platform Engineer | Rotterdam, Netherlands</title>
       <meta name="author" content="Yornik Heyl" />
-      <meta
-        name="description"
-        content="Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business). Kubernetes, GitOps, observability, and resilient platform operations."
-      />
-      <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineering, Kubernetes, GitOps, SRE, Mendix, Siemens" />
+      <meta name="description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens). Open to opportunities." />
+      <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineer, SRE, Site Reliability Engineer, DevOps, Kubernetes, GitOps, Docker, Terraform, CI/CD, AWS, Azure, Infrastructure as Code, Mendix, Siemens, Rotterdam, Netherlands" />
       <meta name="robots" content="index,follow,max-image-preview:large" />
       <meta name="theme-color" content="#0b1117" />
       <link rel="canonical" href="https://yornik.eu/" />
       <link rel="alternate" hreflang="en" href="https://yornik.eu/" />
-      <meta property="og:type" content="website" />
+      <meta name="geo.region" content="NL-ZH" />
+      <meta name="geo.placename" content="Rotterdam" />
+      <meta name="geo.position" content="51.9225;4.47917" />
+      <meta name="ICBM" content="51.9225, 4.47917" />
+      <meta property="og:type" content="profile" />
       <meta property="og:url" content="https://yornik.eu/" />
-      <meta property="og:title" content="Yornik Heyl | Cloud Reliability Engineer" />
-      <meta
-        property="og:description"
-        content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
-      />
+      <meta property="og:title" content="Yornik Heyl – Cloud & Platform Engineer" />
+      <meta property="og:description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure." />
       <meta property="og:site_name" content="Yornik Heyl" />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content="en_NL" />
+      <meta property="profile:first_name" content="Yornik" />
+      <meta property="profile:last_name" content="Heyl" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Yornik Heyl | Cloud Reliability Engineer" />
-      <meta
-        name="twitter:description"
-        content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
-      />
+      <meta name="twitter:title" content="Yornik Heyl – Cloud & Platform Engineer" />
+      <meta name="twitter:description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability specialist." />
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Yornik Heyl",
-        "url": "https://yornik.eu/",
-        "jobTitle": "Cloud Reliability Engineer",
-        "worksFor": {
-          "@type": "Organization",
-          "name": "Mendix",
-          "parentOrganization": {
-            "@type": "Organization",
-            "name": "Siemens"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://yornik.eu/#website",
+            "url": "https://yornik.eu",
+            "name": "Yornik Heyl – Cloud Reliability Engineer",
+            "description": "Portfolio of Yornik Heyl, Cloud Reliability & Platform Engineer in Rotterdam, Netherlands",
+            "publisher": { "@id": "https://yornik.eu/#person" },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "ProfilePage",
+            "@id": "https://yornik.eu/#profilepage",
+            "url": "https://yornik.eu",
+            "dateCreated": "2025-01-01",
+            "dateModified": "2026-03-17",
+            "isPartOf": { "@id": "https://yornik.eu/#website" },
+            "mainEntity": { "@id": "https://yornik.eu/#person" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://yornik.eu/#person",
+            "name": "Yornik Heyl",
+            "url": "https://yornik.eu",
+            "jobTitle": "Cloud Reliability Engineer",
+            "description": "Cloud Reliability & Platform Engineer based in Rotterdam, Netherlands. Specializing in Kubernetes, GitOps, observability, and resilient cloud infrastructure.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Rotterdam",
+              "addressRegion": "South Holland",
+              "addressCountry": "NL"
+            },
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Mendix",
+              "url": "https://www.mendix.com",
+              "parentOrganization": {
+                "@type": "Organization",
+                "name": "Siemens"
+              }
+            },
+            "sameAs": [
+              "https://github.com/Yornik",
+              "https://www.linkedin.com/in/yornik/",
+              "https://www.credly.com/users/yornik-heyl"
+            ],
+            "knowsAbout": [
+              { "@type": "Thing", "name": "Kubernetes", "sameAs": "https://en.wikipedia.org/wiki/Kubernetes" },
+              { "@type": "Thing", "name": "Site Reliability Engineering", "sameAs": "https://en.wikipedia.org/wiki/Site_reliability_engineering" },
+              { "@type": "Thing", "name": "Cloud Computing", "sameAs": "https://en.wikipedia.org/wiki/Cloud_computing" },
+              { "@type": "Thing", "name": "DevOps", "sameAs": "https://en.wikipedia.org/wiki/DevOps" },
+              { "@type": "Thing", "name": "Infrastructure as Code", "sameAs": "https://en.wikipedia.org/wiki/Infrastructure_as_code" },
+              "GitOps", "Observability", "Argo CD", "Grafana", "Terraform",
+              "CI/CD", "Docker", "Linux", "Platform Engineering", "Prometheus", "Helm"
+            ],
+            "knowsLanguage": [
+              { "@type": "Language", "name": "English" },
+              { "@type": "Language", "name": "Dutch" }
+            ],
+            "subjectOf": { "@id": "https://yornik.eu/#profilepage" }
           }
-        },
-        "sameAs": [
-          "https://github.com/Yornik",
-          "https://www.linkedin.com/in/yornik/"
         ]
-      }
-      </script>
-      <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Yornik Heyl",
-        "url": "https://yornik.eu/"
-      }
-      </script>
-      <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "ProfilePage",
-        "name": "Yornik Heyl - Cloud Reliability Engineer",
-        "url": "https://yornik.eu/",
-        "mainEntity": {
-          "@type": "Person",
-          "name": "Yornik Heyl"
-        }
       }
       </script>
       <link rel="stylesheet" href="/styles.css" />
@@ -82,16 +105,16 @@ data:
     <body>
       <main class="shell">
         <section class="hero">
-          <p class="eyebrow">Cloud Reliability Engineering • Kubernetes • GitOps</p>
-          <h1>Yornik Heyl</h1>
-          <p class="role">Cloud Reliability Engineer at Mendix, a Siemens business</p>
+          <h1>Yornik Heyl <span class="h1-role">Cloud Reliability Engineer</span></h1>
+          <p class="role">Cloud Reliability Engineer at Mendix (Siemens)</p>
           <p class="lede">
-            I design and operate reliable cloud platforms with production-first engineering standards: measurable SLOs,
-            resilient service architecture, strict automation, and fast recovery under pressure.
+            I've spent 5 years keeping cloud platforms running at Mendix — handling incidents, hardening infrastructure,
+            and making sure deployments don't ruin anyone's weekend.
           </p>
-          <p class="ai-note">
-            Strong focus on AI and agent-driven workflows to improve engineering efficiency, reduce human error,
-            strengthen security posture, and increase delivery output.
+          <p class="lede">
+            At home I run the same stack for fun: a 4-node Talos Linux Kubernetes cluster, fully GitOps'd with Argo CD,
+            complete with observability, ingress hardening, and DNS automation. Not because someone told me to — because
+            I wanted to understand it end to end.
           </p>
           <div class="links">
             <a class="btn primary" href="https://github.com/Yornik">GitHub</a>
@@ -99,98 +122,53 @@ data:
           </div>
         </section>
 
-        <section class="stats">
-          <article>
-            <h2>Reliability Mindset</h2>
-            <p>Change is safe only when rollback is boring. I optimize for clarity, observability, and repeatability.</p>
-          </article>
-          <article>
-            <h2>Platform Scope</h2>
-            <p>Talos + Kubernetes stack with GitOps, ingress hardening, identity, logs, metrics, and DNS automation.</p>
-          </article>
-          <article>
-            <h2>Execution Style</h2>
-            <p>Pragmatic, incident-driven iteration: reduce toil, ship safer defaults, and keep systems explainable.</p>
-          </article>
-        </section>
-
         <section class="showcase">
-          <h2>What I Deliver</h2>
+          <h2>What I actually do</h2>
           <div class="grid">
             <article class="panel">
-              <h3>Cloud Reliability Engineering</h3>
+              <h3>Production reliability</h3>
               <p>
-                Incident response, preventive hardening, and operational standards that keep services stable while
-                product velocity stays high.
+                I make production safer to change. That means incident response, rollout design, observability that tells
+                you something useful at 3 AM, and alerting that doesn't cry wolf. I care about systems being explainable
+                under pressure, not just working on a good day.
               </p>
             </article>
             <article class="panel">
-              <h3>GitOps-Native Operations</h3>
+              <h3>How I work</h3>
               <p>
-                Declarative infrastructure and applications with auditable changes, reproducible rollouts,
-                and clean ownership boundaries.
-              </p>
-            </article>
-            <article class="panel">
-              <h3>Observability that Drives Action</h3>
-              <p>
-                Logs, metrics, and traces shaped into practical signal. Alerting tuned for response quality,
-                not alert noise.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="impact">
-          <h2>Impact and Working Model</h2>
-          <div class="impact-grid">
-            <article class="impact-panel">
-              <h3>Reliability Outcomes</h3>
-              <p>
-                Build systems that are understandable during incidents, recover quickly, and keep customer-facing
-                services stable through controlled change.
-              </p>
-            </article>
-            <article class="impact-panel">
-              <h3>AI-Assisted Engineering</h3>
-              <p>
-                Use AI agents to improve implementation speed, reduce repetitive mistakes, and enforce safer
-                operational defaults without sacrificing engineering quality.
-              </p>
-            </article>
-            <article class="impact-panel">
-              <h3>Security by Default</h3>
-              <p>
-                Integrate security controls into platform workflows early, so hardening is continuous and does not
-                depend on manual one-off actions.
+                Declarative everything. If it's not in Git, it didn't happen. I push for reproducible rollouts, clean
+                ownership, and security baked into the platform — not bolted on after the fact. I use AI tooling where it
+                genuinely helps (automating the boring parts, catching mistakes early), not as a buzzword.
               </p>
             </article>
           </div>
         </section>
 
         <section class="stack">
-          <h2>Current Focus</h2>
+          <h2>Stack</h2>
           <div class="chips">
             <span class="chip">Kubernetes</span>
             <span class="chip">Talos Linux</span>
             <span class="chip">Argo CD</span>
             <span class="chip">Traefik</span>
-            <span class="chip">Grafana + Loki + Alloy</span>
-            <span class="chip">ExternalDNS + deSEC</span>
-            <span class="chip">Security Hardening</span>
-            <span class="chip">Media + Stateful Workloads</span>
+            <span class="chip">Grafana</span>
+            <span class="chip">Loki</span>
+            <span class="chip">Alloy</span>
+            <span class="chip">ExternalDNS</span>
+            <span class="chip">Cloudflare</span>
           </div>
           <p class="footer">
-            Based in the Rotterdam area, Netherlands. Open to impactful Cloud/Platform/Reliability engineering conversations.
+            Based in the Rotterdam area. Self-taught infrastructure engineer with 5 years of production experience and a homelab that won't quit.
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" width="20" height="12" role="img" aria-label="Pride flag" style="display:inline-block; vertical-align:middle; margin-left:0.3em; border-radius:2px;"><rect fill="#E40303" width="60" height="6"/><rect fill="#FF8C00" y="6" width="60" height="6"/><rect fill="#FFED00" y="12" width="60" height="6"/><rect fill="#008026" y="18" width="60" height="6"/><rect fill="#004DFF" y="24" width="60" height="6"/><rect fill="#750787" y="30" width="60" height="6"/></svg>
           </p>
           <p class="trust">
-            Certifications: <a href="https://www.credly.com/users/yornik-heyl">Credly</a>. Security posture:
-            100% website score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
+            Certifications on <a href="https://www.credly.com/users/yornik-heyl">Credly</a>.
+            100% score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
           </p>
-          <p class="contact">
-            Contact: <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
-          </p>
+          <address class="contact">
+            <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
+          </address>
+          <p class="ai-disclosure">Content on this site was written with the help of AI.</p>
         </section>
       </main>
     </body>
@@ -240,9 +218,7 @@ data:
     }
 
     .hero,
-    .stats,
     .showcase,
-    .impact,
     .stack {
       border: 1px solid var(--line);
       border-radius: 18px;
@@ -256,20 +232,21 @@ data:
       animation: fade-up 0.55s ease-out;
     }
 
-    .eyebrow {
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.77rem;
-      color: var(--accent-2);
-      font-weight: 700;
-    }
-
     h1 {
       margin: 0.35rem 0 0;
       font-size: clamp(2rem, 5vw, 3.55rem);
       line-height: 1.03;
       letter-spacing: -0.03em;
+    }
+
+    .h1-role {
+      display: block;
+      font-size: clamp(1rem, 2.5vw, 1.45rem);
+      letter-spacing: 0;
+      color: var(--accent);
+      font-weight: 700;
+      margin-top: 0.3rem;
+      line-height: 1.3;
     }
 
     .role {
@@ -284,15 +261,6 @@ data:
       max-width: 780px;
       color: var(--muted);
       font-size: clamp(1rem, 1.9vw, 1.16rem);
-    }
-
-    .ai-note {
-      margin: 0.65rem 0 0;
-      max-width: 780px;
-      color: #d4e3f3;
-      font-size: 0.98rem;
-      border-left: 3px solid rgba(168, 85, 247, 0.6);
-      padding-left: 0.7rem;
     }
 
     .links {
@@ -323,39 +291,12 @@ data:
       border-color: rgba(168, 85, 247, 0.5);
     }
 
-    .stats {
-      padding: 1.2rem;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.75rem;
-      animation: fade-up 0.68s ease-out;
-    }
-
-    .stats article {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1rem;
-      background: rgba(10, 14, 26, 0.65);
-    }
-
-    .stats h2 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .stats p {
-      margin: 0.45rem 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
     .showcase {
       padding: 1.5rem;
       animation: fade-up 0.82s ease-out;
     }
 
     .showcase h2,
-    .impact h2,
     .stack h2 {
       margin: 0;
       font-size: 1.2rem;
@@ -364,7 +305,7 @@ data:
     .grid {
       margin-top: 0.85rem;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
     }
 
@@ -373,7 +314,6 @@ data:
       border-radius: 12px;
       padding: 1rem;
       background: rgba(10, 14, 26, 0.65);
-      min-height: 165px;
     }
 
     .panel h3 {
@@ -382,37 +322,6 @@ data:
     }
 
     .panel p {
-      margin: 0.45rem 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .impact {
-      padding: 1.4rem;
-      animation: fade-up 0.9s ease-out;
-    }
-
-    .impact-grid {
-      margin-top: 0.72rem;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.75rem;
-    }
-
-    .impact-panel {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1rem;
-      background: rgba(10, 14, 26, 0.65);
-      min-height: 170px;
-    }
-
-    .impact-panel h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .impact-panel p {
       margin: 0.45rem 0 0;
       color: var(--muted);
       font-size: 0.95rem;
@@ -474,6 +383,13 @@ data:
       text-decoration: underline;
     }
 
+    .ai-disclosure {
+      margin: 0.8rem 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      opacity: 0.7;
+    }
+
     @keyframes fade-up {
       from {
         opacity: 0;
@@ -486,15 +402,12 @@ data:
     }
 
     @media (max-width: 900px) {
-      .stats,
-      .grid,
-      .impact-grid {
+      .grid {
         grid-template-columns: 1fr;
       }
 
       .hero,
       .showcase,
-      .impact,
       .stack {
         padding: 1.2rem;
       }
@@ -502,6 +415,15 @@ data:
 
   robots.txt: |
     User-agent: *
+    Allow: /
+
+    User-agent: GPTBot
+    Allow: /
+
+    User-agent: ClaudeBot
+    Allow: /
+
+    User-agent: PerplexityBot
     Allow: /
 
     Sitemap: https://yornik.eu/sitemap.xml
@@ -518,18 +440,27 @@ data:
 
   llms.txt: |
     # yornik.eu
-    > Professional profile of Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business).
+    > Yornik Heyl is a Cloud Reliability & Platform Engineer based in Rotterdam, Netherlands, specializing in Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens).
 
     ## Primary URL
     - https://yornik.eu/
 
     ## Profile Summary
-    - Cloud Reliability Engineering with Kubernetes, GitOps, observability, and secure-by-default platform operations.
-    - Strong practical focus on AI-assisted and agent-driven workflows to reduce human error and improve delivery quality.
+    - Cloud Reliability & Platform Engineer (SRE / DevOps / Site Reliability Engineer)
+    - Based in Rotterdam, Netherlands — available across the Netherlands and Europe
+    - Kubernetes, Docker, Terraform, Helm, CI/CD, Infrastructure as Code
+    - Observability: Prometheus, Grafana, Loki
+    - Cloud platforms: AWS, Azure, GCP
+    - AI-assisted and agent-driven engineering workflows
+    - Strong practical focus on security, automation, and incident response
+
+    ## Professional Links
+    - LinkedIn: https://www.linkedin.com/in/yornik/
+    - GitHub: https://github.com/Yornik
+    - Credly: https://www.credly.com/users/yornik-heyl
 
     ## Contact
     - yornik@yornik.nl
 
     ## Credentials and Security
-    - Credly profile: https://www.credly.com/users/yornik-heyl
-    - Website security benchmark: 100% website score on Internet.nl
+    - Website security benchmark: 100% website score on Internet.nl, aligned with Dutch NCSC guidance
