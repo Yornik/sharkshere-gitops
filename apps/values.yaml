@@ -566,6 +566,10 @@ apps:
     namespace: privatebin
     path: manifests/privatebin
 
+  argocd-config:
+    namespace: argocd
+    path: manifests/argocd-config
+
   traefik-config:
     namespace: traefik
     path: manifests/traefik-config
