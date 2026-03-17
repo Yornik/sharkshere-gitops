@@ -10,71 +10,94 @@ data:
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Yornik Heyl | Cloud Reliability Engineer</title>
+      <title>Yornik Heyl – Cloud & Platform Engineer | Rotterdam, Netherlands</title>
       <meta name="author" content="Yornik Heyl" />
-      <meta
-        name="description"
-        content="Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business). Kubernetes, GitOps, observability, and resilient platform operations."
-      />
-      <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineering, Kubernetes, GitOps, SRE, Mendix, Siemens" />
+      <meta name="description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens). Open to opportunities." />
+      <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineer, SRE, Site Reliability Engineer, DevOps, Kubernetes, GitOps, Docker, Terraform, CI/CD, AWS, Azure, Infrastructure as Code, Mendix, Siemens, Rotterdam, Netherlands" />
       <meta name="robots" content="index,follow,max-image-preview:large" />
       <meta name="theme-color" content="#0b1117" />
       <link rel="canonical" href="https://yornik.eu/" />
       <link rel="alternate" hreflang="en" href="https://yornik.eu/" />
-      <meta property="og:type" content="website" />
+      <meta name="geo.region" content="NL-ZH" />
+      <meta name="geo.placename" content="Rotterdam" />
+      <meta name="geo.position" content="51.9225;4.47917" />
+      <meta name="ICBM" content="51.9225, 4.47917" />
+      <meta property="og:type" content="profile" />
       <meta property="og:url" content="https://yornik.eu/" />
-      <meta property="og:title" content="Yornik Heyl | Cloud Reliability Engineer" />
-      <meta
-        property="og:description"
-        content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
-      />
+      <meta property="og:title" content="Yornik Heyl – Cloud & Platform Engineer" />
+      <meta property="og:description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure." />
       <meta property="og:site_name" content="Yornik Heyl" />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content="en_NL" />
+      <meta property="profile:first_name" content="Yornik" />
+      <meta property="profile:last_name" content="Heyl" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Yornik Heyl | Cloud Reliability Engineer" />
-      <meta
-        name="twitter:description"
-        content="Cloud Reliability Engineer at Mendix (Siemens business), focused on Kubernetes, GitOps, observability, and resilient operations."
-      />
+      <meta name="twitter:title" content="Yornik Heyl – Cloud & Platform Engineer" />
+      <meta name="twitter:description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability specialist." />
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Yornik Heyl",
-        "url": "https://yornik.eu/",
-        "jobTitle": "Cloud Reliability Engineer",
-        "worksFor": {
-          "@type": "Organization",
-          "name": "Mendix",
-          "parentOrganization": {
-            "@type": "Organization",
-            "name": "Siemens"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://yornik.eu/#website",
+            "url": "https://yornik.eu",
+            "name": "Yornik Heyl – Cloud Reliability Engineer",
+            "description": "Portfolio of Yornik Heyl, Cloud Reliability & Platform Engineer in Rotterdam, Netherlands",
+            "publisher": { "@id": "https://yornik.eu/#person" },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "ProfilePage",
+            "@id": "https://yornik.eu/#profilepage",
+            "url": "https://yornik.eu",
+            "dateCreated": "2025-01-01",
+            "dateModified": "2026-03-17",
+            "isPartOf": { "@id": "https://yornik.eu/#website" },
+            "mainEntity": { "@id": "https://yornik.eu/#person" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://yornik.eu/#person",
+            "name": "Yornik Heyl",
+            "url": "https://yornik.eu",
+            "jobTitle": "Cloud Reliability Engineer",
+            "description": "Cloud Reliability & Platform Engineer based in Rotterdam, Netherlands. Specializing in Kubernetes, GitOps, observability, and resilient cloud infrastructure.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Rotterdam",
+              "addressRegion": "South Holland",
+              "addressCountry": "NL"
+            },
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Mendix",
+              "url": "https://www.mendix.com",
+              "parentOrganization": {
+                "@type": "Organization",
+                "name": "Siemens"
+              }
+            },
+            "sameAs": [
+              "https://github.com/Yornik",
+              "https://www.linkedin.com/in/yornik/",
+              "https://www.credly.com/users/yornik-heyl"
+            ],
+            "knowsAbout": [
+              { "@type": "Thing", "name": "Kubernetes", "sameAs": "https://en.wikipedia.org/wiki/Kubernetes" },
+              { "@type": "Thing", "name": "Site Reliability Engineering", "sameAs": "https://en.wikipedia.org/wiki/Site_reliability_engineering" },
+              { "@type": "Thing", "name": "Cloud Computing", "sameAs": "https://en.wikipedia.org/wiki/Cloud_computing" },
+              { "@type": "Thing", "name": "DevOps", "sameAs": "https://en.wikipedia.org/wiki/DevOps" },
+              { "@type": "Thing", "name": "Infrastructure as Code", "sameAs": "https://en.wikipedia.org/wiki/Infrastructure_as_code" },
+              "GitOps", "Observability", "Argo CD", "Grafana", "Terraform",
+              "CI/CD", "Docker", "Linux", "Platform Engineering", "Prometheus", "Helm"
+            ],
+            "knowsLanguage": [
+              { "@type": "Language", "name": "English" },
+              { "@type": "Language", "name": "Dutch" }
+            ],
+            "subjectOf": { "@id": "https://yornik.eu/#profilepage" }
           }
-        },
-        "sameAs": [
-          "https://github.com/Yornik",
-          "https://www.linkedin.com/in/yornik/"
         ]
-      }
-      </script>
-      <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Yornik Heyl",
-        "url": "https://yornik.eu/"
-      }
-      </script>
-      <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "ProfilePage",
-        "name": "Yornik Heyl - Cloud Reliability Engineer",
-        "url": "https://yornik.eu/",
-        "mainEntity": {
-          "@type": "Person",
-          "name": "Yornik Heyl"
-        }
       }
       </script>
       <link rel="stylesheet" href="/styles.css" />
@@ -82,12 +105,12 @@ data:
     <body>
       <main class="shell">
         <section class="hero">
-          <p class="eyebrow">Cloud Reliability Engineering • Kubernetes • GitOps</p>
-          <h1>Yornik Heyl</h1>
-          <p class="role">Cloud Reliability Engineer at Mendix, a Siemens business</p>
+          <p class="eyebrow">Cloud Reliability Engineering • SRE • Kubernetes • GitOps</p>
+          <h1>Yornik Heyl <span class="h1-role">Cloud Reliability & Platform Engineer</span></h1>
+          <p class="role">SRE at Mendix, a Siemens business — Rotterdam, Netherlands</p>
           <p class="lede">
             I design and operate reliable cloud platforms with production-first engineering standards: measurable SLOs,
-            resilient service architecture, strict automation, and fast recovery under pressure.
+            Infrastructure as Code, resilient service architecture, CI/CD automation, and fast recovery under pressure.
           </p>
           <p class="ai-note">
             Strong focus on AI and agent-driven workflows to improve engineering efficiency, reduce human error,
@@ -106,7 +129,7 @@ data:
           </article>
           <article>
             <h2>Platform Scope</h2>
-            <p>Talos + Kubernetes stack with GitOps, ingress hardening, identity, logs, metrics, and DNS automation.</p>
+            <p>Kubernetes on Talos Linux with Terraform, Docker, Helm, GitOps, ingress hardening, identity, observability, and DNS automation.</p>
           </article>
           <article>
             <h2>Execution Style</h2>
@@ -118,24 +141,24 @@ data:
           <h2>What I Deliver</h2>
           <div class="grid">
             <article class="panel">
-              <h3>Cloud Reliability Engineering</h3>
+              <h3>Site Reliability Engineering</h3>
               <p>
-                Incident response, preventive hardening, and operational standards that keep services stable while
-                product velocity stays high.
+                SRE practices, incident response, preventive hardening, and DevOps-driven operational standards that keep
+                services stable while product velocity stays high.
               </p>
             </article>
             <article class="panel">
-              <h3>GitOps-Native Operations</h3>
+              <h3>Infrastructure as Code</h3>
               <p>
-                Declarative infrastructure and applications with auditable changes, reproducible rollouts,
-                and clean ownership boundaries.
+                Declarative infrastructure with Terraform, Helm, and GitOps: auditable changes, reproducible rollouts,
+                and clean ownership boundaries across AWS, Azure, and GCP.
               </p>
             </article>
             <article class="panel">
               <h3>Observability that Drives Action</h3>
               <p>
-                Logs, metrics, and traces shaped into practical signal. Alerting tuned for response quality,
-                not alert noise.
+                Prometheus, Grafana, and Loki shaped into practical signal. Alerting tuned for response quality,
+                not alert noise. Built on Linux and containers from the ground up.
               </p>
             </article>
           </div>
@@ -172,13 +195,18 @@ data:
           <h2>Current Focus</h2>
           <div class="chips">
             <span class="chip">Kubernetes</span>
+            <span class="chip">Docker</span>
+            <span class="chip">Terraform</span>
+            <span class="chip">Helm</span>
             <span class="chip">Talos Linux</span>
             <span class="chip">Argo CD</span>
-            <span class="chip">Traefik</span>
+            <span class="chip">CI/CD</span>
+            <span class="chip">Prometheus</span>
             <span class="chip">Grafana + Loki + Alloy</span>
-            <span class="chip">ExternalDNS + deSEC</span>
+            <span class="chip">Linux</span>
+            <span class="chip">Traefik</span>
+            <span class="chip">ExternalDNS + Cloudflare</span>
             <span class="chip">Security Hardening</span>
-            <span class="chip">Media + Stateful Workloads</span>
           </div>
           <p class="footer">
             Based in the Rotterdam area, Netherlands. Open to impactful Cloud/Platform/Reliability engineering conversations.
@@ -188,9 +216,9 @@ data:
             Certifications: <a href="https://www.credly.com/users/yornik-heyl">Credly</a>. Security posture:
             100% website score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
           </p>
-          <p class="contact">
+          <address class="contact">
             Contact: <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
-          </p>
+          </address>
         </section>
       </main>
     </body>
@@ -270,6 +298,16 @@ data:
       font-size: clamp(2rem, 5vw, 3.55rem);
       line-height: 1.03;
       letter-spacing: -0.03em;
+    }
+
+    .h1-role {
+      display: block;
+      font-size: clamp(1rem, 2.5vw, 1.45rem);
+      letter-spacing: 0;
+      color: var(--accent);
+      font-weight: 700;
+      margin-top: 0.3rem;
+      line-height: 1.3;
     }
 
     .role {
@@ -504,6 +542,15 @@ data:
     User-agent: *
     Allow: /
 
+    User-agent: GPTBot
+    Allow: /
+
+    User-agent: ClaudeBot
+    Allow: /
+
+    User-agent: PerplexityBot
+    Allow: /
+
     Sitemap: https://yornik.eu/sitemap.xml
 
   sitemap.xml: |
@@ -518,18 +565,27 @@ data:
 
   llms.txt: |
     # yornik.eu
-    > Professional profile of Yornik Heyl, Cloud Reliability Engineer at Mendix (a Siemens business).
+    > Yornik Heyl is a Cloud Reliability & Platform Engineer based in Rotterdam, Netherlands, specializing in Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens).
 
     ## Primary URL
     - https://yornik.eu/
 
     ## Profile Summary
-    - Cloud Reliability Engineering with Kubernetes, GitOps, observability, and secure-by-default platform operations.
-    - Strong practical focus on AI-assisted and agent-driven workflows to reduce human error and improve delivery quality.
+    - Cloud Reliability & Platform Engineer (SRE / DevOps / Site Reliability Engineer)
+    - Based in Rotterdam, Netherlands — available across the Netherlands and Europe
+    - Kubernetes, Docker, Terraform, Helm, CI/CD, Infrastructure as Code
+    - Observability: Prometheus, Grafana, Loki
+    - Cloud platforms: AWS, Azure, GCP
+    - AI-assisted and agent-driven engineering workflows
+    - Strong practical focus on security, automation, and incident response
+
+    ## Professional Links
+    - LinkedIn: https://www.linkedin.com/in/yornik/
+    - GitHub: https://github.com/Yornik
+    - Credly: https://www.credly.com/users/yornik-heyl
 
     ## Contact
     - yornik@yornik.nl
 
     ## Credentials and Security
-    - Credly profile: https://www.credly.com/users/yornik-heyl
-    - Website security benchmark: 100% website score on Internet.nl
+    - Website security benchmark: 100% website score on Internet.nl, aligned with Dutch NCSC guidance
