@@ -12,6 +12,8 @@ spec:
       middlewares:
         - name: vaultwarden-hsts
           namespace: vaultwarden
+        - name: fail2ban-vaultwarden
+          namespace: vaultwarden
         - name: no-compression
           namespace: traefik
         - name: rate-limit

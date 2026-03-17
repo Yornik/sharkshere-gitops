@@ -8,6 +8,7 @@ resources:
   - ingressroute-web.yaml
   - middleware-hsts.yaml
   - middleware-redirect-https.yaml
+  - middleware-fail2ban-vaultwarden.yaml
   - pvc-data.yaml
 generators:
   - secret-generator.yaml
