@@ -105,16 +105,16 @@ data:
     <body>
       <main class="shell">
         <section class="hero">
-          <p class="eyebrow">Cloud Reliability Engineering • SRE • Kubernetes • GitOps</p>
-          <h1>Yornik Heyl <span class="h1-role">Cloud Reliability & Platform Engineer</span></h1>
-          <p class="role">SRE at Mendix, a Siemens business — Rotterdam, Netherlands</p>
+          <h1>Yornik Heyl <span class="h1-role">Cloud Reliability Engineer</span></h1>
+          <p class="role">Cloud Reliability Engineer at Mendix (Siemens)</p>
           <p class="lede">
-            I design and operate reliable cloud platforms with production-first engineering standards: measurable SLOs,
-            Infrastructure as Code, resilient service architecture, CI/CD automation, and fast recovery under pressure.
+            I've spent 5 years keeping cloud platforms running at Mendix — handling incidents, hardening infrastructure,
+            and making sure deployments don't ruin anyone's weekend.
           </p>
-          <p class="ai-note">
-            Strong focus on AI and agent-driven workflows to improve engineering efficiency, reduce human error,
-            strengthen security posture, and increase delivery output.
+          <p class="lede">
+            At home I run the same stack for fun: a 4-node Talos Linux Kubernetes cluster, fully GitOps'd with Argo CD,
+            complete with observability, ingress hardening, and DNS automation. Not because someone told me to — because
+            I wanted to understand it end to end.
           </p>
           <div class="links">
             <a class="btn primary" href="https://github.com/Yornik">GitHub</a>
@@ -122,103 +122,53 @@ data:
           </div>
         </section>
 
-        <section class="stats">
-          <article>
-            <h2>Reliability Mindset</h2>
-            <p>Change is safe only when rollback is boring. I optimize for clarity, observability, and repeatability.</p>
-          </article>
-          <article>
-            <h2>Platform Scope</h2>
-            <p>Kubernetes on Talos Linux with Terraform, Docker, Helm, GitOps, ingress hardening, identity, observability, and DNS automation.</p>
-          </article>
-          <article>
-            <h2>Execution Style</h2>
-            <p>Pragmatic, incident-driven iteration: reduce toil, ship safer defaults, and keep systems explainable.</p>
-          </article>
-        </section>
-
         <section class="showcase">
-          <h2>What I Deliver</h2>
+          <h2>What I actually do</h2>
           <div class="grid">
             <article class="panel">
-              <h3>Site Reliability Engineering</h3>
+              <h3>Production reliability</h3>
               <p>
-                SRE practices, incident response, preventive hardening, and DevOps-driven operational standards that keep
-                services stable while product velocity stays high.
+                I make production safer to change. That means incident response, rollout design, observability that tells
+                you something useful at 3 AM, and alerting that doesn't cry wolf. I care about systems being explainable
+                under pressure, not just working on a good day.
               </p>
             </article>
             <article class="panel">
-              <h3>Infrastructure as Code</h3>
+              <h3>How I work</h3>
               <p>
-                Declarative infrastructure with Terraform, Helm, and GitOps: auditable changes, reproducible rollouts,
-                and clean ownership boundaries across AWS, Azure, and GCP.
-              </p>
-            </article>
-            <article class="panel">
-              <h3>Observability that Drives Action</h3>
-              <p>
-                Prometheus, Grafana, and Loki shaped into practical signal. Alerting tuned for response quality,
-                not alert noise. Built on Linux and containers from the ground up.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        <section class="impact">
-          <h2>Impact and Working Model</h2>
-          <div class="impact-grid">
-            <article class="impact-panel">
-              <h3>Reliability Outcomes</h3>
-              <p>
-                Build systems that are understandable during incidents, recover quickly, and keep customer-facing
-                services stable through controlled change.
-              </p>
-            </article>
-            <article class="impact-panel">
-              <h3>AI-Assisted Engineering</h3>
-              <p>
-                Use AI agents to improve implementation speed, reduce repetitive mistakes, and enforce safer
-                operational defaults without sacrificing engineering quality.
-              </p>
-            </article>
-            <article class="impact-panel">
-              <h3>Security by Default</h3>
-              <p>
-                Integrate security controls into platform workflows early, so hardening is continuous and does not
-                depend on manual one-off actions.
+                Declarative everything. If it's not in Git, it didn't happen. I push for reproducible rollouts, clean
+                ownership, and security baked into the platform — not bolted on after the fact. I use AI tooling where it
+                genuinely helps (automating the boring parts, catching mistakes early), not as a buzzword.
               </p>
             </article>
           </div>
         </section>
 
         <section class="stack">
-          <h2>Current Focus</h2>
+          <h2>Stack</h2>
           <div class="chips">
             <span class="chip">Kubernetes</span>
-            <span class="chip">Docker</span>
-            <span class="chip">Terraform</span>
-            <span class="chip">Helm</span>
             <span class="chip">Talos Linux</span>
             <span class="chip">Argo CD</span>
-            <span class="chip">CI/CD</span>
-            <span class="chip">Prometheus</span>
-            <span class="chip">Grafana + Loki + Alloy</span>
-            <span class="chip">Linux</span>
             <span class="chip">Traefik</span>
-            <span class="chip">ExternalDNS + Cloudflare</span>
-            <span class="chip">Security Hardening</span>
+            <span class="chip">Grafana</span>
+            <span class="chip">Loki</span>
+            <span class="chip">Alloy</span>
+            <span class="chip">ExternalDNS</span>
+            <span class="chip">Cloudflare</span>
           </div>
           <p class="footer">
-            Based in the Rotterdam area, Netherlands. Open to impactful Cloud/Platform/Reliability engineering conversations.
+            Based in the Rotterdam area. Self-taught infrastructure engineer with 5 years of production experience and a homelab that won't quit.
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" width="20" height="12" role="img" aria-label="Pride flag" style="display:inline-block; vertical-align:middle; margin-left:0.3em; border-radius:2px;"><rect fill="#E40303" width="60" height="6"/><rect fill="#FF8C00" y="6" width="60" height="6"/><rect fill="#FFED00" y="12" width="60" height="6"/><rect fill="#008026" y="18" width="60" height="6"/><rect fill="#004DFF" y="24" width="60" height="6"/><rect fill="#750787" y="30" width="60" height="6"/></svg>
           </p>
           <p class="trust">
-            Certifications: <a href="https://www.credly.com/users/yornik-heyl">Credly</a>. Security posture:
-            100% website score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
+            Certifications on <a href="https://www.credly.com/users/yornik-heyl">Credly</a>.
+            100% score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
           </p>
           <address class="contact">
-            Contact: <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
+            <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
           </address>
+          <p class="ai-disclosure">Content on this site was written with the help of AI.</p>
         </section>
       </main>
     </body>
@@ -268,9 +218,7 @@ data:
     }
 
     .hero,
-    .stats,
     .showcase,
-    .impact,
     .stack {
       border: 1px solid var(--line);
       border-radius: 18px;
@@ -282,15 +230,6 @@ data:
     .hero {
       padding: 2rem;
       animation: fade-up 0.55s ease-out;
-    }
-
-    .eyebrow {
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.77rem;
-      color: var(--accent-2);
-      font-weight: 700;
     }
 
     h1 {
@@ -324,15 +263,6 @@ data:
       font-size: clamp(1rem, 1.9vw, 1.16rem);
     }
 
-    .ai-note {
-      margin: 0.65rem 0 0;
-      max-width: 780px;
-      color: #d4e3f3;
-      font-size: 0.98rem;
-      border-left: 3px solid rgba(168, 85, 247, 0.6);
-      padding-left: 0.7rem;
-    }
-
     .links {
       margin-top: 1.1rem;
       display: flex;
@@ -361,39 +291,12 @@ data:
       border-color: rgba(168, 85, 247, 0.5);
     }
 
-    .stats {
-      padding: 1.2rem;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.75rem;
-      animation: fade-up 0.68s ease-out;
-    }
-
-    .stats article {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1rem;
-      background: rgba(10, 14, 26, 0.65);
-    }
-
-    .stats h2 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .stats p {
-      margin: 0.45rem 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
     .showcase {
       padding: 1.5rem;
       animation: fade-up 0.82s ease-out;
     }
 
     .showcase h2,
-    .impact h2,
     .stack h2 {
       margin: 0;
       font-size: 1.2rem;
@@ -402,7 +305,7 @@ data:
     .grid {
       margin-top: 0.85rem;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
     }
 
@@ -411,7 +314,6 @@ data:
       border-radius: 12px;
       padding: 1rem;
       background: rgba(10, 14, 26, 0.65);
-      min-height: 165px;
     }
 
     .panel h3 {
@@ -420,37 +322,6 @@ data:
     }
 
     .panel p {
-      margin: 0.45rem 0 0;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .impact {
-      padding: 1.4rem;
-      animation: fade-up 0.9s ease-out;
-    }
-
-    .impact-grid {
-      margin-top: 0.72rem;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.75rem;
-    }
-
-    .impact-panel {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1rem;
-      background: rgba(10, 14, 26, 0.65);
-      min-height: 170px;
-    }
-
-    .impact-panel h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-
-    .impact-panel p {
       margin: 0.45rem 0 0;
       color: var(--muted);
       font-size: 0.95rem;
@@ -512,6 +383,13 @@ data:
       text-decoration: underline;
     }
 
+    .ai-disclosure {
+      margin: 0.8rem 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      opacity: 0.7;
+    }
+
     @keyframes fade-up {
       from {
         opacity: 0;
@@ -524,15 +402,12 @@ data:
     }
 
     @media (max-width: 900px) {
-      .stats,
-      .grid,
-      .impact-grid {
+      .grid {
         grid-template-columns: 1fr;
       }
 
       .hero,
       .showcase,
-      .impact,
       .stack {
         padding: 1.2rem;
       }
