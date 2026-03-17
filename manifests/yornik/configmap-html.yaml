@@ -182,7 +182,7 @@ data:
           </div>
           <p class="footer">
             Based in the Rotterdam area, Netherlands. Open to impactful Cloud/Platform/Reliability engineering conversations.
-            <svg class="pride-flag" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" role="img" aria-label="Pride flag"><rect fill="#E40303" width="60" height="6"/><rect fill="#FF8C00" y="6" width="60" height="6"/><rect fill="#FFED00" y="12" width="60" height="6"/><rect fill="#008026" y="18" width="60" height="6"/><rect fill="#004DFF" y="24" width="60" height="6"/><rect fill="#750787" y="30" width="60" height="6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" width="20" height="12" role="img" aria-label="Pride flag" style="display:inline-block; vertical-align:middle; margin-left:0.3em; border-radius:2px;"><rect fill="#E40303" width="60" height="6"/><rect fill="#FF8C00" y="6" width="60" height="6"/><rect fill="#FFED00" y="12" width="60" height="6"/><rect fill="#008026" y="18" width="60" height="6"/><rect fill="#004DFF" y="24" width="60" height="6"/><rect fill="#750787" y="30" width="60" height="6"/></svg>
           </p>
           <p class="trust">
             Certifications: <a href="https://www.credly.com/users/yornik-heyl">Credly</a>. Security posture:
@@ -435,15 +435,6 @@ data:
       margin: 0.9rem 0 0;
       color: var(--muted);
       font-size: 0.93rem;
-    }
-
-    .pride-flag {
-      display: inline-block;
-      vertical-align: middle;
-      width: 1.4em;
-      height: auto;
-      margin-left: 0.3em;
-      border-radius: 2px;
     }
 
     .trust {
