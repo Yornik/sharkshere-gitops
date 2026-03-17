@@ -49,7 +49,8 @@ manifests/      per-app manifests and Kustomize overlays
 | `qbittorrent` | `jellyfin` | torrent workload |
 | `democratic-csi` | `democratic-csi` | CSI config bootstrap |
 | `muse` | `muse` | app workload |
-| `vaultwarden` | `vaultwarden` | password manager |
+| `argocd-config` | `argocd` | ArgoCD IngressRoute + fail2ban middleware |
+| `vaultwarden` | `vaultwarden` | password manager (`passwords.yornik.eu`) |
 | `vikunja` | `vikunja` | task management (`todo.yornik.eu`) |
 | `asf` | `asf` | app workload |
 | `fedishark` | `fedishark` | public landing site |
@@ -93,7 +94,7 @@ These risks are intentional tradeoffs for a homelab budget/complexity envelope. 
 ## Domain and Edge Notes
 
 - ExternalDNS manages subdomains for `fedishark.eu` and `yornik.eu`.
-- Apex records for both `yornik.eu` and `fedishark.eu` are intentionally managed manually in deSEC.
+- Apex records for both `yornik.eu` and `fedishark.eu` are intentionally managed manually in Cloudflare.
 - `www.yornik.eu` redirects to apex.
 - Shared edge policy lives in `manifests/traefik-config/`.
 - DNSSEC/DANE (TLSA) is applied selectively where it provides practical value and manageable operational overhead, rather than blanket-enabling it for every endpoint.
