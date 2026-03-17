@@ -94,7 +94,7 @@ These risks are intentional tradeoffs for a homelab budget/complexity envelope. 
 ## Domain and Edge Notes
 
 - ExternalDNS manages subdomains for `fedishark.eu` and `yornik.eu`.
-- Apex records for both `yornik.eu` and `fedishark.eu` are intentionally managed manually in Cloudflare.
+- Apex records for both `yornik.eu` and `fedishark.eu` are managed by ExternalDNS via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare doesn't support CNAME flattening conflicts with DANE TLSA).
 - `www.yornik.eu` redirects to apex.
 - Shared edge policy lives in `manifests/traefik-config/`.
 - DNSSEC/DANE (TLSA) is applied selectively where it provides practical value and manageable operational overhead, rather than blanket-enabling it for every endpoint.
