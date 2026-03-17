@@ -53,6 +53,24 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: disable-video-transcode
+          image: alpine:3.21
+          command: ["sh", "-c"]
+          args:
+            - |
+              DB=/config/data/jellyfin.db
+              if [ ! -f "$DB" ]; then echo "DB not found, skipping"; exit 0; fi
+              apk add --no-cache sqlite > /dev/null 2>&1
+              # Disable video re-encoding (Kind=9=EnableVideoPlaybackTranscoding) for all users.
+              # Remuxing (Kind=19) and audio transcoding (Kind=8) stay enabled so the Apple TV
+              # can still handle container (MKV->MP4) and audio (DTS->AAC) conversions.
+              # This eliminates the HLS cold-start delay where Swiftfin 1.0.1 on Apple TV
+              # reports "Stopped at 0ms" because the first FFmpeg segment is not ready yet.
+              sqlite3 "$DB" "UPDATE Permissions SET Value = 0 WHERE Kind = 9;"
+              echo "Done: video transcoding disabled for all users"
+          volumeMounts:
+            - name: config
+              mountPath: /config
       containers:
         - name: jellyfin
           image: jellyfin/jellyfin:10.11.6
