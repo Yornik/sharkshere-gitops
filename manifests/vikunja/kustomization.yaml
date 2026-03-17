@@ -7,6 +7,7 @@ resources:
   - ingressroute.yaml
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
+  - middleware-fail2ban-vikunja.yaml
   - pvc-files.yaml
   - pvc-db.yaml
 generators:
