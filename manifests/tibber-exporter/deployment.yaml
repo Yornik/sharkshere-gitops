@@ -37,12 +37,16 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /metrics
               port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /
+              path: /metrics
               port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
           securityContext:
             capabilities:
               drop:
