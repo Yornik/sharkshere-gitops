@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Setup Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
 
       - name: Render app-of-apps chart
         run: helm template sharkshere-apps apps/ --namespace argocd
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Setup Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
 
       - name: Install kubeconform
         run: |
