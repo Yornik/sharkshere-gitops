@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: muse
-          image: ghcr.io/museofficial/muse:pr-1284
+          image: dovah/muse:latest
           env:
             - name: DISCORD_TOKEN
               valueFrom:
