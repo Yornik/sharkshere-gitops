@@ -31,16 +31,6 @@ spec:
                 secretKeyRef:
                   name: muse-secrets
                   key: YOUTUBE_API_KEY
-            - name: SPOTIFY_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: muse-secrets
-                  key: SPOTIFY_CLIENT_ID
-            - name: SPOTIFY_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: muse-secrets
-                  key: SPOTIFY_CLIENT_SECRET
             - name: CACHE_LIMIT
               value: "1GB"
             - name: ENABLE_SPONSORBLOCK
