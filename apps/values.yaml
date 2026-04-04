@@ -461,7 +461,7 @@ apps:
       chart: traefik
       targetRevision: "39.*"
       values: |
-        deployment:
+        updateStrategy:
           rollingUpdate:
             maxUnavailable: 1
             maxSurge: 0
