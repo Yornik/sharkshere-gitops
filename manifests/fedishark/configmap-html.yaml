@@ -15,15 +15,36 @@ data:
     <style>
     body {
       background-color: #000033;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='15' cy='25' r='1' fill='%23ffffff22'/%3E%3Ccircle cx='55' cy='15' r='0.8' fill='%23ffffff18'/%3E%3Ccircle cx='85' cy='65' r='1.2' fill='%23ffffff20'/%3E%3Ccircle cx='35' cy='75' r='0.6' fill='%23ffffff15'/%3E%3Ccircle cx='70' cy='45' r='0.9' fill='%23ffffff1a'/%3E%3C/svg%3E");
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='15' cy='25' r='1' fill='%23ffffff22'/%3E%3Ccircle cx='55' cy='15' r='0.8' fill='%23ffffff18'/%3E%3Ccircle cx='85' cy='65' r='1.2' fill='%23ffffff20'/%3E%3Ccircle cx='35' cy='75' r='0.6' fill='%23ffffff15'/%3E%3Ccircle cx='70' cy='45' r='0.9' fill='%23ffffff1a'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 30% 0%, #001a4d 0%, #000033 60%);
       color: #00ffff;
-      font-family: "Comic Sans MS", "Chalkboard SE", cursive;
+      font-family: "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", cursive;
       margin: 0;
       overflow-x: hidden;
     }
     a { color: #ff00ff; }
     a:visited { color: #ff6600; }
     a:hover { color: #ffff00; text-decoration: none; }
+
+    /* Twinkling stars layer */
+    .starfield {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .star {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(0.7); }
+      50%      { opacity: 1;   transform: scale(1.2); }
+    }
 
     .marquee-top {
       background: linear-gradient(90deg, #ff0000, #ff6600, #ffff00, #00ff00, #0066ff, #9900ff);
@@ -33,14 +54,32 @@ data:
       padding: 4px 0;
       overflow: hidden;
       white-space: nowrap;
+      position: relative;
+      z-index: 2;
     }
     .marquee-top span {
       display: inline-block;
-      animation: marquee 15s linear infinite;
+      animation: marquee 18s linear infinite;
     }
     @keyframes marquee {
-      0% { transform: translateX(100vw); }
+      0%   { transform: translateX(100vw); }
       100% { transform: translateX(-100%); }
+    }
+
+    .marquee-bottom {
+      background: #000;
+      color: #00ff00;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      padding: 3px 0;
+      overflow: hidden;
+      white-space: nowrap;
+      border-top: 1px solid #006600;
+      border-bottom: 1px solid #006600;
+    }
+    .marquee-bottom span {
+      display: inline-block;
+      animation: marquee 25s linear infinite;
     }
 
     .ocean-bar {
@@ -48,11 +87,41 @@ data:
       background: repeating-linear-gradient(90deg, #006699, #006699 10px, #003366 10px, #003366 20px);
     }
 
+    /* Animated rainbow horizontal divider */
+    .rainbow-rule {
+      height: 4px;
+      margin: 8px 0;
+      background: linear-gradient(90deg,
+        #ff0000, #ff6600, #ffff00, #00ff00, #00ffff, #0066ff, #9900ff, #ff0066,
+        #ff0000, #ff6600, #ffff00, #00ff00, #00ffff, #0066ff, #9900ff, #ff0066);
+      background-size: 200% 100%;
+      animation: rainbow-slide 4s linear infinite;
+    }
+    @keyframes rainbow-slide {
+      0%   { background-position: 0% 0%; }
+      100% { background-position: -200% 0%; }
+    }
+
     .container {
-      max-width: 800px;
+      max-width: 920px;
       margin: 0 auto;
       padding: 10px;
+      position: relative;
+      z-index: 1;
     }
+
+    /* GeoCities-style top ad-bar */
+    .top-banner {
+      background: #ffcc00;
+      border: 2px outset #ffaa00;
+      color: #000;
+      text-align: center;
+      padding: 6px;
+      margin: 8px 0;
+      font-size: 11px;
+      font-family: "Tahoma", "Verdana", sans-serif;
+    }
+    .top-banner b { color: #cc0000; }
 
     table.main-layout {
       width: 100%;
@@ -64,7 +133,7 @@ data:
     }
 
     .sidebar {
-      width: 180px;
+      width: 170px;
       background-color: #000066;
       border: 2px ridge #0099cc;
       padding: 8px;
@@ -85,9 +154,11 @@ data:
       padding: 2px 0;
       font-size: 12px;
     }
-    .sidebar li::before {
-      content: "🦈 ";
-    }
+    .sidebar li::before { content: "🦈 "; }
+
+    .right-sidebar { width: 160px; background-color: #1a0033; border: 2px ridge #9966cc; }
+    .right-sidebar h3 { color: #ff66ff; }
+    .right-sidebar li::before { content: "⭐ "; }
 
     .content {
       background-color: #00004488;
@@ -97,11 +168,15 @@ data:
 
     h1.title {
       text-align: center;
-      font-size: 32px;
+      font-size: 38px;
       color: #00ffff;
-      text-shadow: 2px 2px #006699, 0 0 20px #0099ff;
-      margin: 10px 0;
-      letter-spacing: 3px;
+      text-shadow:
+        2px 2px #006699,
+        0 0 20px #0099ff,
+        4px 4px #003366;
+      margin: 10px 0 4px;
+      letter-spacing: 4px;
+      font-family: "Impact", "Comic Sans MS", sans-serif;
     }
     .subtitle {
       text-align: center;
@@ -110,11 +185,36 @@ data:
       margin-bottom: 10px;
     }
 
-    .blink {
-      animation: blink 1s step-end infinite;
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* The classic flashing "NEW!" label */
+    .new-flash {
+      display: inline-block;
+      background: #ff0000;
+      color: #ffff00;
+      font-family: "Impact", sans-serif;
+      font-size: 11px;
+      padding: 1px 5px;
+      margin-left: 4px;
+      border: 1px outset #ffaa00;
+      animation: new-pulse 0.7s steps(2) infinite;
+      transform: rotate(-3deg);
+      vertical-align: middle;
     }
-    @keyframes blink {
-      50% { opacity: 0; }
+    @keyframes new-pulse {
+      0%, 100% { background: #ff0000; color: #ffff00; }
+      50%      { background: #ffff00; color: #ff0000; }
+    }
+
+    /* Spinning email icon */
+    .spin-mail {
+      display: inline-block;
+      animation: spin-y 2s linear infinite;
+    }
+    @keyframes spin-y {
+      0%   { transform: rotateY(0deg); }
+      100% { transform: rotateY(360deg); }
     }
 
     .shark-ascii {
@@ -134,9 +234,9 @@ data:
     }
     @keyframes swim {
       0%, 100% { transform: translateX(-200px) scaleX(1); }
-      45% { transform: translateX(calc(100vw - 300px)) scaleX(1); }
-      50% { transform: translateX(calc(100vw - 300px)) scaleX(-1); }
-      95% { transform: translateX(-200px) scaleX(-1); }
+      45%      { transform: translateX(calc(100vw - 300px)) scaleX(1); }
+      50%      { transform: translateX(calc(100vw - 300px)) scaleX(-1); }
+      95%      { transform: translateX(-200px) scaleX(-1); }
     }
 
     .wave {
@@ -146,34 +246,101 @@ data:
     }
     @keyframes wave-move {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+      50%      { transform: translateY(-5px); }
     }
 
     .guestbook {
       background: #000066;
       border: 3px double #0099cc;
-      padding: 10px;
+      padding: 12px;
       margin: 10px 0;
       text-align: center;
     }
-    .guestbook h3 {
-      color: #ffff00;
-      margin: 4px 0;
+    .guestbook h3 { color: #ffff00; margin: 4px 0; }
+
+    /* Mock 90s form */
+    .gb-form {
+      margin: 10px auto 0;
+      max-width: 380px;
+      text-align: left;
+      background: #ccccdd;
+      color: #000;
+      padding: 8px;
+      border: 2px inset #888;
+      font-family: "Tahoma", "Verdana", sans-serif;
+      font-size: 11px;
+    }
+    .gb-form label {
+      display: block;
+      margin: 4px 0 2px;
+      font-weight: bold;
+    }
+    .gb-form .fake-input {
+      background: #fff;
+      border: 2px inset #888;
+      padding: 2px 4px;
+      height: 16px;
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      color: #555;
+    }
+    .gb-form .fake-textarea {
+      background: #fff;
+      border: 2px inset #888;
+      padding: 4px;
+      height: 36px;
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      color: #555;
+    }
+    .gb-form .fake-button {
+      display: inline-block;
+      background: #cccccc;
+      border: 2px outset #ffffff;
+      padding: 2px 12px;
+      margin-top: 6px;
+      font-family: "Tahoma", sans-serif;
+      font-size: 11px;
+      font-weight: bold;
+      color: #000;
+      cursor: not-allowed;
+    }
+    .gb-form .fake-disabled {
+      color: #666;
+      font-style: italic;
+      font-size: 10px;
+      margin-top: 2px;
     }
 
-    .counter {
+    /* LED hit counter — properly cheesy */
+    .counter-block {
       text-align: center;
-      margin: 10px 0;
+      margin: 14px 0;
       font-size: 11px;
-      color: #999;
+      color: #99ccff;
+      font-family: "Tahoma", sans-serif;
     }
-    .counter .digits {
-      font-family: monospace;
+    .led-counter {
+      display: inline-block;
       background: #000;
-      border: 1px inset #333;
-      padding: 2px 6px;
-      color: #00ff00;
-      letter-spacing: 2px;
+      padding: 4px 6px;
+      border: 2px inset #444;
+      box-shadow: inset 0 0 8px #000;
+      margin-top: 4px;
+    }
+    .led-digit {
+      display: inline-block;
+      width: 16px; height: 22px;
+      background: #110000;
+      color: #ff0000;
+      font-family: "Courier New", monospace;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 22px;
+      margin: 0 1px;
+      border: 1px solid #330000;
+      text-shadow: 0 0 6px #ff0000, 0 0 12px #ff0000;
     }
 
     .construction {
@@ -181,6 +348,18 @@ data:
       margin: 8px 0;
       font-size: 14px;
       color: #ffff00;
+    }
+    .const-tape {
+      display: inline-block;
+      background: repeating-linear-gradient(45deg,
+        #ffcc00, #ffcc00 8px,
+        #000000 8px, #000000 16px);
+      color: #000;
+      padding: 2px 10px;
+      font-weight: bold;
+      font-family: "Impact", sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
     }
 
     .webring {
@@ -204,10 +383,91 @@ data:
       font-size: 10px;
       font-family: monospace;
     }
-    .badge-blue { background: #003399; color: #fff; }
-    .badge-green { background: #006600; color: #0f0; }
-    .badge-red { background: #990000; color: #ff6; }
+    .badge-blue   { background: #003399; color: #fff; }
+    .badge-green  { background: #006600; color: #0f0; }
+    .badge-red    { background: #990000; color: #ff6; }
     .badge-purple { background: #660066; color: #f0f; }
+
+    /* 88x31 button collection — the classic web button strip */
+    .btn88x31 {
+      display: inline-block;
+      width: 88px; height: 31px;
+      margin: 2px;
+      vertical-align: middle;
+      font-family: "Tahoma", sans-serif;
+      font-size: 8px;
+      line-height: 1;
+      text-align: center;
+      color: #fff;
+      box-sizing: border-box;
+      border: 1px solid #000;
+      background: #003366;
+      overflow: hidden;
+      position: relative;
+    }
+    .btn88x31 b { display: block; font-size: 10px; padding-top: 5px; letter-spacing: 0.5px; }
+    .btn88x31 i { display: block; font-style: normal; font-size: 7px; padding-top: 2px; opacity: 0.85; }
+    .btn-tls    { background: linear-gradient(90deg, #003366 50%, #006699 50%); }
+    .btn-shark  { background: linear-gradient(90deg, #5b9bb5 50%, #003366 50%); color: #fff; }
+    .btn-html   { background: linear-gradient(90deg, #ff6600 50%, #cc4400 50%); }
+    .btn-w3c    { background: linear-gradient(90deg, #fff 50%, #000 50%); color: #000; }
+    .btn-w3c i  { color: #fff; }
+    .btn-pride  { background: linear-gradient(180deg, #e40303 16.66%, #ff8c00 16.66% 33.33%, #ffed00 33.33% 50%, #008026 50% 66.66%, #004dff 66.66% 83.33%, #750787 83.33%); color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; }
+    .btn-fed    { background: linear-gradient(135deg, #6364ff, #3b3bff); }
+    .btn-talos  { background: linear-gradient(90deg, #000 50%, #333 50%); color: #6cf; }
+    .btn-y2k    { background: linear-gradient(90deg, #ff0066 50%, #00ffff 50%); color: #000; font-weight: bold; }
+    .btn-y2k b  { color: #000; }
+    .btn-noads  { background: #000; color: #0f0; }
+    .btn-ipv6   { background: linear-gradient(135deg, #003366, #006699); }
+    .btn-foss   { background: linear-gradient(90deg, #2c3e50 50%, #c0392b 50%); }
+    .btn-256    { background: conic-gradient(from 0deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+    .btn-256 b  { background: rgba(0,0,0,0.6); border-radius: 2px; padding: 1px 4px; display: inline-block; margin-top: 6px; }
+    .btn-256 i  { display: none; }
+
+    /* Awards row */
+    .awards {
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px;
+      background: #001133;
+      border: 1px inset #336699;
+    }
+    .award {
+      display: inline-block;
+      width: 90px; height: 90px;
+      margin: 4px;
+      vertical-align: middle;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffeb3b, #ff9800 60%, #b8860b);
+      box-shadow: 0 0 10px #ffaa00, inset 0 0 12px #b8860b;
+      color: #4d2600;
+      font-family: "Times New Roman", serif;
+      font-weight: bold;
+      font-size: 9px;
+      text-align: center;
+      padding-top: 18px;
+      box-sizing: border-box;
+      animation: award-spin 8s linear infinite;
+    }
+    .award b { display: block; font-size: 11px; padding: 2px 4px 0; }
+    .award i { font-style: italic; font-size: 8px; padding: 0 4px; display: block; }
+    .award.silver {
+      background: radial-gradient(circle at 35% 30%, #f5f5f5, #b0b0b0 60%, #707070);
+      box-shadow: 0 0 10px #cccccc, inset 0 0 12px #707070;
+      color: #222;
+      animation-direction: reverse;
+    }
+    .award.bronze {
+      background: radial-gradient(circle at 35% 30%, #f4a460, #cd7f32 60%, #6b3410);
+      box-shadow: 0 0 10px #d2691e, inset 0 0 12px #6b3410;
+      color: #fff;
+      animation-duration: 12s;
+    }
+    @keyframes award-spin {
+      0%   { transform: rotate(-6deg); }
+      50%  { transform: rotate( 6deg); }
+      100% { transform: rotate(-6deg); }
+    }
 
     .facts td {
       padding: 4px 8px;
@@ -218,6 +478,31 @@ data:
       color: #ffff00;
       font-weight: bold;
       white-space: nowrap;
+    }
+
+    /* What's New log */
+    .whatsnew {
+      background: #000044;
+      border: 2px ridge #0099cc;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    .whatsnew h3 {
+      color: #ffff00;
+      text-shadow: 1px 1px #000;
+      margin: 0 0 6px;
+    }
+    .whatsnew dl { margin: 0; }
+    .whatsnew dt {
+      color: #00ff66;
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      margin-top: 6px;
+    }
+    .whatsnew dd {
+      margin: 0 0 4px 14px;
+      font-size: 12px;
+      color: #99ccff;
     }
 
     .footer {
@@ -236,14 +521,37 @@ data:
       bottom: -20px;
       font-size: 12px;
       opacity: 0.3;
+      pointer-events: none;
     }
     @keyframes bubble-rise {
-      0% { transform: translateY(0); opacity: 0.3; }
+      0%   { transform: translateY(0); opacity: 0.3; }
       100% { transform: translateY(-110vh); opacity: 0; }
+    }
+
+    @media (max-width: 720px) {
+      table.main-layout, table.main-layout tbody, table.main-layout tr, table.main-layout td {
+        display: block; width: 100%;
+      }
+      .sidebar, .right-sidebar { width: auto; }
+      h1.title { font-size: 28px; letter-spacing: 2px; }
     }
     </style>
     </head>
     <body>
+
+    <!-- Twinkling stars -->
+    <div class="starfield" aria-hidden="true">
+      <div class="star" style="top:8%;  left:12%;"></div>
+      <div class="star" style="top:18%; left:74%; animation-delay:0.6s;"></div>
+      <div class="star" style="top:32%; left:24%; animation-delay:1.4s;"></div>
+      <div class="star" style="top:46%; left:88%; animation-delay:0.2s;"></div>
+      <div class="star" style="top:62%; left:6%;  animation-delay:1.8s;"></div>
+      <div class="star" style="top:74%; left:46%; animation-delay:0.9s;"></div>
+      <div class="star" style="top:90%; left:80%; animation-delay:2.4s;"></div>
+      <div class="star" style="top:14%; left:50%; animation-delay:1.1s;"></div>
+      <div class="star" style="top:38%; left:62%; animation-delay:2.0s;"></div>
+      <div class="star" style="top:80%; left:30%; animation-delay:0.4s;"></div>
+    </div>
 
     <!-- Bubbles -->
     <div class="bubble" style="left:10%; animation-delay:0s">o</div>
@@ -253,10 +561,17 @@ data:
     <div class="bubble" style="left:90%; animation-delay:3s; font-size:6px">o</div>
 
     <!-- Rainbow marquee -->
-    <div class="marquee-top"><span>*** WELCOME TO FEDISHARK.EU *** THE FEDIVERSE'S MOST JAWSOME HOME ON THE WEB *** BEST VIEWED WITH NETSCAPE NAVIGATOR 4.0 *** YOU ARE VISITOR #000001337 *** SHARKS RULE ***</span></div>
+    <div class="marquee-top"><span>*** WELCOME TO FEDISHARK.EU *** THE FEDIVERSE'S MOST JAWSOME HOME ON THE WEB *** BEST VIEWED WITH NETSCAPE NAVIGATOR 4.0 *** YOU ARE VISITOR #000001337 *** SHARKS RULE *** &copy; FEDISHARK 2026 *** PROUD MEMBER OF THE OCEAN-NET WEBRING ***</span></div>
     <div class="ocean-bar"></div>
+    <div class="rainbow-rule"></div>
 
     <div class="container">
+
+    <!-- Top banner (totally not an ad) -->
+    <div class="top-banner">
+      <b>NOTICE:</b> This site is hand-coded HTML 4.01 &mdash; no React, no Webpack, no tracking.
+      Powered entirely by sharks &amp; <abbr title="Hypertext Transfer Protocol">HTTP</abbr> 1.1!
+    </div>
 
     <!-- Swimming shark -->
     <div style="height:40px; position:relative; overflow:hidden;">
@@ -270,7 +585,10 @@ data:
       <span class="wave" style="animation-delay:0.3s">~</span>
     </h1>
     <div class="subtitle">
-      <span class="blink">&#x2B50;</span> The Internet's Premier Shark-Powered Fediverse Hub <span class="blink">&#x2B50;</span>
+      <span class="blink">&#x2B50;</span>
+      The Internet's Premier Shark-Powered Fediverse Hub
+      <span class="blink">&#x2B50;</span>
+      <span class="new-flash">NEW!</span>
     </div>
 
     <div class="shark-ascii">
@@ -290,18 +608,22 @@ data:
                       |______|
     </div>
 
-    <!-- Main layout table -->
+    <div class="rainbow-rule"></div>
+
+    <!-- Main layout table: LEFT sidebar + content + RIGHT sidebar (very 90s) -->
     <table class="main-layout">
     <tr>
 
-    <!-- Sidebar -->
+    <!-- LEFT Sidebar -->
     <td class="sidebar">
       <h3>&#x1F30A; NAVIGATE</h3>
       <ul>
         <li><a href="https://pub.fedishark.eu">Social Feed</a></li>
         <li><a href="https://jelly.yornik.eu">Media Cave</a></li>
         <li><a href="https://grafana.fedishark.eu">Reef Monitor</a></li>
-        <li><a href="https://vikunja.fedishark.eu">Task Tides</a></li>
+        <li><a href="https://todo.yornik.eu">Task Tides</a></li>
+        <li><a href="https://passwords.yornik.eu">Vault Trench</a></li>
+        <li><a href="https://omni.fedishark.eu">Tools Bay</a></li>
       </ul>
 
       <h3>&#x1F41F; FUN FACTS</h3>
@@ -311,14 +633,17 @@ data:
       <p style="font-size:11px; color:#99ccff;">
         A group of sharks is called a &ldquo;shiver&rdquo; &#x1F976;
       </p>
+      <p style="font-size:11px; color:#99ccff;">
+        Megalodon teeth could be 18 cm long. Imagine the toothbrush!
+      </p>
 
       <h3>&#x1F3B5; NOW PLAYING</h3>
       <p style="font-size:10px; color:#66ff66; text-align:center;">
-        &#x266B; Baby Shark (Metal Cover) &#x266B;
+        &#x266B; Baby Shark<br>(Death Metal Cover) &#x266B;
       </p>
 
       <div class="construction">
-        &#x1F6A7; UNDER<br>CONSTRUCTION &#x1F6A7;
+        <span class="const-tape">&#x1F6A7; UNDER CONSTRUCTION &#x1F6A7;</span>
       </div>
     </td>
 
@@ -329,19 +654,28 @@ data:
         <span style="font-size:18px; color:#ff6600;">Ahoy, fellow netizen!</span><br><br>
         Welcome to <b>FediShark.eu</b> &mdash; a self-hosted archipelago of services
         swimming in the deep waters of the <b>Fediverse</b>! This humble corner of
-        the internet is powered by recycled electrons, open-source software, and
-        an unreasonable love for sharks.
+        the World Wide Web is powered by recycled electrons, open-source software,
+        and an unreasonable love for sharks.
+      </p>
+
+      <p>
+        Pull up a beach chair, pour yourself a soda, and stay a while.
+        Don't forget to <a href="#guestbook">sign the guestbook</a> on your way out!
       </p>
 
       <table class="facts" style="width:100%; margin:10px 0;">
-        <tr><td>&#x1F4BB; Powered by</td><td>Talos Linux on 4x Intel N150 nodes</td></tr>
+        <tr><td>&#x1F4BB; Powered by</td><td>Talos Linux on 4&times; Intel N150 nodes</td></tr>
         <tr><td>&#x1F30A; Orchestrated by</td><td>Kubernetes (it's like a school of fish)</td></tr>
         <tr><td>&#x1F512; TLS Version</td><td>1.3 ONLY &mdash; we don't do ancient protocols</td></tr>
         <tr><td>&#x1F510; Certificates</td><td>ECDSA P-384 via Let's Encrypt</td></tr>
         <tr><td>&#x1F3E0; Location</td><td>The deep end of a Dutch living room</td></tr>
         <tr><td>&#x1F4CA; Uptime</td><td>As reliable as a great white's appetite</td></tr>
         <tr><td>&#x2694;&#xFE0F; Security</td><td>NCSC NL &ldquo;Good&rdquo; on ALL categories</td></tr>
+        <tr><td>&#x1F4E1; IP Stack</td><td>IPv4 + IPv6, dual-stack end-to-end</td></tr>
+        <tr><td>&#x1F4E7; Email Auth</td><td>SPF + DKIM + DMARC + DANE/TLSA</td></tr>
       </table>
+
+      <div class="rainbow-rule"></div>
 
       <!-- Services -->
       <h2 style="color:#ffff00; text-align:center; text-shadow:1px 1px #000;">
@@ -351,7 +685,8 @@ data:
       <table style="width:100%; border-collapse:collapse;">
         <tr style="background:#003366;">
           <td style="padding:6px; border:1px solid #006699;">
-            <b style="color:#00ffcc;">GoToSocial</b><br>
+            <b style="color:#00ffcc;">GoToSocial</b>
+            <span class="new-flash">NEW!</span><br>
             <span style="font-size:12px;">
               Our <a href="https://pub.fedishark.eu">ActivityPub server</a> &mdash;
               federated social networking, shark-style. Follow us in the Fediverse!
@@ -367,7 +702,7 @@ data:
             </span>
           </td>
         </tr>
-        <tr style="background:#002244;">
+        <tr style="background:#003366;">
           <td style="padding:6px; border:1px solid #006699;">
             <b style="color:#00ffcc;">Grafana</b><br>
             <span style="font-size:12px;">
@@ -376,15 +711,86 @@ data:
             </span>
           </td>
         </tr>
+        <tr style="background:#002244;">
+          <td style="padding:6px; border:1px solid #006699;">
+            <b style="color:#00ffcc;">Vikunja</b><br>
+            <span style="font-size:12px;">
+              <a href="https://todo.yornik.eu">Task tides</a> &mdash; getting things done,
+              one barnacle at a time.
+            </span>
+          </td>
+        </tr>
+        <tr style="background:#003366;">
+          <td style="padding:6px; border:1px solid #006699;">
+            <b style="color:#00ffcc;">Vaultwarden</b><br>
+            <span style="font-size:12px;">
+              <a href="https://passwords.yornik.eu">Password vault</a> in the trench &mdash;
+              bcrypt and zero-knowledge, deeper than the Mariana.
+            </span>
+          </td>
+        </tr>
       </table>
 
+      <div class="rainbow-rule"></div>
+
+      <!-- What's New log -->
+      <div class="whatsnew">
+        <h3>&#x1F4F0; WHAT'S NEW! &#x1F4F0;</h3>
+        <dl>
+          <dt>2026.04.18</dt>
+          <dd>Hand-restored the entire homepage to be EVEN MORE 90s. Added 88x31 button collection, mock guestbook form, and a proper LED hit counter. <span class="new-flash">NEW!</span></dd>
+          <dt>2026.04.10</dt>
+          <dd>Migrated DNS from deSEC to Cloudflare. Faster propagation, same paranoid record management.</dd>
+          <dt>2026.03.20</dt>
+          <dd>All certificates rotated to ECDSA P-384. Smaller, faster, more modern. Ancient ciphers are now in the dustbin where they belong.</dd>
+          <dt>2026.03.05</dt>
+          <dd>Vaultwarden moved to passwords.yornik.eu. Old vault.fedishark.eu now redirects.</dd>
+          <dt>2026.02.14</dt>
+          <dd>NCSC NL audit: "Good" on every category. The ocean is now officially safe.</dd>
+        </dl>
+      </div>
+
       <!-- Guestbook -->
+      <a id="guestbook"></a>
       <div class="guestbook">
-        <h3>&#x1F4DD; GUESTBOOK</h3>
+        <h3>&#x1F4DD; SIGN THE GUESTBOOK</h3>
         <p style="font-size:12px;">
-          Sign our guestbook! (just kidding, this is a static page)<br>
-          But you CAN find us on the Fediverse: <a href="https://pub.fedishark.eu">@shark@pub.fedishark.eu</a>
+          Leave a message for the captain &mdash; or find us in the Fediverse:<br>
+          <a href="https://pub.fedishark.eu">@shark@pub.fedishark.eu</a>
         </p>
+
+        <div class="gb-form" aria-label="Decorative mock guestbook form, not functional">
+          <label for="gb-name">Your handle:</label>
+          <div class="fake-input" id="gb-name">visitor1337</div>
+          <label for="gb-loc">From the depths of:</label>
+          <div class="fake-input" id="gb-loc">somewhere on the WWW</div>
+          <label for="gb-msg">Message in a bottle:</label>
+          <div class="fake-textarea" id="gb-msg">cool site! the sharks are radical 🦈</div>
+          <span class="fake-button">[Submit]</span>
+          <div class="fake-disabled">(decorative only &mdash; we don't store your data; ping us on the Fediverse instead)</div>
+        </div>
+      </div>
+
+      <!-- Awards -->
+      <div class="awards">
+        <div style="color:#ffff00; font-weight:bold; margin-bottom:6px; font-family:'Tahoma',sans-serif;">
+          &#x1F3C6; PAGE AWARDS &amp; RECOGNITION &#x1F3C6;
+        </div>
+        <div class="award">
+          <b>NCSC NL</b>
+          <i>"Good"</i>
+          <i>2026</i>
+        </div>
+        <div class="award silver">
+          <b>internet.nl</b>
+          <i>100%</i>
+          <i>website</i>
+        </div>
+        <div class="award bronze">
+          <b>HSTS</b>
+          <i>Preload</i>
+          <i>list</i>
+        </div>
       </div>
 
       <!-- Badges -->
@@ -398,34 +804,151 @@ data:
         <span class="badge badge-purple">100% Shark</span>
       </div>
 
+      <!-- 88x31 button strip — the classic web badge collection -->
+      <div style="text-align:center; padding:8px; background:#001122; border:1px inset #336699; margin:10px 0;">
+        <div style="color:#99ccff; font-size:10px; font-family:'Tahoma',sans-serif; margin-bottom:6px;">
+          - this site proudly displays -
+        </div>
+        <div class="btn88x31 btn-shark">
+          <b>FEDISHARK</b>
+          <i>.eu / 2026</i>
+        </div>
+        <div class="btn88x31 btn-tls">
+          <b>TLS 1.3</b>
+          <i>only / always</i>
+        </div>
+        <div class="btn88x31 btn-html">
+          <b>HTML 4.01</b>
+          <i>hand-crafted</i>
+        </div>
+        <div class="btn88x31 btn-w3c">
+          <b>W3C</b>
+          <i>(adjacent)</i>
+        </div>
+        <div class="btn88x31 btn-pride">
+          <b>PRIDE</b>
+          <i>since '69</i>
+        </div>
+        <div class="btn88x31 btn-fed">
+          <b>FEDIVERSE</b>
+          <i>activitypub</i>
+        </div>
+        <div class="btn88x31 btn-talos">
+          <b>TALOS</b>
+          <i>linux</i>
+        </div>
+        <div class="btn88x31 btn-y2k">
+          <b>Y2K</b>
+          <i>READY!</i>
+        </div>
+        <div class="btn88x31 btn-noads">
+          <b>NO ADS</b>
+          <i>NO TRACKERS</i>
+        </div>
+        <div class="btn88x31 btn-ipv6">
+          <b>IPv6</b>
+          <i>dual stack</i>
+        </div>
+        <div class="btn88x31 btn-foss">
+          <b>FOSS</b>
+          <i>top to bottom</i>
+        </div>
+        <div class="btn88x31 btn-256">
+          <b>256<br>COLORS</b>
+        </div>
+      </div>
+
       <!-- Webring -->
       <div class="webring">
         <b style="color:#ffff00;">&#x1F517; FediShark WebRing</b><br>
         <a href="#">&lt;&lt; Prev</a> |
         <a href="#">Random</a> |
-        <a href="#">Next &gt;&gt;</a><br>
-        <span style="font-size:10px; color:#666;">(we're the only member so far)</span>
+        <a href="#">Next &gt;&gt;</a> |
+        <a href="#">List</a><br>
+        <span style="font-size:10px; color:#99ccff;">
+          a ring of self-hosted, hand-crafted, deeply-personal websites
+        </span><br>
+        <span style="font-size:10px; color:#666;">(we're the only member so far &mdash; <a href="mailto:webmaster@fedishark.eu">join us!</a>)</span>
+      </div>
+
+      <!-- Email me -->
+      <div style="text-align:center; padding:6px; margin:8px 0; font-size:13px;">
+        <span class="spin-mail">&#x1F4E7;</span>
+        <a href="mailto:webmaster@fedishark.eu" style="font-weight:bold;">EMAIL THE WEBMASTER</a>
+        <span class="spin-mail">&#x1F4E7;</span>
       </div>
 
     </td>
+
+    <!-- RIGHT Sidebar -->
+    <td class="right-sidebar">
+      <h3>&#x1F31F; LINKS WE LOVE</h3>
+      <ul>
+        <li><a href="https://yornik.eu">yornik.eu</a></li>
+        <li><a href="https://internet.nl">internet.nl</a></li>
+        <li><a href="https://github.com/Yornik/sharkshere-gitops">our gitops repo</a></li>
+        <li><a href="https://www.talos.dev">talos linux</a></li>
+        <li><a href="https://argo-cd.readthedocs.io">argo cd docs</a></li>
+        <li><a href="https://gotosocial.org">gotosocial</a></li>
+      </ul>
+
+      <h3>&#x1F4DC; SITE STATS</h3>
+      <p style="font-size:11px; color:#cc99ff;">
+        <b>Files:</b> 1 (this one)<br>
+        <b>Build system:</b> nginx + ConfigMap<br>
+        <b>Last touched:</b> 2026.04.18<br>
+        <b>Bytes:</b> &asymp; small<br>
+        <b>Cookies:</b> 0
+      </p>
+
+      <h3>&#x1F40B; SEA QUOTE</h3>
+      <p style="font-size:11px; color:#ff99ff; font-style:italic; text-align:center;">
+        "Ph'nglui mglw'nafh<br>Cthulhu R'lyeh<br>wgah'nagl fhtagn"
+        <br><br>
+        &mdash; some old fish
+      </p>
+
+      <h3>&#x1F4DA; CARD CATALOG</h3>
+      <p style="font-size:10px; color:#cc99ff; line-height:1.4;">
+        Filed under:<br>
+        &gt; oceans, deep<br>
+        &gt; sharks, friendly<br>
+        &gt; fediverse, the<br>
+        &gt; nostalgia, peak
+      </p>
+
+      <div class="construction">
+        <span class="const-tape">&#x1F4FB; PAGE 2/2 &#x1F4FB;</span>
+      </div>
+    </td>
+
     </tr>
     </table>
 
+    <div class="rainbow-rule"></div>
+
     <!-- Visitor counter -->
-    <div class="counter">
-      You are visitor number: <span class="digits">001337</span><br>
-      (not really, we don't track you &#x1F60E;)
+    <div class="counter-block">
+      You are visitor number:<br>
+      <span class="led-counter" aria-label="visitor counter, decorative">
+        <span class="led-digit">0</span><span class="led-digit">0</span><span class="led-digit">1</span><span class="led-digit">3</span><span class="led-digit">3</span><span class="led-digit">7</span>
+      </span><br>
+      <span style="font-size:10px; color:#666;">(not really, we don't track you &#x1F60E;)</span>
     </div>
+
+    <div class="rainbow-rule"></div>
 
     <!-- Footer -->
     <div class="footer">
       &copy; 2026 FediShark.eu &bull;
       Made with &#x1F499; and &#x1F988; &bull;
       No sharks were harmed in the making of this website &bull;
-      <a href="/.well-known/security.txt">security.txt</a><br>
+      <a href="/.well-known/security.txt">security.txt</a> &bull;
+      <a href="/.well-known/pgp-key.txt">pgp</a><br>
       <br>
-      Best viewed at 1024x768 &bull; 16-bit color &bull; Netscape Navigator 4.0+<br>
+      Best viewed at 1024&times;768, 800&times;600, or whatever you've got &bull; 16-bit color &bull; Netscape Navigator 4.0+<br>
       This site is <b>Yed Arrr Ell</b> compliant and W3C adjacent (we tried)<br>
+      Hand-coded in Vim. No frameworks were harmed.<br>
       <br>
       <span style="color:#003366;">
         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br>
@@ -440,11 +963,12 @@ data:
     </div>
 
     <div class="ocean-bar"></div>
+    <div class="marquee-bottom"><span>$ kubectl get sharks --all-namespaces &nbsp;|&nbsp; status: SWIMMING &nbsp;|&nbsp; uptime: 99.99% &nbsp;|&nbsp; threads: 4 &nbsp;|&nbsp; gitops: in sync &nbsp;|&nbsp; certificates: ECDSA P-384 &nbsp;|&nbsp; tls: 1.3 only &nbsp;|&nbsp; vibes: immaculate &nbsp;|&nbsp;</span></div>
 
     </div>
 
     <!-- Pride flag with BLÅHAJ -->
-    <div style="max-width:800px; margin:4px auto 0; line-height:0;">
+    <div style="max-width:920px; margin:4px auto 0; line-height:0; position:relative; z-index:1;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" style="width:100%; height:auto; display:block;">
         <rect fill="#E40303" width="600" height="66.67"/>
         <rect fill="#FF8C00" y="66.67" width="600" height="66.67"/>
