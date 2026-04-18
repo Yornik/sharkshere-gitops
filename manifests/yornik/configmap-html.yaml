@@ -454,19 +454,24 @@ data:
       text-transform: uppercase;
       color: var(--dim);
       margin: 0 0 18px;
+      text-align: center;
     }
 
     /* ─────────────── hero ─────────────── */
 
-    .hero { animation: fade-up 0.6s ease-out both; }
+    .hero {
+      animation: fade-up 0.6s ease-out both;
+      text-align: center;
+    }
+    .hero .eyebrow { text-align: center; }
 
     h1 {
-      margin: 0;
+      margin: 0 auto;
       font-family: var(--serif);
       font-weight: 400;
-      font-size: clamp(64px, 13vw, 168px);
-      line-height: 0.88;
-      letter-spacing: -0.04em;
+      font-size: clamp(56px, 9vw, 112px);
+      line-height: 0.92;
+      letter-spacing: -0.035em;
       color: var(--text);
     }
     h1 em {
@@ -483,16 +488,17 @@ data:
       color: var(--text);
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 0 6px;
     }
     .hero-meta .sep { color: var(--vdim); }
 
     .hero-prose {
-      margin: 32px 0 0;
+      margin: 32px auto 0;
       max-width: 56ch;
       font-family: var(--serif);
-      font-size: clamp(20px, 2vw, 24px);
-      line-height: 1.45;
+      font-size: clamp(19px, 1.7vw, 22px);
+      line-height: 1.5;
       color: var(--text);
       font-weight: 400;
     }
@@ -506,6 +512,7 @@ data:
       margin: 40px 0 0;
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 8px;
     }
     .cta {
@@ -572,19 +579,22 @@ data:
     }
     .metric {
       background: var(--bg);
-      padding: 26px 24px 28px;
+      padding: 28px 24px 26px;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      text-align: center;
       gap: 12px;
       position: relative;
     }
     .metric::before {
       content: "";
       position: absolute;
-      top: 0; left: 0;
-      width: 28px; height: 1px;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 32px; height: 1px;
       background: var(--accent);
-      opacity: 0.65;
+      opacity: 0.7;
     }
     .metric-label {
       font-family: var(--mono);
@@ -596,15 +606,16 @@ data:
     .metric-value {
       font-family: var(--serif);
       font-weight: 400;
-      font-size: 76px;
+      font-size: 64px;
       line-height: 0.95;
       color: var(--text);
       letter-spacing: -0.02em;
       display: flex;
       align-items: baseline;
+      justify-content: center;
       gap: 6px;
     }
-    .metric-value.sm { font-size: 48px; letter-spacing: -0.01em; }
+    .metric-value.sm { font-size: 42px; letter-spacing: -0.01em; }
     .metric-unit {
       font-family: var(--serif);
       font-style: italic;
@@ -632,6 +643,7 @@ data:
     .panel {
       background: var(--bg);
       padding: 32px 32px 36px;
+      text-align: center;
     }
     .panel-tag {
       margin: 0 0 18px;
@@ -645,13 +657,14 @@ data:
       margin: 0;
       font-family: var(--serif);
       font-weight: 400;
-      font-size: clamp(22px, 2.4vw, 30px);
-      line-height: 1.18;
+      font-size: clamp(20px, 2vw, 26px);
+      line-height: 1.22;
       letter-spacing: -0.015em;
       color: var(--text);
     }
     .panel p {
-      margin: 18px 0 0;
+      margin: 18px auto 0;
+      max-width: 48ch;
       color: var(--muted);
       font-family: var(--sans);
       font-size: 15px;
@@ -702,12 +715,13 @@ data:
       color: var(--muted);
     }
     .runbook-note {
-      margin: 22px 0 0;
+      margin: 22px auto 0;
       max-width: 70ch;
       font-family: var(--sans);
       font-size: 13.5px;
       color: var(--dim);
       font-style: italic;
+      text-align: center;
     }
     .runbook-note code {
       font-style: normal;
@@ -782,9 +796,11 @@ data:
       padding: 22px 24px;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 6px;
       border: none;
       transition: background 0.16s ease;
+      text-align: center;
     }
     .contact-grid a:hover { background: var(--bg-2); }
     .contact-key {
@@ -803,11 +819,12 @@ data:
     .contact-grid a:hover .contact-val { color: var(--accent); }
 
     .contact-foot {
-      margin: 22px 0 0;
+      margin: 22px auto 0;
       max-width: 64ch;
       font-family: var(--sans);
       font-size: 14px;
       color: var(--muted);
+      text-align: center;
     }
 
     /* ─────────────── footer ─────────────── */
@@ -824,11 +841,13 @@ data:
     .foot-line {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 22px;
+      text-align: center;
     }
     .foot-line .dim { color: var(--vdim); }
     .foot-shark {
-      margin: 36px 0 0;
+      margin: 36px auto 0;
       font-family: var(--mono);
       font-size: 9px;
       line-height: 1.05;
@@ -836,6 +855,7 @@ data:
       white-space: pre;
       overflow: hidden;
       letter-spacing: 0;
+      text-align: center;
     }
 
     /* ─────────────── motion ─────────────── */
