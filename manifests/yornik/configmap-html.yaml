@@ -10,12 +10,12 @@ data:
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Yornik Heyl – Cloud & Platform Engineer | Rotterdam, Netherlands</title>
+      <title>Yornik Heyl – Cloud Reliability Engineer | Rotterdam, Netherlands</title>
       <meta name="author" content="Yornik Heyl" />
       <meta name="description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens). Open to opportunities." />
       <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineer, SRE, Site Reliability Engineer, DevOps, Kubernetes, GitOps, Docker, Terraform, CI/CD, AWS, Azure, Infrastructure as Code, Mendix, Siemens, Rotterdam, Netherlands" />
       <meta name="robots" content="index,follow,max-image-preview:large" />
-      <meta name="theme-color" content="#0b1117" />
+      <meta name="theme-color" content="#0a0e15" />
       <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIEBrZXlmcmFtZXMgc3BpbiB7CiAgICAgICAgMCUgeyB0cmFuc2Zvcm06IHJvdGF0ZSgwZGVnKTsgfQogICAgICAgIDEwMCUgeyB0cmFuc2Zvcm06IHJvdGF0ZSgzNjBkZWcpOyB9CiAgICAgIH0KICAgICAgLnNoYXJrIHsKICAgICAgICBhbmltYXRpb246IHNwaW4gM3MgbGluZWFyIGluZmluaXRlOwogICAgICAgIHRyYW5zZm9ybS1vcmlnaW46IDE2cHggMTZweDsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CgogIDxnIGNsYXNzPSJzaGFyayI+CiAgICA8IS0tIEJvZHkgLSBzaW5nbGUgYm9sZCBzaGFwZSAtLT4KICAgIDxlbGxpcHNlIGN4PSIxOCIgY3k9IjE2IiByeD0iMTIiIHJ5PSI3IiBmaWxsPSIjNUI5QkI1Ii8+CgogICAgPCEtLSBCZWxseSAtIGhpZ2ggY29udHJhc3QgLS0+CiAgICA8ZWxsaXBzZSBjeD0iMTkiIGN5PSIxNyIgcng9IjgiIHJ5PSI0IiBmaWxsPSIjRThGNEY4Ii8+CgogICAgPCEtLSBUYWlsIC0gYm9sZCB0cmlhbmdsZSAtLT4KICAgIDxwYXRoIGQ9Ik0gNCAxNiBMIDEgMTIgTCAxIDIwIFoiIGZpbGw9IiM1QjlCQjUiLz4KCiAgICA8IS0tIERvcnNhbCBmaW4gLSBzaW1wbGUgdHJpYW5nbGUgLS0+CiAgICA8cGF0aCBkPSJNIDE3IDkgTCAyMCA2IEwgMjEgMTEgWiIgZmlsbD0iIzVCOUJCNSIvPgoKICAgIDwhLS0gRXllIC0gYmlnIGFuZCBib2xkIC0tPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSIxNSIgcj0iMy41IiBmaWxsPSIjMDAwIi8+CiAgICA8Y2lyY2xlIGN4PSIyNy41IiBjeT0iMTQiIHI9IjEuNSIgZmlsbD0iI2ZmZiIvPgogIDwvZz4KPC9zdmc+Cg==">
       <link rel="canonical" href="https://yornik.eu/" />
       <link rel="alternate" hreflang="en" href="https://yornik.eu/" />
@@ -52,7 +52,7 @@ data:
             "@id": "https://yornik.eu/#profilepage",
             "url": "https://yornik.eu",
             "dateCreated": "2025-01-01",
-            "dateModified": "2026-03-17",
+            "dateModified": "2026-04-18",
             "isPartOf": { "@id": "https://yornik.eu/#website" },
             "mainEntity": { "@id": "https://yornik.eu/#person" }
           },
@@ -104,313 +104,776 @@ data:
       <link rel="stylesheet" href="/styles.css" />
     </head>
     <body>
-      <main class="shell">
+      <header class="masthead">
+        <div class="status-strip">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="status-label">All systems operational</span>
+          <span class="status-meta">yornik.eu &middot; synced from <span class="mono-em">main</span> &middot; build 2026.04.18</span>
+        </div>
+      </header>
+
+      <main class="page">
+
         <section class="hero">
-          <h1>Yornik Heyl <span class="h1-role">Cloud Reliability Engineer</span></h1>
-          <p class="role">Cloud Reliability Engineer at Mendix (Siemens)</p>
-          <p class="lede">
-            I've been keeping cloud platforms running at Mendix for 5 years. Incident response, infrastructure
-            hardening, and making sure deployments don't break things on a Friday evening.
+          <p class="eyebrow">/ profile.public</p>
+          <h1>Yornik <em>Heyl</em>.</h1>
+          <p class="hero-meta">
+            <span>Cloud Reliability Engineer</span>
+            <span class="sep">/</span>
+            <span>Rotterdam, NL</span>
+            <span class="sep">/</span>
+            <span>EN &middot; NL</span>
           </p>
-          <p class="lede">
-            At home I run the same stack because I want to: a 4-node Talos Linux Kubernetes cluster, fully GitOps'd
-            with Argo CD, with observability, ingress hardening, and DNS automation. All self-built, all in Git.
+          <p class="hero-prose">
+            Five years keeping production calm at <a href="https://www.mendix.com">Mendix</a> (Siemens).
+            Incident response, rollout design, and observability that means something at 03:00.
+            I build platforms that are <em>safe to change</em>, not just safe to leave alone.
           </p>
-          <div class="links">
-            <a class="btn primary" href="https://github.com/Yornik">GitHub</a>
-            <a class="btn" href="https://www.linkedin.com/in/yornik/">LinkedIn</a>
+          <div class="hero-actions">
+            <a class="cta primary" href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
+            <a class="cta" href="https://github.com/Yornik">github</a>
+            <a class="cta" href="https://www.linkedin.com/in/yornik/">linkedin</a>
+            <a class="cta" href="https://www.credly.com/users/yornik-heyl">credly</a>
           </div>
         </section>
 
-        <section class="showcase">
-          <h2>What I actually do</h2>
-          <div class="grid">
+        <section class="overview">
+          <header class="section-head">
+            <span class="section-num">01</span>
+            <h2>Overview</h2>
+            <span class="section-rule"></span>
+          </header>
+          <div class="metrics">
+            <div class="metric">
+              <span class="metric-label">In production</span>
+              <span class="metric-value">5<span class="metric-unit">yr</span></span>
+              <span class="metric-foot">since 2021 &middot; mendix &middot; siemens</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Discipline</span>
+              <span class="metric-value sm">SRE</span>
+              <span class="metric-foot">platform &middot; reliability &middot; on-call</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Stack at home</span>
+              <span class="metric-value sm">k8s</span>
+              <span class="metric-foot">talos &middot; argo cd &middot; gitops</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Friday deploys</span>
+              <span class="metric-value">∞</span>
+              <span class="metric-foot">boring on purpose</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="practice">
+          <header class="section-head">
+            <span class="section-num">02</span>
+            <h2>Practice</h2>
+            <span class="section-rule"></span>
+          </header>
+          <div class="practice-grid">
             <article class="panel">
-              <h3>Production reliability</h3>
+              <p class="panel-tag">/01 reliability</p>
+              <h3>Production should be safe to change.</h3>
               <p>
-                I make production safer to change. Incident response, rollout design, observability that actually
-                tells you something at 3 AM, and alerting that doesn't go off for nothing. Systems should be
-                explainable under pressure, not just work when everything is fine.
+                Incident response, rollout design, observability that actually tells you
+                something at 03:00, and alerting that doesn't go off for nothing. Systems
+                should be explainable under pressure &mdash; not just work when nothing is wrong.
               </p>
             </article>
             <article class="panel">
-              <h3>How I work</h3>
+              <p class="panel-tag">/02 method</p>
+              <h3>If it isn't in Git, it didn't happen.</h3>
               <p>
-                Declarative everything. If it's not in Git, it didn't happen. Reproducible rollouts, clear ownership,
-                and security that's part of the platform, not added afterwards. I use AI tooling where it actually
-                helps (automating the boring parts, catching mistakes early), not as a buzzword.
+                Declarative everything. Reproducible rollouts, clear ownership, security
+                folded into the platform rather than bolted on. AI tooling where it pays
+                &mdash; automating the boring parts and catching mistakes early.
               </p>
             </article>
           </div>
         </section>
 
-        <section class="stack">
-          <h2>Stack</h2>
-          <div class="chips">
-            <span class="chip">Kubernetes</span>
-            <span class="chip">Talos Linux</span>
-            <span class="chip">Argo CD</span>
-            <span class="chip">Traefik</span>
-            <span class="chip">Grafana</span>
-            <span class="chip">Loki</span>
-            <span class="chip">Alloy</span>
-            <span class="chip">ExternalDNS</span>
-            <span class="chip">Cloudflare</span>
-          </div>
-          <p class="footer">
-            Based in the Rotterdam area. Self-taught infrastructure engineer with 5 years of production experience and a homelab that won't quit.
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 36" width="20" height="12" role="img" aria-label="Pride flag" style="display:inline-block; vertical-align:middle; margin-left:0.3em; border-radius:2px;"><rect fill="#E40303" width="60" height="6"/><rect fill="#FF8C00" y="6" width="60" height="6"/><rect fill="#FFED00" y="12" width="60" height="6"/><rect fill="#008026" y="18" width="60" height="6"/><rect fill="#004DFF" y="24" width="60" height="6"/><rect fill="#750787" y="30" width="60" height="6"/></svg>
+        <section class="runbook">
+          <header class="section-head">
+            <span class="section-num">03</span>
+            <h2>Runbook &middot; what I operate</h2>
+            <span class="section-rule"></span>
+          </header>
+          <ul class="services">
+            <li>
+              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="svc-name">talos linux</span>
+              <span class="svc-version">v1.12</span>
+              <span class="svc-note">4-node cluster &middot; 3 control-plane / 1 worker &middot; intel n150</span>
+            </li>
+            <li>
+              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="svc-name">argo cd</span>
+              <span class="svc-version">v3</span>
+              <span class="svc-note">app-of-apps &middot; 28 applications &middot; sops + ksops</span>
+            </li>
+            <li>
+              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="svc-name">prometheus / grafana / loki</span>
+              <span class="svc-version">stable</span>
+              <span class="svc-note">alloy log shipping &middot; 48 h retention &middot; custom dashboards</span>
+            </li>
+            <li>
+              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="svc-name">traefik</span>
+              <span class="svc-version">v3</span>
+              <span class="svc-note">tls 1.3 only &middot; ecdsa p-384 &middot; acme via let's encrypt</span>
+            </li>
+            <li>
+              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="svc-name">external-dns</span>
+              <span class="svc-version">v0.21</span>
+              <span class="svc-note">cloudflare &middot; dane / tlsa cron jobs &middot; sops-encrypted creds</span>
+            </li>
+            <li>
+              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="svc-name">opentofu</span>
+              <span class="svc-version">v1.10</span>
+              <span class="svc-note">hetzner edge nodes &middot; haproxy ingress to tailscale &middot; iac end-to-end</span>
+            </li>
+          </ul>
+          <p class="runbook-note">
+            All declarative. Every change is a pull request: required review, yaml lint,
+            <code>helm template</code>, and <code>kubeconform</code> validation in CI before merge.
           </p>
-          <p class="trust">
-            Certifications on <a href="https://www.credly.com/users/yornik-heyl">Credly</a>.
-            100% score on <a href="https://internet.nl">Internet.nl</a>, aligned with Dutch NCSC guidance.
-          </p>
-          <address class="contact">
-            <a href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
-          </address>
-          <p class="ai-disclosure">Content on this site was written with the help of AI.</p>
         </section>
+
+        <section class="signals">
+          <header class="section-head">
+            <span class="section-num">04</span>
+            <h2>Signals</h2>
+            <span class="section-rule"></span>
+          </header>
+          <ul class="signals-list">
+            <li>
+              <span class="signal-key">Internet.nl score</span>
+              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
+              <span class="signal-val">100 / 100</span>
+            </li>
+            <li>
+              <span class="signal-key">TLS policy</span>
+              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
+              <span class="signal-val">tls 1.3 only &middot; hsts preload</span>
+            </li>
+            <li>
+              <span class="signal-key">Certificates</span>
+              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
+              <span class="signal-val">ecdsa p-384 &middot; le &middot; 90-day rotation</span>
+            </li>
+            <li>
+              <span class="signal-key">Email auth</span>
+              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
+              <span class="signal-val">spf &middot; dkim &middot; dmarc &middot; dane / tlsa</span>
+            </li>
+            <li>
+              <span class="signal-key">IPv6</span>
+              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
+              <span class="signal-val">end-to-end</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="contact">
+          <header class="section-head">
+            <span class="section-num">05</span>
+            <h2>Contact</h2>
+            <span class="section-rule"></span>
+          </header>
+          <div class="contact-grid">
+            <a href="mailto:yornik@yornik.nl">
+              <span class="contact-key">email</span>
+              <span class="contact-val">yornik@yornik.nl</span>
+            </a>
+            <a href="https://github.com/Yornik">
+              <span class="contact-key">github</span>
+              <span class="contact-val">github.com/yornik</span>
+            </a>
+            <a href="https://www.linkedin.com/in/yornik/">
+              <span class="contact-key">linkedin</span>
+              <span class="contact-val">linkedin.com/in/yornik</span>
+            </a>
+            <a href="https://www.credly.com/users/yornik-heyl">
+              <span class="contact-key">credly</span>
+              <span class="contact-val">credly.com/users/yornik-heyl</span>
+            </a>
+          </div>
+          <p class="contact-foot">
+            Currently at Mendix (Siemens). Open to conversations about platform &amp; reliability work
+            in the Netherlands and remote across Europe.
+          </p>
+        </section>
+
+        <footer class="page-foot">
+          <div class="foot-line">
+            <span>yornik.eu</span>
+            <span class="dim">declarative &middot; reproducible &middot; in git</span>
+            <span class="dim">written by hand &middot; with help from AI</span>
+          </div>
+          <pre class="foot-shark" aria-hidden="true">                        ___
+                  ___---     ---___
+              __--      &gt;&lt;        --__
+          ___-          .---.          -___
+         /             |  o  |              \
+         \             '-----'              /
+          ---__                       ___---
+               ---___           ___---
+                     ---_______---
+                          | |
+                         _| |_
+                        |_____|</pre>
+        </footer>
       </main>
     </body>
     </html>
 
   styles.css: |
     :root {
-      --bg: #0a0f1a;
-      --bg-2: #0d1320;
-      --card: rgba(12, 16, 28, 0.72);
-      --line: rgba(148, 163, 194, 0.14);
-      --text: #f0f4fa;
-      --muted: #94a3b8;
-      --accent: #a855f7;
-      --accent-2: #38bdf8;
+      --bg:        #0a0e15;
+      --bg-2:      #0c1119;
+      --surface:   #0e131c;
+      --line:      #1c2330;
+      --line-soft: #131822;
+      --text:      #e8eef6;
+      --muted:     #8a96a8;
+      --dim:       #525e6e;
+      --vdim:      #2f3744;
+      --accent:    #f5b942;
+      --accent-2:  #f59e0b;
+      --status:    #4ade80;
+      --link:      #93c5fd;
+
+      --serif: ui-serif, "New York", "Iowan Old Style", "Charter", "Cambria", "Times New Roman", serif;
+      --sans:  ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --mono:  ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Menlo", Consolas, monospace;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html {
-      background: #080c14;
+      background: var(--bg);
+      color-scheme: dark;
     }
 
     body {
       margin: 0;
       min-height: 100vh;
       color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(rgba(168, 192, 230, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168, 192, 230, 0.025) 1px, transparent 1px),
+        radial-gradient(1200px 700px at 80% -10%, rgba(245, 185, 66, 0.05), transparent 60%),
+        radial-gradient(900px 500px at 0% 100%, rgba(74, 222, 128, 0.04), transparent 60%);
+      background-size: 64px 64px, 64px 64px, auto, auto;
+      background-position: -1px -1px, -1px -1px, 0 0, 0 0;
+    }
+
+    a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(147, 197, 253, 0.32);
+      transition: color 0.16s ease, border-color 0.16s ease;
+    }
+    a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    code, .mono { font-family: var(--mono); }
+    .mono-em { color: var(--accent); }
+
+    /* ─────────────── status strip ─────────────── */
+
+    .masthead {
+      border-bottom: 1px solid var(--line);
       background:
-        radial-gradient(900px 500px at 15% -5%, rgba(56, 189, 248, 0.12), transparent 70%),
-        radial-gradient(800px 500px at 85% 5%, rgba(168, 85, 247, 0.10), transparent 70%),
-        radial-gradient(600px 400px at 50% 50%, rgba(56, 189, 248, 0.04), transparent 70%),
-        radial-gradient(900px 500px at 80% 95%, rgba(168, 85, 247, 0.12), transparent 70%),
-        radial-gradient(700px 400px at 10% 100%, rgba(236, 72, 153, 0.08), transparent 70%),
-        linear-gradient(180deg, #0a0f1a 0%, #0d1320 40%, #0f1228 70%, #120e24 100%);
-      font-family: "Manrope", "Segoe UI", Helvetica, Arial, sans-serif;
-      line-height: 1.5;
+        linear-gradient(180deg, rgba(74, 222, 128, 0.04), transparent 100%),
+        var(--bg);
     }
-
-    .shell {
-      width: min(1080px, 100% - 2rem);
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 2.4rem 0 3.5rem;
-      display: grid;
-      gap: 1rem;
+      padding: 13px 32px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .status-label { color: var(--text); font-weight: 500; letter-spacing: 0.02em; }
+    .status-meta  { margin-left: auto; color: var(--dim); }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: var(--status);
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .dot::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 999px;
+      background: rgba(74, 222, 128, 0.35);
+      animation: pulse 2.6s cubic-bezier(0.2, 0.6, 0.2, 1) infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      0%   { transform: scale(0.6); opacity: 0.7; }
+      90%  { transform: scale(2.0); opacity: 0; }
+      100% { transform: scale(2.0); opacity: 0; }
     }
 
-    .hero,
-    .showcase,
-    .stack {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: var(--card);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 1px 0 0 rgba(148, 163, 194, 0.06) inset, 0 24px 48px rgba(0, 0, 0, 0.4);
+    /* ─────────────── page shell ─────────────── */
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 96px 32px 60px;
     }
 
-    .hero {
-      padding: 2rem;
-      animation: fade-up 0.55s ease-out;
+    section + section { margin-top: 84px; }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin: 0 0 18px;
     }
+
+    /* ─────────────── hero ─────────────── */
+
+    .hero { animation: fade-up 0.6s ease-out both; }
 
     h1 {
-      margin: 0.35rem 0 0;
-      font-size: clamp(2rem, 5vw, 3.55rem);
-      line-height: 1.03;
-      letter-spacing: -0.03em;
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(64px, 13vw, 168px);
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      color: var(--text);
     }
-
-    .h1-role {
-      display: block;
-      font-size: clamp(1rem, 2.5vw, 1.45rem);
-      letter-spacing: 0;
+    h1 em {
+      font-style: italic;
+      font-weight: 400;
       color: var(--accent);
-      font-weight: 700;
-      margin-top: 0.3rem;
-      line-height: 1.3;
     }
 
-    .role {
-      margin: 0.3rem 0 0;
-      color: var(--accent);
-      font-weight: 700;
-      font-size: clamp(1rem, 2vw, 1.2rem);
-    }
-
-    .lede {
-      margin: 0.8rem 0 0;
-      max-width: 780px;
-      color: var(--muted);
-      font-size: clamp(1rem, 1.9vw, 1.16rem);
-    }
-
-    .links {
-      margin-top: 1.1rem;
+    .hero-meta {
+      margin: 22px 0 0;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      letter-spacing: 0.04em;
+      color: var(--text);
       display: flex;
       flex-wrap: wrap;
-      gap: 0.55rem;
+      gap: 0 6px;
     }
+    .hero-meta .sep { color: var(--vdim); }
 
-    .btn {
-      text-decoration: none;
+    .hero-prose {
+      margin: 32px 0 0;
+      max-width: 56ch;
+      font-family: var(--serif);
+      font-size: clamp(20px, 2vw, 24px);
+      line-height: 1.45;
       color: var(--text);
-      padding: 0.62rem 0.9rem;
-      border-radius: 11px;
+      font-weight: 400;
+    }
+    .hero-prose em {
+      color: var(--accent);
+      font-style: italic;
+    }
+    .hero-prose a { color: var(--accent); border-bottom-color: rgba(245, 185, 66, 0.5); }
+
+    .hero-actions {
+      margin: 40px 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cta {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: lowercase;
+      padding: 10px 16px;
       border: 1px solid var(--line);
-      background: rgba(7, 14, 23, 0.66);
-      font-weight: 600;
-      transition: 0.18s ease;
+      background: transparent;
+      color: var(--text);
+      border-radius: 0;
+      transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+    }
+    .cta:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(245, 185, 66, 0.06);
+    }
+    .cta.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(245, 185, 66, 0.04);
+    }
+    .cta.primary:hover {
+      color: var(--bg);
+      background: var(--accent);
     }
 
-    .btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(168, 85, 247, 0.55);
-    }
+    /* ─────────────── section heads ─────────────── */
 
-    .btn.primary {
-      background: linear-gradient(120deg, rgba(168, 85, 247, 0.2), rgba(56, 189, 248, 0.15));
-      border-color: rgba(168, 85, 247, 0.5);
-    }
-
-    .showcase {
-      padding: 1.5rem;
-      animation: fade-up 0.82s ease-out;
-    }
-
-    .showcase h2,
-    .stack h2 {
-      margin: 0;
-      font-size: 1.2rem;
-    }
-
-    .grid {
-      margin-top: 0.85rem;
+    .section-head {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: auto auto 1fr;
+      align-items: center;
+      gap: 14px;
+      margin: 0 0 28px;
     }
+    .section-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--dim);
+    }
+    .section-head h2 {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .section-rule { height: 1px; background: var(--line); }
 
-    .panel {
+    /* ─────────────── metrics ─────────────── */
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1rem;
-      background: rgba(10, 14, 26, 0.65);
+    }
+    .metric {
+      background: var(--bg);
+      padding: 26px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .metric::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 28px; height: 1px;
+      background: var(--accent);
+      opacity: 0.65;
+    }
+    .metric-label {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .metric-value {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 76px;
+      line-height: 0.95;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .metric-value.sm { font-size: 48px; letter-spacing: -0.01em; }
+    .metric-unit {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 22px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .metric-foot {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      margin-top: auto;
     }
 
+    /* ─────────────── practice grid ─────────────── */
+
+    .practice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .panel {
+      background: var(--bg);
+      padding: 32px 32px 36px;
+    }
+    .panel-tag {
+      margin: 0 0 18px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
     .panel h3 {
       margin: 0;
-      font-size: 1rem;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(22px, 2.4vw, 30px);
+      line-height: 1.18;
+      letter-spacing: -0.015em;
+      color: var(--text);
     }
-
     .panel p {
-      margin: 0.45rem 0 0;
+      margin: 18px 0 0;
       color: var(--muted);
-      font-size: 0.95rem;
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.62;
     }
 
-    .stack {
-      padding: 1.4rem;
-      animation: fade-up 0.95s ease-out;
+    /* ─────────────── runbook ─────────────── */
+
+    .services {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border-top: 1px solid var(--line);
+    }
+    .services li {
+      display: grid;
+      grid-template-columns: 14px 240px 80px 1fr;
+      align-items: baseline;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+      transition: background 0.15s ease;
+    }
+    .services li:hover { background: rgba(255, 255, 255, 0.014); }
+    .svc-dot {
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: var(--status);
+      align-self: center;
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+    }
+    .svc-name {
+      font-family: var(--mono);
+      font-size: 13.5px;
+      color: var(--text);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+    .svc-version {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+    .svc-note {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .runbook-note {
+      margin: 22px 0 0;
+      max-width: 70ch;
+      font-family: var(--sans);
+      font-size: 13.5px;
+      color: var(--dim);
+      font-style: italic;
+    }
+    .runbook-note code {
+      font-style: normal;
+      font-size: 12.5px;
+      color: var(--muted);
+      padding: 1px 6px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
     }
 
-    .chips {
-      margin-top: 0.72rem;
+    /* ─────────────── signals ─────────────── */
+
+    .signals-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border-top: 1px solid var(--line);
+    }
+    .signals-list li {
+      display: grid;
+      grid-template-columns: 200px 1fr auto;
+      align-items: center;
+      gap: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .signal-key {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .signal-bar {
+      position: relative;
+      height: 4px;
+      background: var(--line);
+      overflow: hidden;
+      max-width: 360px;
+      width: 100%;
+    }
+    .signal-fill {
+      position: absolute;
+      inset: 0;
+      width: calc(var(--pct) * 1%);
+      background: linear-gradient(90deg, var(--status), var(--accent));
+      transform-origin: left;
+      animation: fill 1s ease-out both;
+    }
+    @keyframes fill {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+    .signal-val {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    /* ─────────────── contact ─────────────── */
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .contact-grid a {
+      background: var(--bg);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: none;
+      transition: background 0.16s ease;
+    }
+    .contact-grid a:hover { background: var(--bg-2); }
+    .contact-key {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .contact-val {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    .contact-grid a:hover .contact-val { color: var(--accent); }
+
+    .contact-foot {
+      margin: 22px 0 0;
+      max-width: 64ch;
+      font-family: var(--sans);
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* ─────────────── footer ─────────────── */
+
+    .page-foot {
+      margin-top: 100px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+    .foot-line {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 22px;
+    }
+    .foot-line .dim { color: var(--vdim); }
+    .foot-shark {
+      margin: 36px 0 0;
+      font-family: var(--mono);
+      font-size: 9px;
+      line-height: 1.05;
+      color: var(--vdim);
+      white-space: pre;
+      overflow: hidden;
+      letter-spacing: 0;
     }
 
-    .chip {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 0.42rem 0.72rem;
-      font-size: 0.85rem;
-      background: rgba(56, 189, 248, 0.08);
-    }
-
-    .footer {
-      margin: 0.9rem 0 0;
-      color: var(--muted);
-      font-size: 0.93rem;
-    }
-
-    .trust {
-      margin: 0.45rem 0 0;
-      font-size: 0.93rem;
-      color: var(--text);
-    }
-
-    .trust a {
-      color: var(--accent-2);
-      text-decoration: none;
-    }
-
-    .trust a:hover {
-      text-decoration: underline;
-    }
-
-    .contact {
-      margin: 0.45rem 0 0;
-      font-size: 0.93rem;
-      color: var(--text);
-    }
-
-    .contact a {
-      color: var(--accent-2);
-      text-decoration: none;
-    }
-
-    .contact a:hover {
-      text-decoration: underline;
-    }
-
-    .ai-disclosure {
-      margin: 0.8rem 0 0;
-      font-size: 0.82rem;
-      color: var(--muted);
-      opacity: 0.7;
-    }
+    /* ─────────────── motion ─────────────── */
 
     @keyframes fade-up {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; transition: none !important; }
+    }
 
-      .hero,
-      .showcase,
-      .stack {
-        padding: 1.2rem;
+    /* ─────────────── responsive ─────────────── */
+
+    @media (max-width: 920px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .practice-grid { grid-template-columns: 1fr; }
+      .signals-list li { grid-template-columns: 1fr auto; gap: 8px 16px; }
+      .signal-bar { grid-column: 1 / -1; max-width: none; order: 3; }
+      .signal-key { order: 1; }
+      .signal-val { order: 2; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 60px 22px 40px; }
+      .status-strip { padding: 12px 22px; gap: 10px; flex-wrap: wrap; }
+      .status-meta { margin-left: 0; flex-basis: 100%; }
+      .metrics { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .services li {
+        grid-template-columns: 12px 1fr auto;
+        row-gap: 6px;
       }
+      .svc-version { grid-column: 3; }
+      .svc-note { grid-column: 2 / -1; padding-left: 0; }
+      h1 { font-size: clamp(56px, 17vw, 100px); }
+      .foot-shark { font-size: 7px; }
     }
 
   robots.txt: |
