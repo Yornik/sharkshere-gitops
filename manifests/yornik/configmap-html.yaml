@@ -107,27 +107,26 @@ data:
       <header class="masthead">
         <div class="status-strip">
           <span class="dot" aria-hidden="true"></span>
-          <span class="status-label">All systems operational</span>
-          <span class="status-meta">yornik.eu &middot; synced from <span class="mono-em">main</span> &middot; build 2026.04.18</span>
+          <span class="status-label">Online</span>
+          <span class="status-meta">yornik.eu &middot; rotterdam, nl</span>
         </div>
       </header>
 
       <main class="page">
 
         <section class="hero">
-          <p class="eyebrow">/ profile.public</p>
-          <h1>Yornik <em>Heyl</em>.</h1>
+          <h1>Yornik Heyl</h1>
           <p class="hero-meta">
-            <span>Cloud Reliability Engineer</span>
+            Cloud Reliability Engineer
             <span class="sep">/</span>
-            <span>Rotterdam, NL</span>
+            Rotterdam, NL
             <span class="sep">/</span>
-            <span>EN &middot; NL</span>
+            EN &middot; NL
           </p>
           <p class="hero-prose">
             Five years keeping production calm at <a href="https://www.mendix.com">Mendix</a> (Siemens).
             Incident response, rollout design, and observability that means something at 03:00.
-            I build platforms that are <em>safe to change</em>, not just safe to leave alone.
+            I build platforms that are safe to change, not just safe to leave alone.
           </p>
           <div class="hero-actions">
             <a class="cta primary" href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
@@ -145,24 +144,24 @@ data:
           </header>
           <div class="metrics">
             <div class="metric">
-              <span class="metric-label">In production</span>
               <span class="metric-value">5<span class="metric-unit">yr</span></span>
+              <span class="metric-label">In production</span>
               <span class="metric-foot">since 2021 &middot; mendix &middot; siemens</span>
             </div>
             <div class="metric">
-              <span class="metric-label">Discipline</span>
-              <span class="metric-value sm">SRE</span>
-              <span class="metric-foot">platform &middot; reliability &middot; on-call</span>
+              <span class="metric-value">28</span>
+              <span class="metric-label">Apps under GitOps</span>
+              <span class="metric-foot">homelab &middot; argo cd app-of-apps</span>
             </div>
             <div class="metric">
-              <span class="metric-label">Stack at home</span>
-              <span class="metric-value sm">k8s</span>
-              <span class="metric-foot">talos &middot; argo cd &middot; gitops</span>
+              <span class="metric-value">4</span>
+              <span class="metric-label">Node Talos cluster</span>
+              <span class="metric-foot">3 control-plane &middot; 1 worker</span>
             </div>
             <div class="metric">
-              <span class="metric-label">Friday deploys</span>
-              <span class="metric-value">∞</span>
-              <span class="metric-foot">boring on purpose</span>
+              <span class="metric-value">100<span class="metric-unit">%</span></span>
+              <span class="metric-label">Internet.nl score</span>
+              <span class="metric-foot">tls 1.3 &middot; dane &middot; hsts preload</span>
             </div>
           </div>
         </section>
@@ -173,25 +172,19 @@ data:
             <h2>Practice</h2>
             <span class="section-rule"></span>
           </header>
-          <div class="practice-grid">
-            <article class="panel">
-              <p class="panel-tag">/01 reliability</p>
-              <h3>Production should be safe to change.</h3>
-              <p>
-                Incident response, rollout design, observability that actually tells you
-                something at 03:00, and alerting that doesn't go off for nothing. Systems
-                should be explainable under pressure &mdash; not just work when nothing is wrong.
-              </p>
-            </article>
-            <article class="panel">
-              <p class="panel-tag">/02 method</p>
-              <h3>If it isn't in Git, it didn't happen.</h3>
-              <p>
-                Declarative everything. Reproducible rollouts, clear ownership, security
-                folded into the platform rather than bolted on. AI tooling where it pays
-                &mdash; automating the boring parts and catching mistakes early.
-              </p>
-            </article>
+          <div class="prose">
+            <p>
+              I make production safer to change. Incident response, rollout design,
+              observability that actually tells you something at 03:00, and alerting
+              that doesn't go off for nothing. Systems should be explainable under
+              pressure, not just work when everything is fine.
+            </p>
+            <p>
+              The way I work is declarative. Reproducible rollouts, clear ownership,
+              and security folded into the platform rather than bolted on afterwards.
+              AI tooling where it pays &mdash; automating the boring parts and catching
+              mistakes early &mdash; not as a buzzword.
+            </p>
           </div>
         </section>
 
@@ -253,29 +246,24 @@ data:
           </header>
           <ul class="signals-list">
             <li>
-              <span class="signal-key">Internet.nl score</span>
-              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
-              <span class="signal-val">100 / 100</span>
-            </li>
-            <li>
               <span class="signal-key">TLS policy</span>
-              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
               <span class="signal-val">tls 1.3 only &middot; hsts preload</span>
             </li>
             <li>
               <span class="signal-key">Certificates</span>
-              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
               <span class="signal-val">ecdsa p-384 &middot; le &middot; 90-day rotation</span>
             </li>
             <li>
               <span class="signal-key">Email auth</span>
-              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
               <span class="signal-val">spf &middot; dkim &middot; dmarc &middot; dane / tlsa</span>
             </li>
             <li>
               <span class="signal-key">IPv6</span>
-              <span class="signal-bar" style="--pct:100"><span class="signal-fill"></span></span>
               <span class="signal-val">end-to-end</span>
+            </li>
+            <li>
+              <span class="signal-key">Audit</span>
+              <span class="signal-val">ncsc nl &mdash; "good" on every category</span>
             </li>
           </ul>
         </section>
@@ -314,20 +302,8 @@ data:
           <div class="foot-line">
             <span>yornik.eu</span>
             <span class="dim">declarative &middot; reproducible &middot; in git</span>
-            <span class="dim">written by hand &middot; with help from AI</span>
+            <span class="dim">written by hand, with help from AI</span>
           </div>
-          <pre class="foot-shark" aria-hidden="true">                        ___
-                  ___---     ---___
-              __--      &gt;&lt;        --__
-          ___-          .---.          -___
-         /             |  o  |              \
-         \             '-----'              /
-          ---__                       ___---
-               ---___           ___---
-                     ---_______---
-                          | |
-                         _| |_
-                        |_____|</pre>
         </footer>
       </main>
     </body>
@@ -371,14 +347,7 @@ data:
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-      background-color: var(--bg);
-      background-image:
-        linear-gradient(rgba(168, 192, 230, 0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(168, 192, 230, 0.025) 1px, transparent 1px),
-        radial-gradient(1200px 700px at 80% -10%, rgba(245, 185, 66, 0.05), transparent 60%),
-        radial-gradient(900px 500px at 0% 100%, rgba(74, 222, 128, 0.04), transparent 60%);
-      background-size: 64px 64px, 64px 64px, auto, auto;
-      background-position: -1px -1px, -1px -1px, 0 0, 0 0;
+      background: var(--bg);
     }
 
     a {
@@ -396,9 +365,7 @@ data:
 
     .masthead {
       border-bottom: 1px solid var(--line);
-      background:
-        linear-gradient(180deg, rgba(74, 222, 128, 0.04), transparent 100%),
-        var(--bg);
+      background: var(--bg);
     }
     .status-strip {
       display: flex;
@@ -454,25 +421,25 @@ data:
       text-transform: uppercase;
       color: var(--dim);
       margin: 0 0 18px;
+      text-align: center;
     }
 
     /* ─────────────── hero ─────────────── */
 
-    .hero { animation: fade-up 0.6s ease-out both; }
+    .hero {
+      animation: fade-up 0.6s ease-out both;
+      text-align: center;
+    }
+    .hero .eyebrow { text-align: center; }
 
     h1 {
-      margin: 0;
+      margin: 0 auto;
       font-family: var(--serif);
       font-weight: 400;
-      font-size: clamp(64px, 13vw, 168px);
-      line-height: 0.88;
-      letter-spacing: -0.04em;
+      font-size: clamp(48px, 7vw, 88px);
+      line-height: 1;
+      letter-spacing: -0.025em;
       color: var(--text);
-    }
-    h1 em {
-      font-style: italic;
-      font-weight: 400;
-      color: var(--accent);
     }
 
     .hero-meta {
@@ -483,16 +450,17 @@ data:
       color: var(--text);
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 0 6px;
     }
     .hero-meta .sep { color: var(--vdim); }
 
     .hero-prose {
-      margin: 32px 0 0;
+      margin: 32px auto 0;
       max-width: 56ch;
       font-family: var(--serif);
-      font-size: clamp(20px, 2vw, 24px);
-      line-height: 1.45;
+      font-size: clamp(19px, 1.7vw, 22px);
+      line-height: 1.5;
       color: var(--text);
       font-weight: 400;
     }
@@ -506,6 +474,7 @@ data:
       margin: 40px 0 0;
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 8px;
     }
     .cta {
@@ -572,19 +541,22 @@ data:
     }
     .metric {
       background: var(--bg);
-      padding: 26px 24px 28px;
+      padding: 28px 24px 26px;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      text-align: center;
       gap: 12px;
       position: relative;
     }
     .metric::before {
       content: "";
       position: absolute;
-      top: 0; left: 0;
-      width: 28px; height: 1px;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 32px; height: 1px;
       background: var(--accent);
-      opacity: 0.65;
+      opacity: 0.7;
     }
     .metric-label {
       font-family: var(--mono);
@@ -596,15 +568,16 @@ data:
     .metric-value {
       font-family: var(--serif);
       font-weight: 400;
-      font-size: 76px;
+      font-size: 64px;
       line-height: 0.95;
       color: var(--text);
       letter-spacing: -0.02em;
       display: flex;
       align-items: baseline;
+      justify-content: center;
       gap: 6px;
     }
-    .metric-value.sm { font-size: 48px; letter-spacing: -0.01em; }
+    .metric-value.sm { font-size: 42px; letter-spacing: -0.01em; }
     .metric-unit {
       font-family: var(--serif);
       font-style: italic;
@@ -622,41 +595,18 @@ data:
 
     /* ─────────────── practice grid ─────────────── */
 
-    .practice-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-    }
-    .panel {
-      background: var(--bg);
-      padding: 32px 32px 36px;
-    }
-    .panel-tag {
-      margin: 0 0 18px;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--dim);
-    }
-    .panel h3 {
-      margin: 0;
-      font-family: var(--serif);
-      font-weight: 400;
-      font-size: clamp(22px, 2.4vw, 30px);
-      line-height: 1.18;
-      letter-spacing: -0.015em;
+    .prose {
+      max-width: 64ch;
+      margin: 0 auto;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.7;
       color: var(--text);
     }
-    .panel p {
-      margin: 18px 0 0;
-      color: var(--muted);
-      font-family: var(--sans);
-      font-size: 15px;
-      line-height: 1.62;
+    .prose p {
+      margin: 0 0 1.1em;
     }
+    .prose p:last-child { margin-bottom: 0; }
 
     /* ─────────────── runbook ─────────────── */
 
@@ -702,12 +652,13 @@ data:
       color: var(--muted);
     }
     .runbook-note {
-      margin: 22px 0 0;
+      margin: 22px auto 0;
       max-width: 70ch;
       font-family: var(--sans);
       font-size: 13.5px;
       color: var(--dim);
       font-style: italic;
+      text-align: center;
     }
     .runbook-note code {
       font-style: normal;
@@ -728,8 +679,8 @@ data:
     }
     .signals-list li {
       display: grid;
-      grid-template-columns: 200px 1fr auto;
-      align-items: center;
+      grid-template-columns: 200px 1fr;
+      align-items: baseline;
       gap: 24px;
       padding: 16px 0;
       border-bottom: 1px solid var(--line);
@@ -740,26 +691,6 @@ data:
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
-    }
-    .signal-bar {
-      position: relative;
-      height: 4px;
-      background: var(--line);
-      overflow: hidden;
-      max-width: 360px;
-      width: 100%;
-    }
-    .signal-fill {
-      position: absolute;
-      inset: 0;
-      width: calc(var(--pct) * 1%);
-      background: linear-gradient(90deg, var(--status), var(--accent));
-      transform-origin: left;
-      animation: fill 1s ease-out both;
-    }
-    @keyframes fill {
-      from { transform: scaleX(0); }
-      to   { transform: scaleX(1); }
     }
     .signal-val {
       font-family: var(--mono);
@@ -782,9 +713,11 @@ data:
       padding: 22px 24px;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 6px;
       border: none;
       transition: background 0.16s ease;
+      text-align: center;
     }
     .contact-grid a:hover { background: var(--bg-2); }
     .contact-key {
@@ -803,11 +736,12 @@ data:
     .contact-grid a:hover .contact-val { color: var(--accent); }
 
     .contact-foot {
-      margin: 22px 0 0;
+      margin: 22px auto 0;
       max-width: 64ch;
       font-family: var(--sans);
       font-size: 14px;
       color: var(--muted);
+      text-align: center;
     }
 
     /* ─────────────── footer ─────────────── */
@@ -824,20 +758,11 @@ data:
     .foot-line {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 22px;
+      text-align: center;
     }
     .foot-line .dim { color: var(--vdim); }
-    .foot-shark {
-      margin: 36px 0 0;
-      font-family: var(--mono);
-      font-size: 9px;
-      line-height: 1.05;
-      color: var(--vdim);
-      white-space: pre;
-      overflow: hidden;
-      letter-spacing: 0;
-    }
-
     /* ─────────────── motion ─────────────── */
 
     @keyframes fade-up {
@@ -853,11 +778,7 @@ data:
 
     @media (max-width: 920px) {
       .metrics { grid-template-columns: repeat(2, 1fr); }
-      .practice-grid { grid-template-columns: 1fr; }
-      .signals-list li { grid-template-columns: 1fr auto; gap: 8px 16px; }
-      .signal-bar { grid-column: 1 / -1; max-width: none; order: 3; }
-      .signal-key { order: 1; }
-      .signal-val { order: 2; }
+      .signals-list li { grid-template-columns: 1fr; gap: 4px; }
     }
 
     @media (max-width: 640px) {
@@ -872,8 +793,7 @@ data:
       }
       .svc-version { grid-column: 3; }
       .svc-note { grid-column: 2 / -1; padding-left: 0; }
-      h1 { font-size: clamp(56px, 17vw, 100px); }
-      .foot-shark { font-size: 7px; }
+      h1 { font-size: clamp(48px, 14vw, 80px); }
     }
 
   robots.txt: |
