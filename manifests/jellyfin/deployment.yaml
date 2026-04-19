@@ -49,11 +49,16 @@ spec:
                 sed -i 's|<VaapiDevice>.*</VaapiDevice>|<VaapiDevice>/dev/dri/renderD128</VaapiDevice>|' "$ENCODING"
                 sed -i 's|<EnableHardwareEncoding>false</EnableHardwareEncoding>|<EnableHardwareEncoding>true</EnableHardwareEncoding>|' "$ENCODING"
                 sed -i 's|<PreferSystemNativeHwDecoder>false</PreferSystemNativeHwDecoder>|<PreferSystemNativeHwDecoder>true</PreferSystemNativeHwDecoder>|' "$ENCODING"
+                # Add HEVC to hardware decoding codecs so QSV handles H.265 — this makes
+                # transcoding fast enough on the N150 iGPU that the Apple TV cold-start
+                # "Stopped at 0ms" issue no longer occurs.
+                grep -q '<string>hevc</string>' "$ENCODING" || \
+                  sed -i 's|</HardwareDecodingCodecs>|<string>hevc</string></HardwareDecodingCodecs>|' "$ENCODING"
               fi
           volumeMounts:
             - name: config
               mountPath: /config
-        - name: disable-video-transcode
+        - name: enable-video-transcode
           image: alpine:3.23
           command: ["sh", "-c"]
           args:
@@ -61,13 +66,11 @@ spec:
               DB=/config/data/jellyfin.db
               if [ ! -f "$DB" ]; then echo "DB not found, skipping"; exit 0; fi
               apk add --no-cache sqlite > /dev/null 2>&1
-              # Disable video re-encoding (Kind=9=EnableVideoPlaybackTranscoding) for all users.
-              # Remuxing (Kind=19) and audio transcoding (Kind=8) stay enabled so the Apple TV
-              # can still handle container (MKV->MP4) and audio (DTS->AAC) conversions.
-              # This eliminates the HLS cold-start delay where Swiftfin 1.0.1 on Apple TV
-              # reports "Stopped at 0ms" because the first FFmpeg segment is not ready yet.
-              sqlite3 "$DB" "UPDATE Permissions SET Value = 0 WHERE Kind = 9;"
-              echo "Done: video transcoding disabled for all users"
+              # Re-enable video transcoding (Kind=9=EnableVideoPlaybackTranscoding) for all users.
+              # Previously disabled to work around Apple TV "Stopped at 0ms" cold-start, but that
+              # is now solved by HEVC hardware decoding via QSV (see patch-network-config above).
+              sqlite3 "$DB" "UPDATE Permissions SET Value = 1 WHERE Kind = 9;"
+              echo "Done: video transcoding re-enabled for all users"
           volumeMounts:
             - name: config
               mountPath: /config
