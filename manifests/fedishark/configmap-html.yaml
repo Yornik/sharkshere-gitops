@@ -620,9 +620,7 @@ data:
       <ul>
         <li><a href="https://pub.fedishark.eu">Social Feed</a></li>
         <li><a href="https://jelly.yornik.eu">Media Cave</a></li>
-        <li><a href="https://grafana.fedishark.eu">Reef Monitor</a></li>
         <li><a href="https://todo.yornik.eu">Task Tides</a></li>
-        <li><a href="https://passwords.yornik.eu">Vault Trench</a></li>
         <li><a href="https://omni.fedishark.eu">Tools Bay</a></li>
       </ul>
 
@@ -704,28 +702,10 @@ data:
         </tr>
         <tr style="background:#003366;">
           <td style="padding:6px; border:1px solid #006699;">
-            <b style="color:#00ffcc;">Grafana</b><br>
-            <span style="font-size:12px;">
-              <a href="https://grafana.fedishark.eu">Monitoring dashboard</a> &mdash;
-              watching over our reef 24/7 like a hammerhead on patrol.
-            </span>
-          </td>
-        </tr>
-        <tr style="background:#002244;">
-          <td style="padding:6px; border:1px solid #006699;">
             <b style="color:#00ffcc;">Vikunja</b><br>
             <span style="font-size:12px;">
               <a href="https://todo.yornik.eu">Task tides</a> &mdash; getting things done,
               one barnacle at a time.
-            </span>
-          </td>
-        </tr>
-        <tr style="background:#003366;">
-          <td style="padding:6px; border:1px solid #006699;">
-            <b style="color:#00ffcc;">Vaultwarden</b><br>
-            <span style="font-size:12px;">
-              <a href="https://passwords.yornik.eu">Password vault</a> in the trench &mdash;
-              bcrypt and zero-knowledge, deeper than the Mariana.
             </span>
           </td>
         </tr>
@@ -743,8 +723,6 @@ data:
           <dd>Migrated DNS from deSEC to Cloudflare. Faster propagation, same paranoid record management.</dd>
           <dt>2026.03.20</dt>
           <dd>All certificates rotated to ECDSA P-384. Smaller, faster, more modern. Ancient ciphers are now in the dustbin where they belong.</dd>
-          <dt>2026.03.05</dt>
-          <dd>Vaultwarden moved to passwords.yornik.eu. Old vault.fedishark.eu now redirects.</dd>
           <dt>2026.02.14</dt>
           <dd>NCSC NL audit: "Good" on every category. The ocean is now officially safe.</dd>
         </dl>
