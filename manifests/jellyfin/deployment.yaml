@@ -58,6 +58,18 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+        - name: install-libdvdcss
+          image: alpine:3.23
+          command: ["sh", "-c"]
+          args:
+            - |
+              apk add --no-cache libdvdcss \
+                --repository https://dl-cdn.alpinelinux.org/alpine/edge/testing > /dev/null 2>&1
+              cp /usr/lib/libdvdcss.so* /dvdcss/
+              echo "libdvdcss installed: $(ls /dvdcss/)"
+          volumeMounts:
+            - name: dvdcss
+              mountPath: /dvdcss
         - name: enable-video-transcode
           image: alpine:3.23
           command: ["sh", "-c"]
@@ -89,6 +101,8 @@ spec:
               value: /usr/lib/jellyfin-ffmpeg/lib/dri
             - name: LIBVA_DRIVER_NAME
               value: iHD
+            - name: LD_LIBRARY_PATH
+              value: /dvdcss
           resources:
             requests:
               cpu: 500m
@@ -109,6 +123,8 @@ spec:
               mountPath: /cache
             - name: dri
               mountPath: /dev/dri
+            - name: dvdcss
+              mountPath: /dvdcss
           livenessProbe:
             httpGet:
               path: /health
@@ -137,3 +153,5 @@ spec:
           hostPath:
             path: /dev/dri
             type: Directory
+        - name: dvdcss
+          emptyDir: {}
