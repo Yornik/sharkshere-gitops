@@ -85,7 +85,7 @@ spec:
             claimName: vikunja-files
         - name: db
           persistentVolumeClaim:
-            claimName: vikunja-db
+            claimName: vikunja-db-ssd
         - name: cache
           emptyDir: {}
         - name: tmp

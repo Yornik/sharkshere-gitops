@@ -10,5 +10,6 @@ resources:
   - middleware-fail2ban-vikunja.yaml
   - pvc-files.yaml
   - pvc-db.yaml
+  - pvc-db-old.yaml
 generators:
   - secret-generator.yaml
