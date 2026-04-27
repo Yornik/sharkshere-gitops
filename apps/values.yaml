@@ -481,6 +481,7 @@ apps:
             mountOptions:
               - noatime
               - nfsvers=4
+              - nconnect=4
         volumeSnapshotClasses: []
 
   traefik:
