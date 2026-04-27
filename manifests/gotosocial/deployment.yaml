@@ -91,7 +91,7 @@ spec:
       volumes:
         - name: sqlite
           persistentVolumeClaim:
-            claimName: gotosocial-sqlite
+            claimName: gotosocial-sqlite-ssd
         - name: storage
           persistentVolumeClaim:
             claimName: gotosocial-storage
