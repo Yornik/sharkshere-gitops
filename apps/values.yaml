@@ -391,7 +391,7 @@ apps:
                     instance = "nas",
                   }
                 }
-                forward_to = [loki.write.loki.receiver]
+                forward_to = [loki.process.pipeline.receiver]
               }
 
               loki.write "loki" {
