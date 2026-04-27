@@ -10,5 +10,6 @@ resources:
   - middleware-redirect-https.yaml
   - middleware-fail2ban-vaultwarden.yaml
   - pvc-data.yaml
+  - pvc-data-old.yaml
 generators:
   - secret-generator.yaml
