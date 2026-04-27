@@ -78,8 +78,8 @@ manifests/      per-app manifests and Kustomize overlays
 
 | StorageClass | Protocol | Backing pool | Notes |
 |--------------|----------|--------------|-------|
-| `truenas-nfs` (default) | NFS | `Big_Pool` raidz1 (7× HDD) | Bulk / media PVCs |
-| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | Database / random-IO PVCs |
+| `truenas-nfs` (default) | NFS | `Big_Pool` raidz1 (7× HDD) | Jellyfin media, GoToSocial storage, Vikunja files — bulk/sequential IO only |
+| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | All other PVCs — databases, config, certs, logs, metrics |
 | `truenas-iscsi` | iSCSI | `Big_Pool` | Block storage |
 | `smb` | SMB | `Big_Pool/Share` | Jellyfin media read-only |
 | `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write |
