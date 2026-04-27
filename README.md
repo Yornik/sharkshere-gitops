@@ -68,9 +68,21 @@ manifests/      per-app manifests and Kustomize overlays
 | `loki` | `monitoring` | `loki` |
 | `alloy` | `monitoring` | `alloy` |
 | `democratic-csi-nfs` | `democratic-csi` | `democratic-csi` |
+| `democratic-csi-nfs-ssd` | `democratic-csi` | `democratic-csi` |
 | `democratic-csi-iscsi` | `democratic-csi` | `democratic-csi` |
 | `traefik` | `traefik` | `traefik` |
 | `tailscale-operator` | `tailscale` | `tailscale-operator` |
+
+## Storage Classes
+
+| StorageClass | Protocol | Backing pool | Notes |
+|--------------|----------|--------------|-------|
+| `truenas-nfs` (default) | NFS | `Big_Pool` raidz1 (7× HDD) | Bulk / media PVCs |
+| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | Database / random-IO PVCs |
+| `truenas-iscsi` | iSCSI | `Big_Pool` | Block storage |
+| `smb` | SMB | `Big_Pool/Share` | Jellyfin media read-only |
+| `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write |
+| `local-path` | hostPath | Node-local | Jellyfin config (node-pinned) |
 
 ## Engineering Signals
 
