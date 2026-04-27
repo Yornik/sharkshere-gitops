@@ -144,7 +144,7 @@ apps:
             - -log.level=error
           persistence:
             enabled: true
-            storageClass: truenas-nfs
+            storageClass: truenas-ssd
             size: 20Gi
         read:
           replicas: 0
