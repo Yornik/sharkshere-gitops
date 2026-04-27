@@ -310,6 +310,23 @@ apps:
                   }
                 }
 
+                stage.match {
+                  selector = "{job=\"truenas\"}"
+                  // Drop obvious noise from TrueNAS syslog. Keep all PAM, sshd,
+                  // and ZFS/disk events.
+                  stage.drop {
+                    expression = "Cannot find unit for notify message"
+                  }
+                  stage.drop {
+                    expression = "Syslog connection (failed|established);"
+                  }
+                  stage.drop {
+                    // Ephemeral systemd user-session housekeeping; the matching
+                    // sshd PAM lines carry the real audit signal.
+                    expression = "user-runtime-dir@|run-user-\\d+\\.mount|session-\\d+\\.scope|user@\\d+\\.service|user-\\d+\\.slice"
+                  }
+                }
+
                 stage.json {
                   expressions = {
                     level     = "level",
