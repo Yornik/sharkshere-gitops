@@ -11,10 +11,10 @@ spec:
     - name: syslog-tcp
       port: 5140
       targetPort: 5140
-      nodePort: 35140
+      nodePort: 30514
       protocol: TCP
     - name: syslog-udp
       port: 5140
       targetPort: 5140
-      nodePort: 35140
+      nodePort: 30514
       protocol: UDP
