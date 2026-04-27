@@ -82,7 +82,7 @@ spec:
       volumes:
         - name: files
           persistentVolumeClaim:
-            claimName: vikunja-files
+            claimName: vikunja-files-ssd
         - name: db
           persistentVolumeClaim:
             claimName: vikunja-db-ssd
