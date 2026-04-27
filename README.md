@@ -32,6 +32,7 @@ manifests/      per-app manifests and Kustomize overlays
 1. Bootstrap installs Argo CD and root app.
 2. Root app renders one `Application` per entry in `apps/values.yaml`.
 3. Argo CD continuously enforces desired state (prune + self-heal).
+4. **GitHub webhook** → `https://argocd.fedishark.eu/api/webhook` triggers an immediate sync on every push to `main`, so ArgoCD reconciles within seconds of a merge rather than waiting for the default 3-minute polling interval. Configured under the repo's GitHub Settings → Webhooks.
 
 ## Application Inventory
 
