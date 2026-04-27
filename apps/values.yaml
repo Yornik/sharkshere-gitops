@@ -378,16 +378,20 @@ apps:
                 listener {
                   address  = "0.0.0.0:5140"
                   protocol = "tcp"
+                  labels   = {
+                    job      = "truenas",
+                    instance = "nas",
+                  }
                 }
                 listener {
                   address  = "0.0.0.0:5140"
                   protocol = "udp"
+                  labels   = {
+                    job      = "truenas",
+                    instance = "nas",
+                  }
                 }
                 forward_to = [loki.write.loki.receiver]
-                labels = {
-                  job      = "truenas",
-                  instance = "nas",
-                }
               }
 
               loki.write "loki" {
