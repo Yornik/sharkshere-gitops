@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: gotosocial-storage
+  name: gotosocial-storage-ssd
   namespace: gotosocial
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-nfs
+  storageClassName: truenas-ssd
   resources:
     requests:
       storage: 50Gi
