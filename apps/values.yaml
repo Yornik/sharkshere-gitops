@@ -402,7 +402,6 @@ apps:
             limits:
               cpu: 250m
               memory: 256Mi
-        alloy:
           extraPorts:
             - name: syslog-tcp
               port: 5140
