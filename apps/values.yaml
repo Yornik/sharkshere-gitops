@@ -455,6 +455,34 @@ apps:
             mountOptions: []
         volumeSnapshotClasses: []
 
+  democratic-csi-nfs-ssd:
+    namespace: democratic-csi
+    helm:
+      repoURL: https://democratic-csi.github.io/charts/
+      chart: democratic-csi
+      targetRevision: "*"
+      values: |
+        csiDriver:
+          name: org.democratic-csi.nfs-ssd
+        driver:
+          existingConfigSecret: democratic-csi-nfs-ssd-driver-config
+          config:
+            driver: freenas-api-nfs
+        controller:
+          externalSnapshotter:
+            enabled: false
+        storageClasses:
+          - name: truenas-ssd
+            defaultClass: false
+            reclaimPolicy: Delete
+            allowVolumeExpansion: true
+            parameters:
+              fsType: nfs
+            mountOptions:
+              - noatime
+              - nfsvers=4
+        volumeSnapshotClasses: []
+
   traefik:
     namespace: traefik
     helm:
