@@ -77,3 +77,19 @@ spec:
     - name: dummy
       port: 80
       targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-nas-collector-fedishark-eu
+  namespace: external-dns
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: nas-collector.fedishark.eu
+    external-dns.alpha.kubernetes.io/target: 192.168.1.192,192.168.1.193,192.168.1.194,192.168.1.195
+    external-dns.alpha.kubernetes.io/ttl: "60"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
