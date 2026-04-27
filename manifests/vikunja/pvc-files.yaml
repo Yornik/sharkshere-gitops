@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: vikunja-files
+  name: vikunja-files-ssd
   namespace: vikunja
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: truenas-nfs
+  storageClassName: truenas-ssd
   resources:
     requests:
       storage: 5Gi
