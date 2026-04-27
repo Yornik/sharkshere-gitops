@@ -20,6 +20,7 @@ spec:
           image: prom/graphite-exporter:v0.15.1
           args:
             - --graphite.mapping-config=/etc/graphite-exporter/graphite_mapping.conf
+            - --graphite.listen-address=:2003
           ports:
             - name: metrics
               containerPort: 9108
