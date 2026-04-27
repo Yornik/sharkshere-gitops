@@ -562,8 +562,7 @@ apps:
                 entryPoint: web
         persistence:
           enabled: true
-          storageClass: truenas-nfs
-          size: 128Mi
+          existingClaim: traefik-ssd
         providers:
           kubernetesCRD:
             enabled: true

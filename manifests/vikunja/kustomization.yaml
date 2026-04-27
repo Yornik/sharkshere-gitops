@@ -9,6 +9,7 @@ resources:
   - middleware-redirect-https.yaml
   - middleware-fail2ban-vikunja.yaml
   - pvc-files.yaml
+  - pvc-files-old.yaml
   - pvc-db.yaml
   - pvc-db-old.yaml
 generators:

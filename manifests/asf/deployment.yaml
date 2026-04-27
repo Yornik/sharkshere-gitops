@@ -73,7 +73,7 @@ spec:
       volumes:
         - name: config
           persistentVolumeClaim:
-            claimName: asf-config
+            claimName: asf-config-ssd
         - name: ipc-config
           configMap:
             name: asf-ipc-config
