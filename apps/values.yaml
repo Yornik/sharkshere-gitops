@@ -63,7 +63,7 @@ apps:
             passwordKey: admin-password
           persistence:
             enabled: true
-            storageClassName: truenas-nfs
+            storageClassName: truenas-ssd
             size: 2Gi
           sidecar:
             dashboards:
