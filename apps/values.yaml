@@ -183,11 +183,6 @@ apps:
                 targets = discovery.kubernetes.pods.targets
 
                 rule {
-                  source_labels = ["__meta_kubernetes_namespace"]
-                  regex         = "argocd"
-                  action        = "drop"
-                }
-                rule {
                   source_labels = ["__meta_kubernetes_pod_name"]
                   regex         = "loki-canary.*"
                   action        = "drop"
@@ -334,6 +329,12 @@ apps:
                   selector            = "{app=\"democratic-csi\", level!~\"warn|error|fatal|panic\"}"
                   action              = "drop"
                   drop_counter_reason = "democratic_csi_non_error"
+                }
+
+                stage.match {
+                  selector            = "{namespace=\"argocd\", level!~\"warn|error|fatal|panic\"}"
+                  action              = "drop"
+                  drop_counter_reason = "argocd_non_error"
                 }
 
                 stage.drop {
