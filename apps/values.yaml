@@ -179,6 +179,10 @@ apps:
         test:
           enabled: false
 
+  truenas-monitoring:
+    namespace: monitoring
+    path: manifests/truenas-monitoring
+
   alloy:
     namespace: monitoring
     helm:
@@ -370,6 +374,22 @@ apps:
                 forward_to = [loki.write.loki.receiver]
               }
 
+              loki.source.syslog "truenas" {
+                listener {
+                  address  = "0.0.0.0:5140"
+                  protocol = "tcp"
+                }
+                listener {
+                  address  = "0.0.0.0:5140"
+                  protocol = "udp"
+                }
+                forward_to = [loki.write.loki.receiver]
+                labels = {
+                  job      = "truenas",
+                  instance = "nas",
+                }
+              }
+
               loki.write "loki" {
                 endpoint {
                   url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
@@ -382,6 +402,16 @@ apps:
             limits:
               cpu: 250m
               memory: 256Mi
+        alloy:
+          extraPorts:
+            - name: syslog-tcp
+              port: 5140
+              targetPort: 5140
+              protocol: TCP
+            - name: syslog-udp
+              port: 5140
+              targetPort: 5140
+              protocol: UDP
         controller:
           type: daemonset
         tolerations:
