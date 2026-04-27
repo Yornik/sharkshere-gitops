@@ -89,7 +89,7 @@ apps:
             storage:
               volumeClaimTemplate:
                 spec:
-                  storageClassName: truenas-nfs
+                  storageClassName: truenas-ssd
                   resources:
                     requests:
                       storage: 2Gi
