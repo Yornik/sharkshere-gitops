@@ -55,9 +55,16 @@
       '/manifests/.+\\.yaml$/',
     ],
   },
-  argocd: {
-    managerFilePatterns: [
-      '/apps/values\\.yaml$/',
-    ],
-  },
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/apps/values\\.yaml$/',
+      ],
+      matchStrings: [
+        'repoURL:\\s*(?<registryUrl>\\S+)\\s*\\n\\s*chart:\\s*(?<depName>\\S+)\\s*\\n\\s*targetRevision:\\s*[\'"]?(?<currentValue>[^\'"\\s]+)[\'"]?',
+      ],
+      datasourceTemplate: 'helm',
+    },
+  ],
 }
