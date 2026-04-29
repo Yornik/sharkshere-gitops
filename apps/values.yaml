@@ -179,6 +179,10 @@ apps:
         test:
           enabled: false
 
+  truenas-monitoring:
+    namespace: monitoring
+    path: manifests/truenas-monitoring
+
   alloy:
     namespace: monitoring
     helm:
@@ -306,6 +310,23 @@ apps:
                   }
                 }
 
+                stage.match {
+                  selector = "{job=\"truenas\"}"
+                  // Drop obvious noise from TrueNAS syslog. Keep all PAM, sshd,
+                  // and ZFS/disk events.
+                  stage.drop {
+                    expression = "Cannot find unit for notify message"
+                  }
+                  stage.drop {
+                    expression = "Syslog connection (failed|established);"
+                  }
+                  stage.drop {
+                    // Ephemeral systemd user-session housekeeping; the matching
+                    // sshd PAM lines carry the real audit signal.
+                    expression = "user-runtime-dir@|run-user-\\d+\\.mount|session-\\d+\\.scope|user@\\d+\\.service|user-\\d+\\.slice"
+                  }
+                }
+
                 stage.json {
                   expressions = {
                     level     = "level",
@@ -370,6 +391,26 @@ apps:
                 forward_to = [loki.write.loki.receiver]
               }
 
+              loki.source.syslog "truenas" {
+                listener {
+                  address  = "0.0.0.0:5140"
+                  protocol = "tcp"
+                  labels   = {
+                    job      = "truenas",
+                    instance = "nas",
+                  }
+                }
+                listener {
+                  address  = "0.0.0.0:5140"
+                  protocol = "udp"
+                  labels   = {
+                    job      = "truenas",
+                    instance = "nas",
+                  }
+                }
+                forward_to = [loki.process.pipeline.receiver]
+              }
+
               loki.write "loki" {
                 endpoint {
                   url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
@@ -382,6 +423,15 @@ apps:
             limits:
               cpu: 250m
               memory: 256Mi
+          extraPorts:
+            - name: syslog-tcp
+              port: 5140
+              targetPort: 5140
+              protocol: TCP
+            - name: syslog-udp
+              port: 5140
+              targetPort: 5140
+              protocol: UDP
         controller:
           type: daemonset
         tolerations:
@@ -416,7 +466,7 @@ apps:
     helm:
       repoURL: https://democratic-csi.github.io/charts/
       chart: democratic-csi
-      targetRevision: "*"
+      targetRevision: 0.15.1
       values: |
         csiDriver:
           name: org.democratic-csi.nfs
@@ -444,7 +494,7 @@ apps:
     helm:
       repoURL: https://democratic-csi.github.io/charts/
       chart: democratic-csi
-      targetRevision: "*"
+      targetRevision: 0.15.1
       values: |
         csiDriver:
           name: org.democratic-csi.iscsi
@@ -480,7 +530,7 @@ apps:
     helm:
       repoURL: https://democratic-csi.github.io/charts/
       chart: democratic-csi
-      targetRevision: "*"
+      targetRevision: 0.15.1
       values: |
         csiDriver:
           name: org.democratic-csi.nfs-ssd
@@ -632,7 +682,7 @@ apps:
     helm:
       repoURL: https://pkgs.tailscale.com/helmcharts
       chart: tailscale-operator
-      targetRevision: "*"
+      targetRevision: 1.96.5
       values: |
         oauth:
           clientId: ""
