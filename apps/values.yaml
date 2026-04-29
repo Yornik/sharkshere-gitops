@@ -124,7 +124,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: loki
-      targetRevision: "6.*"
+      targetRevision: "7.*"
       values: |
         deploymentMode: SingleBinary
         loki:
