@@ -55,4 +55,9 @@
       '/manifests/.+\\.yaml$/',
     ],
   },
+  argocd: {
+    managerFilePatterns: [
+      '/apps/values\\.yaml$/',
+    ],
+  },
 }
