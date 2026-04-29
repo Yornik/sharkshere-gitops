@@ -466,7 +466,7 @@ apps:
     helm:
       repoURL: https://democratic-csi.github.io/charts/
       chart: democratic-csi
-      targetRevision: "*"
+      targetRevision: 0.15.1
       values: |
         csiDriver:
           name: org.democratic-csi.nfs
@@ -494,7 +494,7 @@ apps:
     helm:
       repoURL: https://democratic-csi.github.io/charts/
       chart: democratic-csi
-      targetRevision: "*"
+      targetRevision: 0.15.1
       values: |
         csiDriver:
           name: org.democratic-csi.iscsi
@@ -530,7 +530,7 @@ apps:
     helm:
       repoURL: https://democratic-csi.github.io/charts/
       chart: democratic-csi
-      targetRevision: "*"
+      targetRevision: 0.15.1
       values: |
         csiDriver:
           name: org.democratic-csi.nfs-ssd
@@ -682,7 +682,7 @@ apps:
     helm:
       repoURL: https://pkgs.tailscale.com/helmcharts
       chart: tailscale-operator
-      targetRevision: "*"
+      targetRevision: 1.96.5
       values: |
         oauth:
           clientId: ""
