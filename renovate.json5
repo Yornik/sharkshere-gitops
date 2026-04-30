@@ -49,10 +49,42 @@
         'helm',
       ],
     },
+    {
+      matchPackageNames: [
+        'quay.io/argoproj/argocd',
+      ],
+      automerge: false,
+      labels: [
+        'renovate',
+        'bootstrap',
+        'manual-apply',
+      ],
+      prBodyNotes: [
+        '> :warning: **Manual apply required.** ArgoCD does not manage its own bootstrap manifest, so this PR cannot be auto-applied by the cluster.',
+        '',
+        'After merging, run:',
+        '',
+        '```bash',
+        'kubectl --context yornik-sharkshere apply -k bootstrap/argocd/',
+        '```',
+        '',
+        'Then verify the rollout and that all Applications stay healthy:',
+        '',
+        '```bash',
+        'kubectl --context yornik-sharkshere -n argocd rollout status \\',
+        '  deploy/argocd-server deploy/argocd-repo-server \\',
+        '  statefulset/argocd-application-controller',
+        'kubectl --context yornik-sharkshere -n argocd get applications',
+        '```',
+        '',
+        'Rollback (if needed): revert the commit on `main`, run `kubectl apply -k bootstrap/argocd/` again to restore the previous version.',
+      ],
+    },
   ],
   kubernetes: {
     managerFilePatterns: [
       '/manifests/.+\\.yaml$/',
+      '/bootstrap/argocd/install\\.yaml$/',
     ],
   },
   customManagers: [
