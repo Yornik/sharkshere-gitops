@@ -4,4 +4,12 @@ metadata:
   name: argocd-cmd-params-cm
   namespace: argocd
 data:
+  # Trust the reverse proxy (Traefik) for TLS termination. Without this,
+  # ArgoCD does an HTTP -> HTTPS redirect that loops behind Traefik.
   server.insecure: "true"
+  # Use the API server's dry-run to compute diffs. ArgoCD's local
+  # structured-merge-diff library has stale OpenAPI schemas for several
+  # operator-managed CRDs (e.g. monitoring.coreos.com Prometheus has
+  # spec.hostNetwork that the cached schema does not declare), which would
+  # otherwise produce ComparisonError on those Applications.
+  controller.diff.server.side: "true"
