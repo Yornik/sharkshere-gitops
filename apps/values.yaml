@@ -895,13 +895,9 @@ apps:
         # through Renovate — there's no path where we'd silently skip versions.
         upgradeCheck:
           enabled: false
-        # Chart 10.0.0 ships gitlab-exporter subchart pinned to image tag
-        # 16.8.0, which is NOT published to registry.gitlab.com — every pod
-        # ImagePullBackOff's. Disable it; kube-prometheus-stack already
-        # scrapes the workload pods directly via PodMonitor (sidekiq /
-        # webservice / gitaly expose their own metrics endpoints).
-        gitlab-exporter:
-          enabled: false
+        # gitlab-exporter disabled — see the gitlab.gitlab-exporter block
+        # nested below (it's a sub-sub-chart under the `gitlab` subchart,
+        # not a top-level subchart, so the disable key needs that nesting).
         nginx-ingress:
           enabled: false
         prometheus:
@@ -915,6 +911,17 @@ apps:
           email: noreply@yornik.eu
 
         gitlab:
+          # Chart 10.0.0 ships gitlab-exporter pinned to image tag 16.8.0
+          # which is NOT published to registry.gitlab.com → every pod
+          # ImagePullBackOff's. Disable it; kube-prometheus-stack already
+          # scrapes the workload pods directly via PodMonitor (sidekiq /
+          # webservice / gitaly expose their own /metrics endpoints).
+          # NOTE: gitlab-exporter is a sub-sub-chart (under `gitlab`), not
+          # a top-level subchart — `gitlab-exporter.enabled: false` at the
+          # umbrella level is silently ignored because there's no top-level
+          # subchart by that name.
+          gitlab-exporter:
+            enabled: false
           webservice:
             ingress:
               enabled: false
