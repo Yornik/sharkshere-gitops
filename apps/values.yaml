@@ -70,6 +70,24 @@ apps:
               enabled: true
             datasources:
               enabled: true
+          # File-based dashboard providers. The sidecar auto-generates one
+          # for /tmp/dashboards (where it dumps ConfigMap dashboards). We
+          # add a 'Postgres' provider so URL-downloaded dashboards in
+          # /var/lib/grafana/dashboards/default get picked up AND grouped
+          # into a 'Postgres' folder in the Grafana UI.
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+                - name: default
+                  orgId: 1
+                  folder: Postgres
+                  type: file
+                  disableDeletion: false
+                  allowUiUpdates: false
+                  updateIntervalSeconds: 30
+                  options:
+                    path: /var/lib/grafana/dashboards/default
           # URL-imported dashboards (chart's initContainer fetches at
           # Grafana pod startup, writes into the file-provider path).
           dashboards:
