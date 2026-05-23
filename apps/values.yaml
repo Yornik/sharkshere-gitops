@@ -552,6 +552,42 @@ apps:
             mountOptions: []
         volumeSnapshotClasses: []
 
+  democratic-csi-iscsi-ssd:
+    namespace: democratic-csi
+    helm:
+      repoURL: https://democratic-csi.github.io/charts/
+      chart: democratic-csi
+      targetRevision: 0.15.1
+      values: |
+        csiDriver:
+          name: org.democratic-csi.iscsi-ssd
+        node:
+          hostPID: true
+          driver:
+            extraEnv:
+              - name: ISCSIADM_HOST_STRATEGY
+                value: nsenter
+              - name: ISCSIADM_HOST_PATH
+                value: /usr/local/sbin/iscsiadm
+            iscsiDirHostPath: /etc/iscsi
+            iscsiDirHostPathType: ""
+        driver:
+          existingConfigSecret: democratic-csi-iscsi-ssd-driver-config
+          config:
+            driver: freenas-api-iscsi
+        controller:
+          externalSnapshotter:
+            enabled: false
+        storageClasses:
+          - name: truenas-ssd-iscsi
+            defaultClass: false
+            reclaimPolicy: Delete
+            allowVolumeExpansion: true
+            parameters:
+              fsType: ext4
+            mountOptions: []
+        volumeSnapshotClasses: []
+
   democratic-csi-nfs-ssd:
     namespace: democratic-csi
     helm:
