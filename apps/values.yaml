@@ -880,10 +880,20 @@ apps:
           # ignores X-Forwarded-* from Traefik and logs the wrong client
           # IP, breaking rate-limiting and audit logs.
           OPENPROJECT_RAILS__TRUSTED__PROXIES: '["10.244.0.0/16","10.96.0.0/12"]'
+        # We use S3 for attachments — disable the bundled persistence PVC
+        # (which would also try to be RWX, requiring NFS).
+        persistence:
+          enabled: false
         openproject:
           host: plan.yornik.eu
           https: true
           hsts: true
+          # readOnlyRootFilesystem: true means /tmp and /app/tmp come from
+          # ephemeral PVCs. Default storage class is our truenas-nfs which
+          # doesn't preserve the sticky bit Ruby's Tmpdir check requires
+          # (errors with "/tmp is world-writable"). Pin to the ext4-on-zvol
+          # iSCSI class — formatted with proper 1777 root perms.
+          tmpVolumesStorageClassName: truenas-ssd-iscsi
           admin_user:
             name: yornik
             mail: openprojects@yornik.eu
