@@ -820,3 +820,7 @@ apps:
   shared-pg:
     namespace: shared-pg
     path: manifests/shared-pg
+
+  openproject-pg:
+    namespace: openproject
+    path: manifests/openproject
