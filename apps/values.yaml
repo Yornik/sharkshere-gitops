@@ -824,3 +824,76 @@ apps:
   openproject-pg:
     namespace: openproject
     path: manifests/openproject
+
+  openproject:
+    namespace: openproject
+    helm:
+      repoURL: https://charts.openproject.org/
+      chart: openproject
+      targetRevision: 13.6.0
+      values: |
+        # We ship our own IngressRoute (see manifests/openproject/) so the
+        # chart's bundled Ingress stays off.
+        ingress:
+          enabled: false
+        # External CNPG Postgres (Cluster CR in manifests/openproject/cluster.yaml).
+        # CNPG auto-creates the openproject-pg-app Secret with the connection
+        # credentials; we just point the chart at the {host, secret, user, db}.
+        postgresql:
+          bundled: false
+          connection:
+            host: openproject-pg-rw.openproject.svc.cluster.local
+            port: 5432
+          auth:
+            existingSecret: openproject-pg-app
+            secretKeys:
+              userPasswordKey: password
+            username: openproject
+            database: openproject
+        # S3 attachments — Hetzner OS bucket openproject-attachments. Avoids
+        # the RWX-PVC problem (web/worker/cron all need attachment writes).
+        s3:
+          enabled: true
+          auth:
+            existingSecret: openproject-s3-attachments
+          region: nbg1
+          bucketName: openproject-attachments
+          endpoint: https://nbg1.your-objectstorage.com
+        # Bundled memcached is fine — chart default, low overhead.
+        memcached:
+          enabled: true
+        # Non-secret env vars (SMTP host/port/from + Rails trustedProxies +
+        # registration disabled). Secret values come via extraEnvVarsSecret
+        # below (openproject-smtp + openproject-s3-attachments).
+        environment:
+          OPENPROJECT_EMAIL__DELIVERY__METHOD: smtp
+          OPENPROJECT_SMTP__ADDRESS: smtp.resend.com
+          OPENPROJECT_SMTP__PORT: "465"
+          OPENPROJECT_SMTP__DOMAIN: yornik.eu
+          OPENPROJECT_SMTP__USER__NAME: resend
+          OPENPROJECT_SMTP__AUTHENTICATION: plain
+          OPENPROJECT_SMTP__SSL: "true"
+          OPENPROJECT_SMTP__ENABLE__STARTTLS__AUTO: "false"
+          OPENPROJECT_MAIL__FROM: openprojects@yornik.eu
+          OPENPROJECT_SELF__REGISTRATION: "0"
+          # Trusted proxies: pod CIDR + service CIDR. Without this Rails
+          # ignores X-Forwarded-* from Traefik and logs the wrong client
+          # IP, breaking rate-limiting and audit logs.
+          OPENPROJECT_RAILS__TRUSTED__PROXIES: '["10.244.0.0/16","10.96.0.0/12"]'
+        openproject:
+          host: plan.yornik.eu
+          https: true
+          hsts: true
+          admin_user:
+            name: yornik
+            mail: openprojects@yornik.eu
+            password_reset: "true"
+            secret: openproject-app
+          secretKeyBase:
+            existingSecret: openproject-app
+            secretKey: secret-key-base
+          # Picks up both SMTP password (openproject-smtp) and S3 attachment
+          # credentials (openproject-s3-attachments) via env vars with
+          # OPENPROJECT_SMTP__PASSWORD / OPENPROJECT_FOG_CREDENTIALS_AWS__*
+          # keys.
+          extraEnvVarsSecret: openproject-smtp
