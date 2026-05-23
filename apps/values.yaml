@@ -694,3 +694,24 @@ apps:
           defaultTags: "tag:k8s"
         apiServerProxyConfig:
           mode: "false"
+
+  cnpg-operator:
+    namespace: cnpg-system
+    annotations:
+      argocd.argoproj.io/sync-wave: "-10"
+    syncOptions:
+      - ServerSideApply=true
+    helm:
+      repoURL: https://cloudnative-pg.github.io/charts
+      chart: cloudnative-pg
+      targetRevision: 0.28.2
+      values: |
+        crds:
+          create: true
+        replicaCount: 2
+        monitoring:
+          podMonitorEnabled: true
+          grafanaDashboard:
+            create: true
+          prometheusRule:
+            enabled: true
