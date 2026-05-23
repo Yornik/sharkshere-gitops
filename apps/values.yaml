@@ -942,6 +942,16 @@ apps:
 
         global:
           edition: ce
+          # Disable Gateway API + envoy-gateway subchart. We route everything
+          # through Traefik IngressRoute, so we don't need GitLab's Gateway
+          # API integration. The chart ships experimental-channel Gateway API
+          # CRDs which conflict with the cluster's standard-channel ones
+          # (blocked by ValidatingAdmissionPolicy safe-upgrades.gateway.
+          # networking.k8s.io) — server-side dry-run fails on the CRD, ArgoCD
+          # aborts the whole comparison, and the app stays OutOfSync forever.
+          gatewayApi:
+            enabled: false
+            installEnvoy: false
           hosts:
             domain: yornik.eu
             # https: true even though TLS termination is on Traefik —
