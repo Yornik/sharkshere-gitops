@@ -889,6 +889,13 @@ apps:
         # through Renovate — there's no path where we'd silently skip versions.
         upgradeCheck:
           enabled: false
+        # Chart 10.0.0 ships gitlab-exporter subchart pinned to image tag
+        # 16.8.0, which is NOT published to registry.gitlab.com — every pod
+        # ImagePullBackOff's. Disable it; kube-prometheus-stack already
+        # scrapes the workload pods directly via PodMonitor (sidekiq /
+        # webservice / gitaly expose their own metrics endpoints).
+        gitlab-exporter:
+          enabled: false
         nginx-ingress:
           enabled: false
         prometheus:
