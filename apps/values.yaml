@@ -695,6 +695,21 @@ apps:
         apiServerProxyConfig:
           mode: "false"
 
+  cert-manager:
+    namespace: cert-manager
+    annotations:
+      argocd.argoproj.io/sync-wave: "-20"
+    syncOptions:
+      - ServerSideApply=true
+    helm:
+      repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.20.2
+      values: |
+        crds:
+          enabled: true
+        replicaCount: 2
+
   cnpg-operator:
     namespace: cnpg-system
     annotations:
