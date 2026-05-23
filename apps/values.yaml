@@ -74,6 +74,15 @@ apps:
         # Prometheus
         prometheus:
           prometheusSpec:
+            # Pick up PodMonitor/ServiceMonitor/etc from any namespace, not
+            # only those labelled release=kube-prometheus-stack. Needed so
+            # operator-installed monitors (CNPG, future operators) are
+            # actually scraped.
+            podMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            probeSelectorNilUsesHelmValues: false
+            scrapeConfigSelectorNilUsesHelmValues: false
             retention: 60d
             retentionSize: 45GB
             storageSpec:
