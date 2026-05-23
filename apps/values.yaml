@@ -862,6 +862,148 @@ apps:
         service:
           port: 6379
 
+  # GitLab CE — chart 10.0 (GitLab 19) requires fully-external infra:
+  #   - postgres: gitlab-pg CNPG Cluster (manifests/gitlab/cluster.yaml)
+  #   - redis: gitlab-valkey (Valkey Helm app above)
+  #   - object storage: Hetzner OS (six yornik-gitlab-* buckets)
+  # bundled minio/postgresql/redis subcharts no longer exist in 10.0.
+  #
+  # First boot runs DB migrations as a Job — webservice + sidekiq stay
+  # Init/0 for 5-15 min while that finishes. ArgoCD will show Progressing.
+  # Don't re-sync; let it cook.
+  gitlab:
+    namespace: gitlab
+    helm:
+      repoURL: https://charts.gitlab.io
+      chart: gitlab
+      targetRevision: 10.0.0
+      values: |
+        # All subcharts disabled — we use external CNPG postgres, external
+        # Valkey, external S3, and Traefik IngressRoutes instead of
+        # bundled cert-manager/nginx-ingress/prometheus/runner.
+        installCertmanager: false
+        nginx-ingress:
+          enabled: false
+        prometheus:
+          install: false
+        gitlab-runner:
+          install: false
+        # certmanager-issuer is templated even when chart cert-manager off;
+        # email is just used for the optional ClusterIssuer that won't render
+        # because configureCertmanager: false below.
+        certmanager-issuer:
+          email: noreply@yornik.eu
+
+        gitlab:
+          webservice:
+            ingress:
+              enabled: false
+          gitaly:
+            persistence:
+              enabled: true
+              storageClass: truenas-ssd-iscsi
+              size: 50Gi
+          # Backups: toolbox uploads tarballs to yornik-gitlab-backups via
+          # s3cmd; auth via gitlab-backup-storage Secret.
+          toolbox:
+            backups:
+              objectStorage:
+                config:
+                  secret: gitlab-backup-storage
+                  key: config
+
+        registry:
+          enabled: true
+          # Registry uses its own storage Secret shape (docker registry
+          # config.yml, not Rails Fog YAML) — see gitlab-registry-storage.
+          storage:
+            secret: gitlab-registry-storage
+            key: config
+
+        global:
+          edition: ce
+          hosts:
+            domain: yornik.eu
+            # https: true even though TLS termination is on Traefik —
+            # tells Rails to generate https:// URLs (webhooks etc.).
+            https: true
+            gitlab:
+              name: git.yornik.eu
+            registry:
+              name: registry.git.yornik.eu
+            # gitlab-shell advertised externally on port 2222 (HAProxy on
+            # jump hosts forwards :2222 → gitlab-shell over Tailscale).
+            ssh: git.yornik.eu
+          shell:
+            port: 2222
+          ingress:
+            configureCertmanager: false
+            class: none
+            tls:
+              enabled: false
+          # External CNPG. Single physical DB (gitlabhq_production) used
+          # by both main and ci connection decompositions — chart 10 falls
+          # back to the global psql.password Secret when per-decomp
+          # overrides aren't set.
+          psql:
+            host: gitlab-pg-rw.gitlab.svc.cluster.local
+            port: 5432
+            database: gitlabhq_production
+            username: gitlab
+            password:
+              useSecret: true
+              secret: gitlab-pg-app
+              key: password
+          # External Valkey (gitlab-valkey Helm app).
+          redis:
+            host: gitlab-valkey.gitlab.svc.cluster.local
+            port: 6379
+            auth:
+              enabled: true
+              secret: gitlab-valkey
+              key: password
+          # Consolidated object storage — single connection Secret
+          # (Rails Fog YAML) covers lfs/artifacts/uploads/packages/etc.
+          appConfig:
+            object_store:
+              enabled: true
+              connection:
+                secret: gitlab-s3-connection
+                key: connection
+            lfs:
+              enabled: true
+              bucket: yornik-gitlab-lfs
+            artifacts:
+              enabled: true
+              bucket: yornik-gitlab-artifacts
+            uploads:
+              enabled: true
+              bucket: yornik-gitlab-uploads
+            packages:
+              enabled: true
+              bucket: yornik-gitlab-packages
+            backups:
+              bucket: yornik-gitlab-backups
+              tmpBucket: yornik-gitlab-backups
+          smtp:
+            enabled: true
+            address: smtp.resend.com
+            port: 465
+            tls: true
+            starttls_auto: false
+            user_name: resend
+            password:
+              secret: gitlab-smtp
+              key: password
+            domain: yornik.eu
+            authentication: plain
+          email:
+            from: gitlab@yornik.eu
+            display_name: GitLab
+          initialRootPassword:
+            secret: gitlab-initial-root-password
+            key: password
+
   openproject:
     namespace: openproject
     helm:
