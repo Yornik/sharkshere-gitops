@@ -61,6 +61,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `tailscale` | `tailscale` | cluster-side tailscale resources |
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
+| `gitlab-pg` | `gitlab` | dedicated CNPG Postgres Cluster for GitLab CE (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS) |
 
 (OpenProject itself is deployed via the Helm app entry — see the Helm apps table below.)
 

@@ -825,6 +825,10 @@ apps:
     namespace: openproject
     path: manifests/openproject
 
+  gitlab-pg:
+    namespace: gitlab
+    path: manifests/gitlab
+
   openproject:
     namespace: openproject
     helm:
