@@ -1,0 +1,34 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: gitlab-pg
+  namespace: gitlab
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  instances: 3
+  storage:
+    storageClass: truenas-ssd-iscsi
+    size: 20Gi
+  walStorage:
+    storageClass: truenas-ssd-iscsi
+    size: 10Gi
+  postgresql:
+    parameters:
+      shared_buffers: 256MB
+      work_mem: 16MB
+      effective_cache_size: 1GB
+  bootstrap:
+    initdb:
+      database: gitlabhq_production
+      owner: gitlab
+  monitoring:
+    # Deprecated in CNPG; will be removed. We ship our own PodMonitor in
+    # podmonitor.yaml so we control the release label Prometheus filters on.
+    enablePodMonitor: false
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: gitlab-pg-store
+        serverName: gitlab-pg
