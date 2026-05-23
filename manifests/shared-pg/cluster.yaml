@@ -23,7 +23,9 @@ spec:
       database: app
       owner: app
   monitoring:
-    enablePodMonitor: true
+    # Deprecated in CNPG; will be removed. We ship our own PodMonitor in
+    # podmonitor.yaml so we control the release label Prometheus filters on.
+    enablePodMonitor: false
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true

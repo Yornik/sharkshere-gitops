@@ -726,6 +726,11 @@ apps:
         replicaCount: 2
         monitoring:
           podMonitorEnabled: true
+          # Required so the chart-created PodMonitor matches Prometheus's
+          # release-scoped selector (chart default selects only resources
+          # with release=kube-prometheus-stack).
+          podMonitorAdditionalLabels:
+            release: kube-prometheus-stack
           grafanaDashboard:
             create: true
           prometheusRule:
