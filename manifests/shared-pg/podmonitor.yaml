@@ -12,3 +12,14 @@ spec:
       cnpg.io/podRole: instance
   podMetricsEndpoints:
     - port: metrics
+      metricRelabelings:
+        # Drop deprecated, always-zero backup metrics. The plugin model
+        # exposes the real values under barman_cloud_cloudnative_pg_io_*;
+        # the upstream Grafana dashboard's regex
+        # __name__=~"cnpg_collector_*|barman_cloud_*" returns both series
+        # per pod, which collide after the panel's `*1000` operator
+        # strips __name__ → "vector cannot contain metrics with the same
+        # labelset" error.
+        - sourceLabels: [__name__]
+          regex: cnpg_collector_(last_available_backup_timestamp|first_recoverability_point|last_failed_backup_timestamp)
+          action: drop
