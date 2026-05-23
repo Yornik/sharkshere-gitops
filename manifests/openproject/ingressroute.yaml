@@ -1,0 +1,21 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: openproject
+  namespace: openproject
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`plan.yornik.eu`)
+      kind: Rule
+      middlewares:
+        - name: openproject-hsts
+          namespace: openproject
+        - name: fail2ban-openproject
+          namespace: openproject
+      services:
+        - name: openproject
+          port: 8080
+  tls:
+    certResolver: letsencrypt

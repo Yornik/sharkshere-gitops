@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: openproject-redirect-https
+  namespace: openproject
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true

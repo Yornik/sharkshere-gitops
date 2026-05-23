@@ -62,6 +62,8 @@ manifests/      per-app manifests and Kustomize overlays
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 
+(OpenProject itself is deployed via the Helm app entry — see the Helm apps table below.)
+
 ### Helm apps
 
 | App | Namespace | Chart |
@@ -79,6 +81,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `cnpg-operator` | `cnpg-system` | `cloudnative-pg` |
 | `cnpg-plugin-barman-cloud` | `cnpg-system` | `plugin-barman-cloud` |
 | `cert-manager` | `cert-manager` | `cert-manager` |
+| `openproject` | `openproject` | `openproject` |
 
 ## Storage Classes
 
