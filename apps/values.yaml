@@ -119,6 +119,39 @@ apps:
           extraArgs:
             - --no-collector.systemd
 
+        # Expose CNPG Backup.status.stoppedAt as a Prometheus metric so the
+        # Grafana "last backup age" / RPO panels render. CNPG 1.29 + plugin-
+        # barman-cloud v0.12.0 doesn't populate Cluster.status.* from the
+        # plugin, leaving cnpg_collector_last_available_backup_timestamp at
+        # 0. The Backup CRs themselves DO have .status.stoppedAt populated,
+        # so we surface that via kube-state-metrics customResourceState.
+        kube-state-metrics:
+          rbac:
+            extraRules:
+              - apiGroups: ["postgresql.cnpg.io"]
+                resources: ["backups"]
+                verbs: ["get", "list", "watch"]
+          customResourceState:
+            enabled: true
+            config:
+              kind: CustomResourceStateMetrics
+              spec:
+                resources:
+                  - groupVersionKind:
+                      group: postgresql.cnpg.io
+                      version: v1
+                      kind: Backup
+                    metrics:
+                      - name: cnpg_backup_stopped_timestamp_seconds
+                        help: Unix timestamp when the CNPG Backup reached its stoppedAt time
+                        each:
+                          type: Gauge
+                          gauge:
+                            path: [status, stoppedAt]
+                        labelsFromPath:
+                          cluster: [spec, cluster, name]
+                          phase: [status, phase]
+
   loki:
     namespace: monitoring
     helm:
