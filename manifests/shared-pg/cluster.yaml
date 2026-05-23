@@ -8,10 +8,10 @@ metadata:
 spec:
   instances: 3
   storage:
-    storageClass: truenas-ssd
+    storageClass: truenas-ssd-iscsi
     size: 10Gi
   walStorage:
-    storageClass: truenas-ssd
+    storageClass: truenas-ssd-iscsi
     size: 5Gi
   postgresql:
     parameters:

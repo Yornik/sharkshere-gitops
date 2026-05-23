@@ -72,6 +72,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `democratic-csi-nfs` | `democratic-csi` | `democratic-csi` |
 | `democratic-csi-nfs-ssd` | `democratic-csi` | `democratic-csi` |
 | `democratic-csi-iscsi` | `democratic-csi` | `democratic-csi` |
+| `democratic-csi-iscsi-ssd` | `democratic-csi` | `democratic-csi` |
 | `traefik` | `traefik` | `traefik` |
 | `tailscale-operator` | `tailscale` | `tailscale-operator` |
 | `cnpg-operator` | `cnpg-system` | `cloudnative-pg` |
@@ -83,8 +84,9 @@ manifests/      per-app manifests and Kustomize overlays
 | StorageClass | Protocol | Backing pool | Notes |
 |--------------|----------|--------------|-------|
 | `truenas-nfs` (default) | NFS | `Big_Pool` raidz1 (7× HDD) | Jellyfin media, GoToSocial storage, Vikunja files — bulk/sequential IO only |
-| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | All other PVCs — databases, config, certs, logs, metrics |
-| `truenas-iscsi` | iSCSI | `Big_Pool` | Block storage |
+| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | App PVCs — config, attachments, small state (dataset `sync=disabled`, fast but RAM-buffered) |
+| `truenas-ssd-iscsi` | iSCSI | `ssd_pool` mirror | CNPG Postgres Clusters — ext4 on zvol with `sync=standard` for real per-commit durability |
+| `truenas-iscsi` | iSCSI | `Big_Pool` | Block storage (HDD-backed, rarely used) |
 | `smb` | SMB | `Big_Pool/Share` | Jellyfin media read-only |
 | `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write |
 | `local-path` | hostPath | Node-local | Jellyfin config (node-pinned) |
