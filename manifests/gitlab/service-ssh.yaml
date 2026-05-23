@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-shell
+  namespace: gitlab
+  annotations:
+    # Tailscale operator exposes this Service at
+    # gitlab-shell.hedgehog-wage.ts.net so HAProxy on the Hetzner jump hosts
+    # can reach it. The chart's own gitlab-gitlab-shell Service stays for
+    # internal cluster traffic — we own this one so Helm upgrades don't
+    # reconcile the annotation away.
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: gitlab-shell
+spec:
+  type: ClusterIP
+  selector:
+    app: gitlab-shell
+    release: gitlab
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 2222
+      protocol: TCP

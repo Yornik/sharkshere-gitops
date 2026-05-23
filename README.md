@@ -61,7 +61,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `tailscale` | `tailscale` | cluster-side tailscale resources |
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
-| `gitlab-pg` | `gitlab` | dedicated CNPG Postgres Cluster for GitLab CE (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS) |
+| `gitlab-pg` | `gitlab` | GitLab CE supporting resources — CNPG `gitlab-pg` Cluster (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS), IngressRoutes for `git.yornik.eu` + `registry.git.yornik.eu`, Tailscale-exposed `gitlab-shell` Service for SSH on `:2222`, and the SOPS Secrets the chart consumes (S3 buckets, registry storage, SMTP, initial root password) |
 
 (OpenProject itself is deployed via the Helm app entry — see the Helm apps table below.)
 
@@ -83,6 +83,8 @@ manifests/      per-app manifests and Kustomize overlays
 | `cnpg-plugin-barman-cloud` | `cnpg-system` | `plugin-barman-cloud` |
 | `cert-manager` | `cert-manager` | `cert-manager` |
 | `openproject` | `openproject` | `openproject` |
+| `gitlab-valkey` | `gitlab` | `valkey` |
+| `gitlab` | `gitlab` | `gitlab` |
 
 ## Storage Classes
 
@@ -104,6 +106,18 @@ manifests/      per-app manifests and Kustomize overlays
 - Shared edge hardening (`CSP`, selective `no-compression`, centralized `security.txt`).
 - Explicit sender-domain alignment for app mailers (`@yornik.eu`).
 - Registration controls for public apps (`Vikunja` registration disabled).
+
+## Stateful Workload Architecture
+
+Postgres is run via the CloudNativePG operator with a per-app Cluster pattern:
+
+- `shared-pg` (3-instance HA) hosts multi-tenant app databases that don't need their own cluster (GoToSocial, Vikunja, etc.).
+- Apps with their own large, hot workloads get a dedicated Cluster: `openproject-pg` for OpenProject, `gitlab-pg` for GitLab CE. Blast radius stays scoped — a runaway migration on one doesn't touch the others.
+- Every Cluster ships continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin, with a `truenas-ssd-iscsi` block-storage backing the live data + WAL volumes. iSCSI was chosen over NFS so `sync=standard` gives real per-commit `fsync` durability — see the pgbench notes in `manifests/shared-pg/` for the comparison that drove the decision.
+
+The cache + queue tier is the official Valkey chart (Linux Foundation Redis fork), externalized in its own Helm Application (`gitlab-valkey`) — chart-bundled Redis is no longer offered in GitLab Helm chart 10.0 (GitLab 19), and the Bitnami chart went paid in late 2025.
+
+Object storage for all GitLab-app data (LFS, artifacts, uploads, packages, registry, backups) is fully external to the cluster — six dedicated `yornik-gitlab-*` buckets in Hetzner Object Storage, each consumed via a SOPS-encrypted credentials Secret that the chart mounts as a connection file. Nothing app-scale persists on local volumes except gitaly's repo storage (which is its own iSCSI PVC).
 
 ## Homelab Constraints
 

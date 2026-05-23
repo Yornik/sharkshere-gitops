@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: gitlab-web
+  namespace: gitlab
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`git.yornik.eu`)
+      kind: Rule
+      middlewares:
+        - name: gitlab-redirect-https
+          namespace: gitlab
+      services:
+        - name: gitlab-webservice-default
+          port: 8181
