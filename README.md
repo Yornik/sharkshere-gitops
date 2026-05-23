@@ -60,6 +60,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `traefik-config` | `traefik` | shared edge middleware and `security.txt` |
 | `tailscale` | `tailscale` | cluster-side tailscale resources |
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
+| `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 
 ### Helm apps
 
