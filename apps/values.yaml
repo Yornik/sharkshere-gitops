@@ -829,6 +829,39 @@ apps:
     namespace: gitlab
     path: manifests/gitlab
 
+  # GitLab's cache + sidekiq queue store. Chart 10.0 (GitLab 19) removed the
+  # bundled redis subchart and GitLab's migration docs explicitly recommend the
+  # official Valkey chart — see [[feedback_bitnami_charts_deprecated]] for why
+  # Bitnami's redis isn't a viable option. Standalone is plenty for CE; promote
+  # to master+replica if a second consumer ever needs it.
+  gitlab-valkey:
+    namespace: gitlab
+    helm:
+      repoURL: https://valkey.io/valkey-helm/
+      chart: valkey
+      targetRevision: 0.9.4
+      values: |
+        replica:
+          enabled: false
+        dataStorage:
+          enabled: true
+          requestedSize: 8Gi
+          className: truenas-ssd-iscsi
+          accessModes:
+            - ReadWriteOnce
+        auth:
+          enabled: true
+          # ACL-based; the `default` user's password is read from a SOPS
+          # Secret in manifests/gitlab/secret-valkey.enc.yaml (single Secret
+          # consumed by both Valkey and GitLab).
+          usersExistingSecret: gitlab-valkey
+          aclUsers:
+            default:
+              permissions: "~* &* +@all"
+              passwordKey: password
+        service:
+          port: 6379
+
   openproject:
     namespace: openproject
     helm:
