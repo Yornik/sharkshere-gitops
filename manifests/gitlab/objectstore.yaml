@@ -1,0 +1,21 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: gitlab-pg-store
+  namespace: gitlab
+spec:
+  configuration:
+    destinationPath: s3://cnpg-wal/
+    endpointURL: https://nbg1.your-objectstorage.com
+    s3Credentials:
+      accessKeyId:
+        name: cnpg-s3-wal
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: cnpg-s3-wal
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+  retentionPolicy: 14d
