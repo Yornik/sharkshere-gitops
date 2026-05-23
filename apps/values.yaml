@@ -70,6 +70,15 @@ apps:
               enabled: true
             datasources:
               enabled: true
+          # URL-imported dashboards (chart's initContainer fetches at
+          # Grafana pod startup, writes into the file-provider path).
+          dashboards:
+            default:
+              cnpg-cluster:
+                # Pinned to the commit that added barman_cloud_* support;
+                # Renovate tracks via the customManager in renovate.json5.
+                url: https://raw.githubusercontent.com/cloudnative-pg/grafana-dashboards/19f534b2b3d2d34e871d656351599eb8b170ad86/charts/cluster/grafana-dashboard.json
+                sha256: 292cdeb3f17506d75623749fdfdfcaf51fbd9a414d6faa197434771fcff05bd2
 
         # Prometheus
         prometheus:
@@ -103,23 +112,6 @@ apps:
                   - record: namespace:container_memory_working_set:avg5m
                     expr: sum by(namespace) (container_memory_working_set_bytes{container!=""})
 
-          # Synthesize the CNPG metrics the operator should populate in the
-          # plugin model but doesn't (as of CNPG 1.29 + plugin-barman-cloud
-          # v0.12.0). Aliases the kube-state-metrics customResourceState
-          # gauge we expose from Backup CRs back to the upstream metric
-          # names the CNPG Grafana dashboard already queries — so the panels
-          # render without modifying dashboard JSON. Drop both rules once
-          # upstream populates cnpg_collector_* directly.
-          cnpg-backup-shim:
-            groups:
-              - name: cnpg-backup-shim
-                interval: 30s
-                rules:
-                  - record: cnpg_collector_last_available_backup_timestamp
-                    expr: max by(cluster) (kube_customresource_cnpg_backup_stopped_timestamp_seconds{phase="completed"})
-                  - record: cnpg_collector_first_recoverability_point
-                    expr: min by(cluster) (kube_customresource_cnpg_backup_stopped_timestamp_seconds{phase="completed"})
-
         # Alertmanager
         alertmanager:
           alertmanagerSpec:
@@ -135,39 +127,6 @@ apps:
         prometheus-node-exporter:
           extraArgs:
             - --no-collector.systemd
-
-        # Expose CNPG Backup.status.stoppedAt as a Prometheus metric so the
-        # Grafana "last backup age" / RPO panels render. CNPG 1.29 + plugin-
-        # barman-cloud v0.12.0 doesn't populate Cluster.status.* from the
-        # plugin, leaving cnpg_collector_last_available_backup_timestamp at
-        # 0. The Backup CRs themselves DO have .status.stoppedAt populated,
-        # so we surface that via kube-state-metrics customResourceState.
-        kube-state-metrics:
-          rbac:
-            extraRules:
-              - apiGroups: ["postgresql.cnpg.io"]
-                resources: ["backups"]
-                verbs: ["get", "list", "watch"]
-          customResourceState:
-            enabled: true
-            config:
-              kind: CustomResourceStateMetrics
-              spec:
-                resources:
-                  - groupVersionKind:
-                      group: postgresql.cnpg.io
-                      version: v1
-                      kind: Backup
-                    metrics:
-                      - name: cnpg_backup_stopped_timestamp_seconds
-                        help: Unix timestamp when the CNPG Backup reached its stoppedAt time
-                        each:
-                          type: Gauge
-                          gauge:
-                            path: [status, stoppedAt]
-                        labelsFromPath:
-                          cluster: [spec, cluster, name]
-                          phase: [status, phase]
 
   loki:
     namespace: monitoring
@@ -782,7 +741,12 @@ apps:
           podMonitorAdditionalLabels:
             release: kube-prometheus-stack
           grafanaDashboard:
-            create: true
+            # Chart ships a stale dashboard snapshot that still queries
+            # the deprecated cnpg_collector_* metrics. The maintained
+            # dashboard at cloudnative-pg/grafana-dashboards queries both
+            # the old AND new (barman_cloud_*) metric names. Load that
+            # instead via grafana.dashboards URL pointer below.
+            create: false
           prometheusRule:
             enabled: true
 

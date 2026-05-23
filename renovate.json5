@@ -101,5 +101,20 @@
       ],
       datasourceTemplate: 'helm',
     },
+    // Track SHA-pinned raw.githubusercontent.com URLs (e.g. the upstream
+    // CNPG Grafana dashboard JSON we import at Grafana pod startup).
+    // Renovate proposes PRs when the tracked branch advances.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/apps/values\\.yaml$/',
+      ],
+      matchStrings: [
+        'https://raw\\.githubusercontent\\.com/(?<depName>[^/]+/[^/]+)/(?<currentDigest>[a-f0-9]{40})/',
+      ],
+      currentValueTemplate: 'main',
+      datasourceTemplate: 'github-refs',
+      packageNameTemplate: '{{depName}}',
+    },
   ],
 }
