@@ -815,7 +815,13 @@ apps:
       chart: plugin-barman-cloud
       targetRevision: 0.6.0
       values: |
-        replicaCount: 2
+        # Single replica: the chart enables --leader-elect and the readiness
+        # probe is a tcp dial on :9090, which only the leader opens. A second
+        # replica sits at 0/1 forever waiting for leadership it'll never get,
+        # which flags the whole Application as Degraded in ArgoCD.
+        # HA for a control-plane plugin is via fast re-election after the
+        # leader pod dies, not via active-active replicas.
+        replicaCount: 1
 
   shared-pg:
     namespace: shared-pg
