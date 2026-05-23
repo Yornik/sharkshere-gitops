@@ -882,6 +882,13 @@ apps:
         # Valkey, external S3, and Traefik IngressRoutes instead of
         # bundled cert-manager/nginx-ingress/prometheus/runner.
         installCertmanager: false
+        # Chart hook is `pre-upgrade` only; Helm skips on first install, but
+        # ArgoCD applies all manifests and tries to run the version-detection
+        # script against an empty database → "unsupported upgrade path".
+        # Safe to leave off because we pin chart version + bump intentionally
+        # through Renovate — there's no path where we'd silently skip versions.
+        upgradeCheck:
+          enabled: false
         nginx-ingress:
           enabled: false
         prometheus:
