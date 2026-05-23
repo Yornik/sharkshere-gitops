@@ -715,3 +715,20 @@ apps:
             create: true
           prometheusRule:
             enabled: true
+
+  cnpg-plugin-barman-cloud:
+    namespace: cnpg-system
+    annotations:
+      argocd.argoproj.io/sync-wave: "-10"
+    syncOptions:
+      - ServerSideApply=true
+    helm:
+      repoURL: https://cloudnative-pg.github.io/charts
+      chart: plugin-barman-cloud
+      targetRevision: 0.6.0
+      values: |
+        replicaCount: 2
+
+  shared-pg:
+    namespace: shared-pg
+    path: manifests/shared-pg

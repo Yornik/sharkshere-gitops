@@ -1,0 +1,32 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shared-pg
+  namespace: shared-pg
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  instances: 3
+  storage:
+    storageClass: truenas-ssd
+    size: 10Gi
+  walStorage:
+    storageClass: truenas-ssd
+    size: 5Gi
+  postgresql:
+    parameters:
+      shared_buffers: 256MB
+      work_mem: 16MB
+      effective_cache_size: 1GB
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+  monitoring:
+    enablePodMonitor: true
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: shared-pg-store
+        serverName: shared-pg
