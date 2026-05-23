@@ -76,6 +76,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `tailscale-operator` | `tailscale` | `tailscale-operator` |
 | `cnpg-operator` | `cnpg-system` | `cloudnative-pg` |
 | `cnpg-plugin-barman-cloud` | `cnpg-system` | `plugin-barman-cloud` |
+| `cert-manager` | `cert-manager` | `cert-manager` |
 
 ## Storage Classes
 
