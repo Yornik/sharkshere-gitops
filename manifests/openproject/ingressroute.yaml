@@ -12,8 +12,11 @@ spec:
       middlewares:
         - name: openproject-hsts
           namespace: openproject
-        - name: fail2ban-openproject
-          namespace: openproject
+        # NOTE: fail2ban-openproject removed. OpenProject's SPA makes
+        # unauthenticated /api/v3/* calls that legitimately return 401,
+        # which the IP-based fail2ban plugin counted as failed login
+        # attempts → instant ban on first page load. OpenProject has
+        # its own Rails-level login throttling; we rely on that.
       services:
         - name: openproject
           port: 8080

@@ -8,7 +8,6 @@ resources:
   - podmonitor.yaml
   - middleware-redirect-https.yaml
   - middleware-hsts.yaml
-  - middleware-fail2ban-openproject.yaml
   - ingressroute.yaml
   - ingressroute-web.yaml
 generators:
