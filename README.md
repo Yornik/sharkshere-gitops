@@ -1,29 +1,86 @@
 # sharkshere-gitops
 
-GitOps workload control plane for the sharkshere Kubernetes platform.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling ~40 ArgoCD Applications that serve 14+ public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
-This repo is the application/policy layer in a 3-repo architecture:
+Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
-1. `jumpingsharks`: provisions edge infrastructure and DNS/rDNS
-2. `sharkshere-ansible`: hardens/configures edge hosts
-3. `sharkshere-gitops` (this repo): reconciles cluster workloads and runtime policy
+This repo is one of three:
 
-## Cluster Profile
+| Repo | Layer | Responsibility |
+|---|---|---|
+| [`jumpingsharks`](https://github.com/Yornik/jumpingsharks) | infrastructure | provisions Hetzner edge hosts + DNS/rDNS via OpenTofu |
+| [`sharkshere-ansible`](https://github.com/Yornik/sharkshere-ansible) | hosts | hardens edge hosts, deploys HAProxy + Tailscale + fail2ban |
+| `sharkshere-gitops` (this repo) | workloads | reconciles in-cluster apps + runtime policy via ArgoCD |
 
-| Item | Value |
-|------|-------|
-| Nodes | 4x Intel N150 |
-| Topology | 3 control-plane + 1 worker (all schedulable) |
-| Memory | 32 GB per node |
-| Storage | ~475 GB per node |
-| OS | Talos Linux |
-| GPU | Intel iGPU on all nodes |
+## At a glance
 
-## Repository Layout
+| Metric | Value |
+|---|---|
+| Nodes | 4× Intel N150 (3 control-plane + 1 worker, all schedulable), Talos Linux |
+| Memory | 128 GiB cluster total |
+| Workloads | ~40 ArgoCD Applications, ~14 public HTTPS domains |
+| Postgres | 3 dedicated CloudNativePG Clusters (shared / OpenProject / GitLab), 3-instance HA each |
+| Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
+| Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
+| Storage backend | TrueNAS SCALE (7-disk raidz1 HDD pool + 2-disk SSD mirror) over NFS + iSCSI + SMB |
+| Logs | Alloy (DaemonSet) → Loki (60-day retention, 30 GiB store) |
+| Metrics | kube-prometheus-stack + Grafana with file-provider dashboards |
+| Secrets | SOPS + age, decrypted in-cluster by KSOPS in the ArgoCD repo-server |
+
+## Traffic + state flow
+
+```mermaid
+flowchart LR
+  Internet([Internet])
+  subgraph Hetzner["Hetzner Cloud (edge)"]
+    HAProxy["HAProxy (L4 TCP)<br/>:80 :443 :2222<br/>PROXY v2"]
+  end
+  subgraph TS["Tailscale mesh"]
+    Mesh{{tailnet}}
+  end
+  subgraph Home["Home cluster (Talos)"]
+    Traefik["Traefik<br/>TLS termination<br/>(LE HTTP-01)"]
+    Apps[Workloads]
+    GitlabShell["gitlab-shell<br/>(SSH)"]
+  end
+  subgraph NAS["TrueNAS SCALE"]
+    HDD["NFS / Big_Pool<br/>(media + bulk)"]
+    SSD_NFS["NFS / ssd_pool<br/>(app config, sync=disabled)"]
+    SSD_iSCSI["iSCSI / ssd_pool<br/>(Postgres, sync=standard)"]
+  end
+  subgraph S3["Hetzner Object Storage"]
+    WAL["cnpg-wal/<br/>(continuous WAL archive)"]
+    Buckets["yornik-gitlab-* + openproject-attachments<br/>(LFS, registry, uploads, backups)"]
+  end
+
+  Internet -->|HTTPS / HTTP / SSH| HAProxy
+  HAProxy -->|"PROXY v2"| Mesh
+  Mesh -->|443| Traefik
+  Mesh -->|22| GitlabShell
+  Traefik --> Apps
+  Apps --> HDD
+  Apps --> SSD_NFS
+  Apps --> SSD_iSCSI
+  Apps --> Buckets
+  SSD_iSCSI -.barman-cloud plugin.-> WAL
+```
+
+## Engineering highlights
+
+- **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject and GitLab CE each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All three ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin.
+- **iSCSI over NFS for Postgres.** Block storage on `ssd_pool` with `sync=standard` gives real per-commit `fsync` durability — pgbench notes in `manifests/shared-pg/` document the comparison that drove the decision.
+- **Valkey, not Bitnami Redis.** GitLab chart 10.0 dropped its bundled Redis subchart, and the Bitnami chart went paid in Sept 2025. The cache + queue tier runs the official Valkey chart from `valkey.io` (Linux Foundation Redis fork) with iSCSI persistence.
+- **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains.
+- **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
+- **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
+- **SOPS + KSOPS** for in-cluster secret decryption. `.enc.yaml` files are decrypted by the repo-server init container with an age key mounted as a Secret; no plaintext secrets at rest or in git.
+- **PR-gated everything**: yamllint + helm template + kubeconform (raw + rendered) before merge.
+
+## Repository layout
 
 ```text
 apps/           app-of-apps chart producing Argo CD Applications
-bootstrap/      Argo CD bootstrap manifests
+bootstrap/      Argo CD bootstrap manifests (cluster-zero state)
 manifests/      per-app manifests and Kustomize overlays
 ```
 
@@ -31,8 +88,8 @@ manifests/      per-app manifests and Kustomize overlays
 
 1. Bootstrap installs Argo CD and root app.
 2. Root app renders one `Application` per entry in `apps/values.yaml`.
-3. Argo CD continuously enforces desired state (prune + self-heal).
-4. **GitHub webhook** → `https://argocd.fedishark.eu/api/webhook` triggers an immediate sync on every push to `main`, so ArgoCD reconciles within seconds of a merge rather than waiting for the default 3-minute polling interval. Configured under the repo's GitHub Settings → Webhooks.
+3. Argo CD continuously enforces desired state (prune + selfHeal).
+4. **GitHub webhook** → `https://argocd.fedishark.eu/api/webhook` triggers an immediate sync on every push to `main`, so ArgoCD reconciles within seconds of a merge rather than waiting for the default 3-minute polling interval.
 
 ## Application Inventory
 
@@ -63,8 +120,6 @@ manifests/      per-app manifests and Kustomize overlays
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 | `gitlab-pg` | `gitlab` | GitLab CE supporting resources — CNPG `gitlab-pg` Cluster (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS), IngressRoutes for `git.yornik.eu` + `registry.git.yornik.eu`, Tailscale-exposed `gitlab-shell` Service for SSH on `:2222`, and the SOPS Secrets the chart consumes (S3 buckets, registry storage, SMTP, initial root password) |
 
-(OpenProject itself is deployed via the Helm app entry — see the Helm apps table below.)
-
 ### Helm apps
 
 | App | Namespace | Chart |
@@ -83,10 +138,11 @@ manifests/      per-app manifests and Kustomize overlays
 | `cnpg-plugin-barman-cloud` | `cnpg-system` | `plugin-barman-cloud` |
 | `cert-manager` | `cert-manager` | `cert-manager` |
 | `openproject` | `openproject` | `openproject` |
-| `gitlab-valkey` | `gitlab` | `valkey` |
-| `gitlab` | `gitlab` | `gitlab` |
+| `gitlab-valkey` | `gitlab` | `valkey` (official `valkey/valkey` from `valkey.io`) |
+| `gitlab` | `gitlab` | `gitlab` (CE, chart 10.0) |
+| `gitlab-runner` | `gitlab` | `gitlab-runner` (kubernetes executor) |
 
-## Storage Classes
+## Storage classes
 
 | StorageClass | Protocol | Backing pool | Notes |
 |--------------|----------|--------------|-------|
@@ -98,44 +154,26 @@ manifests/      per-app manifests and Kustomize overlays
 | `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write |
 | `local-path` | hostPath | Node-local | Jellyfin config (node-pinned) |
 
-## Engineering Signals
+## Public surface
 
-- Git-driven reconciliation as the source of truth.
-- Split between local manifests and chart-managed components where appropriate.
-- Centralized logging pipeline (`Alloy -> Loki`) with noise filtering at ingestion.
-- Shared edge hardening (`CSP`, selective `no-compression`, centralized `security.txt`).
-- Explicit sender-domain alignment for app mailers (`@yornik.eu`).
-- Registration controls for public apps (`Vikunja` registration disabled).
+| Domain | Service |
+|---|---|
+| `yornik.eu` | professional site |
+| `fedishark.eu` | landing site |
+| `pub.fedishark.eu` | GoToSocial (Fediverse) |
+| `grafana.fedishark.eu` | Grafana |
+| `argocd.fedishark.eu` | ArgoCD UI + webhook receiver |
+| `asf.fedishark.eu` | ArchiSteamFarm |
+| `omni.fedishark.eu` | omni-tools |
+| `jelly.yornik.eu` | Jellyfin |
+| `passwords.yornik.eu` | Vaultwarden |
+| `todo.yornik.eu` | Vikunja |
+| `secrets.yornik.eu` | PrivateBin |
+| `plan.yornik.eu` | OpenProject |
+| `git.yornik.eu` | GitLab CE (web + git over HTTPS + git over SSH on `:2222`) |
+| `registry.git.yornik.eu` | GitLab Container Registry |
 
-## Stateful Workload Architecture
-
-Postgres is run via the CloudNativePG operator with a per-app Cluster pattern:
-
-- `shared-pg` (3-instance HA) hosts multi-tenant app databases that don't need their own cluster (GoToSocial, Vikunja, etc.).
-- Apps with their own large, hot workloads get a dedicated Cluster: `openproject-pg` for OpenProject, `gitlab-pg` for GitLab CE. Blast radius stays scoped — a runaway migration on one doesn't touch the others.
-- Every Cluster ships continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin, with a `truenas-ssd-iscsi` block-storage backing the live data + WAL volumes. iSCSI was chosen over NFS so `sync=standard` gives real per-commit `fsync` durability — see the pgbench notes in `manifests/shared-pg/` for the comparison that drove the decision.
-
-The cache + queue tier is the official Valkey chart (Linux Foundation Redis fork), externalized in its own Helm Application (`gitlab-valkey`) — chart-bundled Redis is no longer offered in GitLab Helm chart 10.0 (GitLab 19), and the Bitnami chart went paid in late 2025.
-
-Object storage for all GitLab-app data (LFS, artifacts, uploads, packages, registry, backups) is fully external to the cluster — six dedicated `yornik-gitlab-*` buckets in Hetzner Object Storage, each consumed via a SOPS-encrypted credentials Secret that the chart mounts as a connection file. Nothing app-scale persists on local volumes except gitaly's repo storage (which is its own iSCSI PVC).
-
-## Homelab Constraints
-
-Known single points of failure in this environment:
-
-- Single residential power feed
-- Single residential internet uplink
-- Shared NAS-backed storage dependency for part of the stateful workload set
-
-These risks are intentional tradeoffs for a homelab budget/complexity envelope. Full mitigation (dual power path, dual WAN with proper edge failover, fully independent replicated storage domains) is possible, but currently disproportionate in cost and operational overhead for this environment.
-
-## Domain and Edge Notes
-
-- ExternalDNS manages subdomains for `fedishark.eu` and `yornik.eu`.
-- Apex records for both `yornik.eu` and `fedishark.eu` are managed by ExternalDNS via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare doesn't support CNAME flattening conflicts with DANE TLSA).
-- `www.yornik.eu` redirects to apex.
-- Shared edge policy lives in `manifests/traefik-config/`.
-- DNSSEC/DANE (TLSA) is applied selectively where it provides practical value and manageable operational overhead, rather than blanket-enabling it for every endpoint.
+ExternalDNS manages all subdomains for `fedishark.eu` and `yornik.eu`. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
 ## Bootstrap
 
@@ -143,24 +181,41 @@ Prerequisite: `kubectl` context with cluster access.
 
 ```sh
 kubectl apply -f bootstrap/argocd-namespace.yaml
-kubectl apply -f bootstrap/argocd-install.yaml
+kubectl apply --server-side --force-conflicts -k bootstrap/argocd/
+sops -d bootstrap/argocd-secret.enc.yaml | kubectl apply -f -
 kubectl apply -f bootstrap/argocd-project.yaml
 kubectl apply -f bootstrap/root-app.yaml
 ```
 
+(Detailed bootstrap + upgrade procedures live in `CLAUDE.md`.)
+
 ## Secrets
 
-Secrets are encrypted with SOPS (`*.enc.yaml`) and decrypted during sync via KSOPS.
+Secrets are encrypted with SOPS (`*.enc.yaml`) and decrypted during sync via KSOPS. The age private key is mounted into the ArgoCD repo-server init container; nothing plaintext lives in git.
 
 ## CI
 
-PR checks:
+PR checks (run on every PR to `main`):
 
-1. YAML lint
-2. Helm template
-3. Kubeconform (raw manifests)
+1. YAML lint (`yamllint`)
+2. Helm template (`helm template apps/`)
+3. Kubeconform on raw manifests
 4. Kubeconform on rendered Helm output
 
-## Dependency Updates
+Average run: ~10 seconds.
 
-Renovate is enabled. Patch/minor image updates are auto-merged; major bumps require review.
+## Dependency updates
+
+Renovate is enabled. Patch + docker minor updates are auto-merged. Helm chart bumps open a PR with the `major` label when crossing a major; chart-cm changes require human review.
+
+## Homelab constraints
+
+Known single points of failure:
+
+- Single residential power feed
+- Single residential internet uplink
+- Shared NAS-backed storage dependency for part of the stateful workload set
+
+A UPS on the cluster, NAS, and home router doesn't actually solve the power-outage failure mode — when neighborhood power drops, the ISP's street-cabinet equipment (DSLAM / GPON / DOCSIS amplifier) typically loses power within minutes too. Local battery backup keeps the cluster *running* but with no upstream connectivity, which serves nobody. Real mitigation needs a second independent uplink (LTE/5G failover with its own battery), and at that point dual power becomes the smaller problem.
+
+These are intentional tradeoffs for a homelab budget/complexity envelope. Full mitigation (dual power path, genuinely independent dual WAN with edge failover, fully independent replicated storage domains) is feasible but currently disproportionate in cost and operational overhead for this environment.
