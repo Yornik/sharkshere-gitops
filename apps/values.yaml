@@ -1082,14 +1082,28 @@ apps:
                 # with that exact string as its name.
                 namespace = "gitlab"
                 image = "alpine:3.20"
-                cpu_request = "100m"
-                cpu_limit = "1"
-                memory_request = "256Mi"
-                memory_limit = "1Gi"
+                # Default per-job ceiling — enough for Godot/Rust/Java builds
+                # and most container builds. Cluster has 128 GiB total and
+                # ~95 GiB free, so even 4 concurrent jobs at full default
+                # (32 GiB) is comfortable.
+                cpu_request = "200m"
+                cpu_limit = "2"
+                memory_request = "512Mi"
+                memory_limit = "8Gi"
                 service_cpu_limit = "1"
-                service_memory_limit = "512Mi"
+                service_memory_limit = "8Gi"
                 helper_cpu_limit = "100m"
                 helper_memory_limit = "256Mi"
+                # Per-job override ceilings — a .gitlab-ci.yml job can ask
+                # for up to 4 CPU / 16 GiB via KUBERNETES_CPU_LIMIT /
+                # KUBERNETES_MEMORY_LIMIT env vars when a build genuinely
+                # needs more (e.g. linker memory spikes). Anything past the
+                # ceiling is rejected — keeps a runaway job from eating the
+                # cluster.
+                cpu_limit_overwrite_max_allowed = "4"
+                memory_limit_overwrite_max_allowed = "16Gi"
+                service_cpu_limit_overwrite_max_allowed = "2"
+                service_memory_limit_overwrite_max_allowed = "16Gi"
                 # Pull the helper image from Docker Hub by default; CI jobs can
                 # override `image:` per-job to use the registry.git.yornik.eu
                 # container registry once they're publishing there.
