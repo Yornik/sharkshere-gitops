@@ -1068,6 +1068,11 @@ apps:
           secret: gitlab-runner
           config: |
             [[runners]]
+              # Bump from default 1 — silences the chart's "long polling
+              # request bottleneck" warning and lets the runner check in for
+              # new jobs more aggressively (matches `concurrent: 4` above so
+              # the long-poll channels don't queue behind each other).
+              request_concurrency = 4
               [runners.kubernetes]
                 # Hardcoded — the chart writes runners.config to
                 # config.template.toml verbatim (no tpl pass when paired with
