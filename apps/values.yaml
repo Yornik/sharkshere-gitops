@@ -1069,7 +1069,13 @@ apps:
           config: |
             [[runners]]
               [runners.kubernetes]
-                namespace = "{{ "{{" }} .Release.Namespace {{ "}}" }}"
+                # Hardcoded — the chart writes runners.config to
+                # config.template.toml verbatim (no tpl pass when paired with
+                # the `runners.secret` + runner-token auth path), so a
+                # `{{ .Release.Namespace }}` here would land literal in the
+                # TOML and the runner would try to spawn jobs in a namespace
+                # with that exact string as its name.
+                namespace = "gitlab"
                 image = "alpine:3.20"
                 cpu_request = "100m"
                 cpu_limit = "1"
