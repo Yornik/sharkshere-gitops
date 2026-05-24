@@ -1103,7 +1103,7 @@ apps:
                 cpu_limit_overwrite_max_allowed = "4"
                 memory_limit_overwrite_max_allowed = "16Gi"
                 service_cpu_limit_overwrite_max_allowed = "2"
-                service_memory_limit_overwrite_max_allowed = "4Gi"
+                service_memory_limit_overwrite_max_allowed = "16Gi"
                 # Pull the helper image from Docker Hub by default; CI jobs can
                 # override `image:` per-job to use the registry.git.yornik.eu
                 # container registry once they're publishing there.
