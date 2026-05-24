@@ -1041,6 +1041,48 @@ apps:
             secret: gitlab-initial-root-password
             key: password
 
+  # GitLab Runner — runs CI jobs as ephemeral pods in the `gitlab` namespace,
+  # using the kubernetes executor. Auth via the `gitlab-runner` Secret
+  # (manifests/gitlab/secret-runner-registration.enc.yaml) which holds the
+  # `runner-token` issued in the GitLab UI (Admin → CI/CD → Runners).
+  # Tags: kubernetes,self-hosted (set on the runner in GitLab, not chart).
+  gitlab-runner:
+    namespace: gitlab
+    helm:
+      repoURL: https://charts.gitlab.io
+      chart: gitlab-runner
+      targetRevision: 0.88.3
+      values: |
+        gitlabUrl: https://git.yornik.eu/
+        # Allow up to 4 concurrent jobs — homelab cluster has plenty of CPU but
+        # tighter memory; each job pod pulls its own image so 4 lets CI parallelize
+        # without thrashing the node cache.
+        concurrent: 4
+        # RBAC: the runner needs to create Pods/ConfigMaps/Secrets/PVCs in the
+        # gitlab namespace so the kubernetes executor can spawn job pods.
+        rbac:
+          create: true
+        # Don't have the chart re-register on every restart — we set the token
+        # ourselves via the gitlab-runner Secret (see manifests/gitlab/).
+        runners:
+          secret: gitlab-runner
+          config: |
+            [[runners]]
+              [runners.kubernetes]
+                namespace = "{{ "{{" }} .Release.Namespace {{ "}}" }}"
+                image = "alpine:3.20"
+                cpu_request = "100m"
+                cpu_limit = "1"
+                memory_request = "256Mi"
+                memory_limit = "1Gi"
+                service_cpu_limit = "1"
+                service_memory_limit = "512Mi"
+                helper_cpu_limit = "100m"
+                helper_memory_limit = "256Mi"
+                # Pull the helper image from Docker Hub by default; CI jobs can
+                # override `image:` per-job to use the registry.git.yornik.eu
+                # container registry once they're publishing there.
+
   openproject:
     namespace: openproject
     helm:
