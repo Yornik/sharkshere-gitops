@@ -1091,7 +1091,7 @@ apps:
                 memory_request = "512Mi"
                 memory_limit = "8Gi"
                 service_cpu_limit = "1"
-                service_memory_limit = "2Gi"
+                service_memory_limit = "8Gi"
                 helper_cpu_limit = "100m"
                 helper_memory_limit = "256Mi"
                 # Per-job override ceilings — a .gitlab-ci.yml job can ask
