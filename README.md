@@ -216,4 +216,6 @@ Known single points of failure:
 - Single residential internet uplink
 - Shared NAS-backed storage dependency for part of the stateful workload set
 
-These are intentional tradeoffs for a homelab budget/complexity envelope. Full mitigation (dual power path, dual WAN with edge failover, fully independent replicated storage domains) is feasible but currently disproportionate in cost and operational overhead for this environment.
+A UPS on the cluster, NAS, and home router doesn't actually solve the power-outage failure mode — when neighborhood power drops, the ISP's street-cabinet equipment (DSLAM / GPON / DOCSIS amplifier) typically loses power within minutes too. Local battery backup keeps the cluster *running* but with no upstream connectivity, which serves nobody. Real mitigation needs a second independent uplink (LTE/5G failover with its own battery), and at that point dual power becomes the smaller problem.
+
+These are intentional tradeoffs for a homelab budget/complexity envelope. Full mitigation (dual power path, genuinely independent dual WAN with edge failover, fully independent replicated storage domains) is feasible but currently disproportionate in cost and operational overhead for this environment.
