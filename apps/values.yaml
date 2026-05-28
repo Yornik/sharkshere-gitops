@@ -52,7 +52,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: "85.*"
+      targetRevision: "86.*"
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
@@ -66,11 +66,15 @@ apps:
 
         # Grafana
         grafana:
-          deployment:
-            strategy:
-              rollingUpdate:
-                maxUnavailable: 1
-                maxSurge: 0
+          # Grafana has an RWO PVC (truenas-ssd); a surge during rollout would
+          # schedule a 2nd pod on another node and deadlock on Multi-Attach.
+          # The chart key is `deploymentStrategy` (top-level), NOT
+          # `deployment.strategy` — the latter is silently ignored.
+          deploymentStrategy:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: 1
+              maxSurge: 0
           admin:
             existingSecret: grafana-admin
             userKey: admin-user
@@ -896,7 +900,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.0.0
+      targetRevision: 10.0.1
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
