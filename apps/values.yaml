@@ -23,6 +23,20 @@ apps:
         controller:
           replicas: 1
 
+  metrics-server:
+    namespace: kube-system
+    helm:
+      repoURL: https://kubernetes-sigs.github.io/metrics-server/
+      chart: metrics-server
+      targetRevision: "3.*"
+      values: |
+        # Talos kubelet serving certs are self-signed (not signed by the
+        # cluster CA), so metrics-server cannot verify them over TLS.
+        # --kubelet-insecure-tls is the documented Talos approach. Restores
+        # `kubectl top` and CPU-based HPA scaling (e.g. the gitlab HPAs).
+        args:
+          - --kubelet-insecure-tls
+
   external-dns:
     namespace: external-dns
     path: manifests/external-dns
