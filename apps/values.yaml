@@ -1177,6 +1177,12 @@ apps:
           OPENPROJECT_SMTP__ENABLE__STARTTLS__AUTO: "false"
           OPENPROJECT_MAIL__FROM: openprojects@yornik.eu
           OPENPROJECT_SELF__REGISTRATION: "0"
+          # Hide Enterprise Edition upsell. EE__HIDE__BANNERS=true suppresses the
+          # EE promo banners and "Enterprise add-on" feature teasers in the UI;
+          # EE__MANAGER__VISIBLE=false removes the Enterprise admin/management
+          # section. (Both use __ to escape underscores in the var name.)
+          OPENPROJECT_EE__HIDE__BANNERS: "true"
+          OPENPROJECT_EE__MANAGER__VISIBLE: "false"
           # Trusted proxies: pod CIDR + service CIDR. Without this Rails
           # ignores X-Forwarded-* from Traefik and logs the wrong client
           # IP, breaking rate-limiting and audit logs.
