@@ -53,6 +53,13 @@
       matchPackageNames: [
         'quay.io/argoproj/argocd',
       ],
+      // Track ArgoCD with semver, not the default docker versioning. Docker
+      // versioning treats the `-rc7` in `v3.4.0-rc7` as a compatibility suffix
+      // and rejects every suffix-less stable tag (v3.4.0 .. v3.4.3), so no
+      // upgrade PR is ever opened. With semver, rc7 is a prerelease of 3.4.0
+      // and — because the current version is itself a prerelease — Renovate
+      // rolls forward to the latest stable release.
+      versioning: 'semver',
       automerge: false,
       labels: [
         'renovate',
