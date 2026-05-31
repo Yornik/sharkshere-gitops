@@ -1020,6 +1020,11 @@ apps:
           # Consolidated object storage — single connection Secret
           # (Rails Fog YAML) covers lfs/artifacts/uploads/packages/etc.
           appConfig:
+            # Disable telemetry sent to GitLab. enableUsagePing=false turns off
+            # Service Ping (aggregated usage stats); enableSeatLink=false turns
+            # off Seat Link (seat/license reporting — moot on unlicensed CE).
+            enableUsagePing: false
+            enableSeatLink: false
             object_store:
               enabled: true
               connection:
