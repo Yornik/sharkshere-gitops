@@ -486,6 +486,10 @@ apps:
     namespace: monitoring
     path: manifests/tibber-exporter
 
+  dirigera-exporter:
+    namespace: monitoring
+    path: manifests/dirigera-exporter
+
   gotosocial:
     namespace: gotosocial
     path: manifests/gotosocial

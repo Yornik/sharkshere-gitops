@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dirigera-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: dirigera-exporter
+    app.kubernetes.io/instance: dirigera-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dirigera-exporter
+      app.kubernetes.io/instance: dirigera-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dirigera-exporter
+        app.kubernetes.io/instance: dirigera-exporter
+    spec:
+      containers:
+        - name: dirigera-exporter
+          image: ghcr.io/yornik/dirigera-exporter:v0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DIRIGERA_IP
+              value: "192.168.1.62"
+            - name: POLL_INTERVAL_SECONDS
+              value: "30"
+            # ALPSTUGA reads ~2 C warm; set to "-2" once confirmed against a
+            # reference thermometer. Applied to the temperature gauge only.
+            - name: TEMP_OFFSET_CELSIUS
+              value: "0.0"
+            - name: LISTEN_PORT
+              value: "9119"
+            - name: DIRIGERA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dirigera-api
+                  key: token
+          ports:
+            - name: http
+              containerPort: 9119
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
