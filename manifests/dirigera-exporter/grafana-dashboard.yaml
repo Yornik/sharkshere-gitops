@@ -215,7 +215,7 @@ data:
                   }
                 ]
               },
-              "unit": "conppm",
+              "unit": "ppm",
               "displayName": "${__field.labels.sensor}"
             },
             "overrides": []
@@ -591,7 +591,7 @@ data:
                   }
                 ]
               },
-              "unit": "conppm"
+              "unit": "ppm"
             },
             "overrides": []
           },
@@ -820,7 +820,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "ikea_air_purifier_running{sensor=~\"$sensor\"}",
+              "expr": "ikea_air_purifier_running",
               "instant": true,
               "legendFormat": "{{sensor}}",
               "range": false,
@@ -887,7 +887,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "ikea_air_purifier_motor_speed{sensor=~\"$sensor\"}",
+              "expr": "ikea_air_purifier_motor_speed",
               "instant": true,
               "legendFormat": "{{sensor}}",
               "range": false,
@@ -952,7 +952,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "ikea_air_purifier_fan_mode{sensor=~\"$sensor\"} == 1",
+              "expr": "ikea_air_purifier_fan_mode == 1",
               "instant": true,
               "legendFormat": "{{mode}}",
               "range": false,
@@ -1036,7 +1036,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": false,
-              "expr": "ikea_air_purifier_filter_alarm{sensor=~\"$sensor\"}",
+              "expr": "ikea_air_purifier_filter_alarm",
               "instant": true,
               "legendFormat": "{{sensor}}",
               "range": false,
@@ -1130,7 +1130,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "ikea_air_purifier_running{sensor=~\"$sensor\"}",
+              "expr": "ikea_air_purifier_running",
               "legendFormat": "{{sensor}}",
               "range": true,
               "refId": "A"
@@ -1222,7 +1222,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "ikea_air_purifier_motor_speed{sensor=~\"$sensor\"}",
+              "expr": "ikea_air_purifier_motor_speed",
               "legendFormat": "{{sensor}}",
               "range": true,
               "refId": "A"
@@ -1230,6 +1230,75 @@ data:
           ],
           "title": "Fan motor speed",
           "type": "timeseries"
+        },
+        {
+          "id": 16,
+          "type": "timeseries",
+          "title": "Air purifier PM2.5 (raw — not µg/m³ comparable)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 10,
+                "showPoints": "never",
+                "spanNulls": true,
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "short",
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "ikea_air_purifier_pm25",
+              "legendFormat": "{{sensor}}",
+              "range": true,
+              "refId": "A"
+            }
+          ]
         }
       ],
       "refresh": "30s",
@@ -1265,7 +1334,7 @@ data:
               "type": "prometheus",
               "uid": "${datasource}"
             },
-            "definition": "label_values(ikea_air_pm25_micrograms_per_cubic_meter, sensor)",
+            "definition": "label_values(ikea_air_temperature_celsius, sensor)",
             "hide": 0,
             "includeAll": true,
             "label": "Sensor",
@@ -1273,7 +1342,7 @@ data:
             "name": "sensor",
             "options": [],
             "query": {
-              "query": "label_values(ikea_air_pm25_micrograms_per_cubic_meter, sensor)",
+              "query": "label_values(ikea_air_temperature_celsius, sensor)",
               "refId": "StandardVariableQuery"
             },
             "refresh": 1,
