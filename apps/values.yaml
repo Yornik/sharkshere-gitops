@@ -1074,7 +1074,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab-runner
-      targetRevision: 0.89.0
+      targetRevision: 0.89.1
       values: |
         gitlabUrl: https://git.yornik.eu/
         # Allow up to 4 concurrent jobs — homelab cluster has plenty of CPU but
