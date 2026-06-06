@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: dirigera-exporter
-          image: ghcr.io/yornik/dirigera-exporter:v0.1.0
+          image: ghcr.io/yornik/dirigera-exporter:v0.2.0
           imagePullPolicy: IfNotPresent
           env:
             - name: DIRIGERA_IP
