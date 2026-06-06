@@ -7,7 +7,7 @@ metadata:
   labels:
     grafana_dashboard: '1'
 data:
-  dashboard.json: |-
+  dirigera-air-quality.json: |-
     {
       "annotations": {
         "list": [
@@ -67,7 +67,8 @@ data:
                   }
                 ]
               },
-              "unit": "celsius"
+              "unit": "celsius",
+              "displayName": "${__field.labels.sensor}"
             },
             "overrides": []
           },
@@ -91,7 +92,7 @@ data:
               "values": false
             },
             "text": {},
-            "textMode": "auto"
+            "textMode": "value_and_name"
           },
           "pluginVersion": "10.1.1",
           "targets": [
@@ -140,7 +141,8 @@ data:
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "percent",
+              "displayName": "${__field.labels.sensor}"
             },
             "overrides": []
           },
@@ -164,7 +166,7 @@ data:
               "values": false
             },
             "text": {},
-            "textMode": "auto"
+            "textMode": "value_and_name"
           },
           "pluginVersion": "10.1.1",
           "targets": [
@@ -213,7 +215,8 @@ data:
                   }
                 ]
               },
-              "unit": "ppm"
+              "unit": "conppm",
+              "displayName": "${__field.labels.sensor}"
             },
             "overrides": []
           },
@@ -237,7 +240,7 @@ data:
               "values": false
             },
             "text": {},
-            "textMode": "auto"
+            "textMode": "value_and_name"
           },
           "pluginVersion": "10.1.1",
           "targets": [
@@ -286,7 +289,8 @@ data:
                   }
                 ]
               },
-              "unit": "conμgm3"
+              "unit": "conμgm3",
+              "displayName": "${__field.labels.sensor}"
             },
             "overrides": []
           },
@@ -310,7 +314,7 @@ data:
               "values": false
             },
             "text": {},
-            "textMode": "auto"
+            "textMode": "value_and_name"
           },
           "pluginVersion": "10.1.1",
           "targets": [
@@ -338,7 +342,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axisCenteredZero": false,
@@ -356,7 +360,7 @@ data:
                 },
                 "insertNulls": false,
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 2,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -368,7 +372,7 @@ data:
                   "mode": "none"
                 },
                 "thresholdsStyle": {
-                  "mode": "dashed"
+                  "mode": "off"
                 }
               },
               "mappings": [],
@@ -437,7 +441,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axisCenteredZero": false,
@@ -455,7 +459,7 @@ data:
                 },
                 "insertNulls": false,
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 2,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -467,7 +471,7 @@ data:
                   "mode": "none"
                 },
                 "thresholdsStyle": {
-                  "mode": "dashed"
+                  "mode": "off"
                 }
               },
               "mappings": [],
@@ -536,7 +540,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axisCenteredZero": false,
@@ -554,7 +558,7 @@ data:
                 },
                 "insertNulls": false,
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 2,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -566,7 +570,7 @@ data:
                   "mode": "none"
                 },
                 "thresholdsStyle": {
-                  "mode": "dashed"
+                  "mode": "off"
                 }
               },
               "mappings": [],
@@ -587,7 +591,7 @@ data:
                   }
                 ]
               },
-              "unit": "ppm"
+              "unit": "conppm"
             },
             "overrides": []
           },
@@ -635,7 +639,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axisCenteredZero": false,
@@ -653,7 +657,7 @@ data:
                 },
                 "insertNulls": false,
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 2,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
@@ -665,7 +669,7 @@ data:
                   "mode": "none"
                 },
                 "thresholdsStyle": {
-                  "mode": "dashed"
+                  "mode": "off"
                 }
               },
               "mappings": [],
@@ -737,7 +741,10 @@ data:
           "id": 9,
           "panels": [],
           "title": "Air Purifier (STARKVIND)",
-          "type": "row"
+          "type": "row",
+          "fieldConfig": {
+            "defaults": {}
+          }
         },
         {
           "datasource": {
@@ -754,10 +761,14 @@ data:
                   "type": "value",
                   "options": {
                     "0": {
-                      "text": "Off"
+                      "text": "Off",
+                      "index": 0,
+                      "color": "red"
                     },
                     "1": {
-                      "text": "On"
+                      "text": "On",
+                      "index": 1,
+                      "color": "green"
                     }
                   }
                 }
@@ -905,7 +916,8 @@ data:
                     "value": null
                   }
                 ]
-              }
+              },
+              "displayName": "${__field.labels.mode}"
             },
             "overrides": []
           },
@@ -965,10 +977,14 @@ data:
                   "type": "value",
                   "options": {
                     "0": {
-                      "text": "OK"
+                      "text": "OK",
+                      "index": 0,
+                      "color": "green"
                     },
                     "1": {
-                      "text": "Replace"
+                      "text": "Replace",
+                      "index": 1,
+                      "color": "red"
                     }
                   }
                 }
@@ -1056,10 +1072,14 @@ data:
                   "type": "value",
                   "options": {
                     "0": {
-                      "text": "Off"
+                      "text": "Off",
+                      "index": 0,
+                      "color": "red"
                     },
                     "1": {
-                      "text": "On"
+                      "text": "On",
+                      "index": 1,
+                      "color": "green"
                     }
                   }
                 }
@@ -1127,7 +1147,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axisCenteredZero": false,
@@ -1145,7 +1165,7 @@ data:
                 },
                 "insertNulls": false,
                 "lineInterpolation": "linear",
-                "lineWidth": 1,
+                "lineWidth": 2,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
