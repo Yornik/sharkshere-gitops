@@ -22,7 +22,7 @@ spec:
         - name: tibber-exporter
           # Fork of terjesannum/tibber-exporter adding 15-min (quarter-hourly)
           # price resolution. Source + CI: github.com/Yornik/tibber-exporter
-          image: ghcr.io/yornik/tibber-exporter:v1.0.0
+          image: ghcr.io/yornik/tibber-exporter:v1.1.0
           imagePullPolicy: IfNotPresent
           args:
             - --live
