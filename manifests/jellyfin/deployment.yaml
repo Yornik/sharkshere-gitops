@@ -59,7 +59,7 @@ spec:
             - name: config
               mountPath: /config
         - name: install-libdvdcss
-          image: alpine:3.23
+          image: alpine:3.24
           command: ["sh", "-c"]
           args:
             - |
@@ -71,7 +71,7 @@ spec:
             - name: dvdcss
               mountPath: /dvdcss
         - name: enable-video-transcode
-          image: alpine:3.23
+          image: alpine:3.24
           command: ["sh", "-c"]
           args:
             - |
