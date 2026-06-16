@@ -804,7 +804,7 @@ apps:
     helm:
       repoURL: https://cloudnative-pg.github.io/charts
       chart: cloudnative-pg
-      targetRevision: 0.28.2
+      targetRevision: 0.28.3
       values: |
         crds:
           create: true
@@ -904,7 +904,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.0.1
+      targetRevision: 10.0.2
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
