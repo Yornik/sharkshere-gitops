@@ -904,7 +904,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.0.2
+      targetRevision: 10.1.1
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
