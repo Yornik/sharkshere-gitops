@@ -644,7 +644,7 @@ apps:
     helm:
       repoURL: https://traefik.github.io/charts
       chart: traefik
-      targetRevision: "40.*"
+      targetRevision: "41.*"
       values: |
         updateStrategy:
           rollingUpdate:
