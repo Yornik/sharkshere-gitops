@@ -9,7 +9,7 @@ jobs:
     name: YAML Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install yamllint
         run: pip install yamllint
@@ -23,7 +23,7 @@ jobs:
     name: Validate security.txt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate signed security.txt
         run: .github/scripts/validate-security-txt.sh
@@ -32,7 +32,7 @@ jobs:
     name: Helm Template Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Helm
         uses: azure/setup-helm@v5
@@ -44,7 +44,7 @@ jobs:
     name: Validate Kubernetes Schemas
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install kubeconform
         run: |
@@ -73,7 +73,7 @@ jobs:
     name: Validate Rendered Helm Output
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Helm
         uses: azure/setup-helm@v5
