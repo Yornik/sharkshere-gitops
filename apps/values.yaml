@@ -804,7 +804,7 @@ apps:
     helm:
       repoURL: https://cloudnative-pg.github.io/charts
       chart: cloudnative-pg
-      targetRevision: 0.28.3
+      targetRevision: 0.29.0
       values: |
         crds:
           create: true
