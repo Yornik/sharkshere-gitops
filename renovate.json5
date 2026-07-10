@@ -108,6 +108,18 @@
       ],
       datasourceTemplate: 'helm',
     },
+    // Track tool versions pinned in workflow env vars via the standard
+    // `# renovate: datasource=... depName=...` comment convention
+    // (e.g. KUBECONFORM_VERSION in validate.yaml).
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/\\.github/workflows/.+\\.ya?ml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\n\\s*[A-Z_]+_VERSION: (?<currentValue>\\S+)',
+      ],
+    },
     // Track SHA-pinned raw.githubusercontent.com URLs (e.g. the upstream
     // CNPG Grafana dashboard JSON we import at Grafana pod startup).
     // Renovate proposes PRs when the tracked branch advances.

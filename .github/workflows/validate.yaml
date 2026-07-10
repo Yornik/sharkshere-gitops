@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # renovate: datasource=github-releases depName=yannh/kubeconform
+  KUBECONFORM_VERSION: v0.8.0
+  # CRD schemas (IngressRoute, Middleware, CNPG Cluster, Application,
+  # PodMonitor, ...). Without this, kubeconform skips every CRD-typed
+  # resource — more than half the repo — while reporting green.
+  CRD_SCHEMAS: 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{ .Group }}/{{ .ResourceKind }}_{{ .ResourceAPIVersion }}.json'
+
 jobs:
   yaml-lint:
     name: YAML Lint
@@ -40,6 +48,22 @@ jobs:
       - name: Render app-of-apps chart
         run: helm template sharkshere-apps apps/ --namespace argocd
 
+  helm-values:
+    name: Render Charts With Values
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v5
+
+      # Renders every upstream chart at its pinned version with the exact
+      # values ArgoCD will pass it. Catches chart/values schema breaks
+      # (e.g. traefik 41.x rejecting the `logs` key) that rendering only
+      # the Application envelopes cannot.
+      - name: Render all charts with their inline values
+        run: .github/scripts/validate-helm-values.sh
+
   kubeconform:
     name: Validate Kubernetes Schemas
     runs-on: ubuntu-latest
@@ -48,26 +72,38 @@ jobs:
 
       - name: Install kubeconform
         run: |
-          curl -fsSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
             | tar xz -C /usr/local/bin
 
       - name: Validate manifests
         run: |
-          kubeconform \
-            -strict \
+          kubeconform -strict -summary -output text \
             -ignore-missing-schemas \
-            -summary \
-            -output text \
+            -schema-location default \
+            -schema-location "$CRD_SCHEMAS" \
             manifests/
 
-      - name: Validate bootstrap
+      - name: Validate bootstrap manifests
         run: |
-          kubeconform \
-            -strict \
+          kubeconform -strict -summary -output text \
             -ignore-missing-schemas \
-            -summary \
-            -output text \
-            bootstrap/argocd-namespace.yaml bootstrap/argocd-project.yaml
+            -schema-location default \
+            -schema-location "$CRD_SCHEMAS" \
+            bootstrap/argocd-namespace.yaml \
+            bootstrap/argocd-project.yaml \
+            bootstrap/root-app.yaml
+
+      # The argocd overlay (upstream install + KSOPS/config patches) was
+      # previously never built in CI, so a broken strategic-merge patch
+      # merged green and only failed at kubectl-apply time.
+      - name: Build and validate bootstrap/argocd kustomize overlay
+        run: |
+          kubectl kustomize bootstrap/argocd/ \
+            | kubeconform -strict -summary -output text \
+                -ignore-missing-schemas \
+                -schema-location default \
+                -schema-location "$CRD_SCHEMAS" \
+                -
 
   helm-kubeconform:
     name: Validate Rendered Helm Output
@@ -80,10 +116,14 @@ jobs:
 
       - name: Install kubeconform
         run: |
-          curl -fsSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
             | tar xz -C /usr/local/bin
 
       - name: Template and validate
         run: |
           helm template sharkshere-apps apps/ --namespace argocd \
-            | kubeconform -strict -ignore-missing-schemas -summary -output text
+            | kubeconform -strict -summary -output text \
+                -ignore-missing-schemas \
+                -schema-location default \
+                -schema-location "$CRD_SCHEMAS" \
+                -
