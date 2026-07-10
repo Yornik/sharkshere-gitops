@@ -202,13 +202,6 @@ apps:
                 index:
                   prefix: loki_index_
                   period: 24h
-          storageConfig:
-            boltdb_shipper:
-              active_index_directory: /var/loki/index
-              cache_location: /var/loki/cache
-              shared_store: filesystem
-            filesystem:
-              directory: /var/loki/chunks
           storage:
             type: filesystem
         singleBinary:
@@ -1214,7 +1207,7 @@ apps:
                 # literal and in sync with runners.jobNamespace above (which
                 # places the executor Role/RoleBinding in that namespace).
                 namespace = "gitlab-ci"
-                image = "alpine:3.20"
+                image = "alpine:3.22"
                 # Default per-job ceiling — enough for Godot/Rust/Java builds
                 # and most container builds. Cluster has 128 GiB total and
                 # ~95 GiB free, so even 4 concurrent jobs at full default
