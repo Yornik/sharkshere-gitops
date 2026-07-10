@@ -13,6 +13,16 @@ spec:
   walStorage:
     storageClass: truenas-ssd-iscsi
     size: 5Gi
+  # Requests sized from observed usage (~75-165Mi, <20m CPU) + headroom so the
+  # pods get Burstable QoS instead of BestEffort (first evicted under memory
+  # pressure). Memory limit ~2x request and well above shared_buffers (256MB)
+  # + work_mem headroom. No CPU limit: throttling a DB is worse than sharing.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
   postgresql:
     parameters:
       shared_buffers: 256MB
