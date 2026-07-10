@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc-data.yaml
-  - pvc-data-old.yaml
   - deployment.yaml
   - service.yaml
   - ingressroute.yaml

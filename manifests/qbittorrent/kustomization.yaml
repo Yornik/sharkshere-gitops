@@ -8,7 +8,6 @@ resources:
   - middleware-auth.yaml
   - middleware-redirect-https.yaml
   - pvc-config.yaml
-  - pvc-config-old.yaml
   - pv-movies-rw.yaml
   - pvc-movies-rw.yaml
   - pv-series-rw.yaml
