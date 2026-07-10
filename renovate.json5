@@ -124,6 +124,10 @@
     managerFilePatterns: [
       '/manifests/.+\\.yaml$/',
       '/bootstrap/argocd/install\\.yaml$/',
+      // Picks up the alpine init-container image in the ksops repo-server
+      // patch. The KSOPS_VERSION inside its script has its own regex
+      // manager below.
+      '/bootstrap/argocd/repo-server-ksops-patch\\.yaml$/',
     ],
   },
   customManagers: [
@@ -166,6 +170,33 @@
       matchStrings: [
         '# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\n\\s*[A-Z_]+_VERSION: (?<currentValue>\\S+)',
       ],
+    },
+    // Track the default job image inside the gitlab-runner runners.config
+    // TOML string (`image = "alpine:X.Y"`). The `image = "..."` TOML
+    // assignment appears exactly once in apps/values.yaml; Helm-values
+    // images use `image:` (colon) syntax and are not matched.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/apps/values\\.yaml$/',
+      ],
+      matchStrings: [
+        'image = "(?<depName>[a-z0-9./-]+):(?<currentValue>[A-Za-z0-9._-]+)"',
+      ],
+      datasourceTemplate: 'docker',
+    },
+    // Track the Traefik fail2ban plugin pin. Anchored to the moduleName
+    // line directly above so it cannot match any other `version:` key.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/apps/values\\.yaml$/',
+      ],
+      matchStrings: [
+        'moduleName: github\\.com/tomMoulard/fail2ban\\s*\\n\\s*version: (?<currentValue>v[0-9.]+)',
+      ],
+      depNameTemplate: 'tomMoulard/fail2ban',
+      datasourceTemplate: 'github-releases',
     },
     // Track SHA-pinned raw.githubusercontent.com URLs (e.g. the upstream
     // CNPG Grafana dashboard JSON we import at Grafana pod startup).

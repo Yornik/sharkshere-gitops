@@ -19,7 +19,10 @@ spec:
     spec:
       containers:
         - name: muse
-          image: dovah/muse:latest
+          # dovah/muse publishes only the "latest" tag (the pr-1284 yt-dlp
+          # fork tag no longer exists on Docker Hub), so pin by digest.
+          # This digest matches the image the running pod uses.
+          image: dovah/muse:latest@sha256:1726a9083607d1e4d7b1e2be6f5c7ee089aca3e8234f54e8a40be13244530017
           env:
             - name: DISCORD_TOKEN
               valueFrom:
