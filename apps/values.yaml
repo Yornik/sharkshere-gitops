@@ -738,7 +738,7 @@ apps:
           plugins:
             fail2ban:
               moduleName: github.com/tomMoulard/fail2ban
-              version: v0.8.9
+              version: v0.9.0
         logs:
           general:
             format: json
