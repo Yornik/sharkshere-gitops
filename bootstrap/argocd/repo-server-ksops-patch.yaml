@@ -12,8 +12,20 @@ spec:
           command:
             - /bin/sh
             - -c
+          # KSOPS_SHA256 pins ksops v4.4.0 (ksops_4.4.0_Linux_x86_64.tar.gz, from the
+          # release's checksums.txt). Bumping the ksops version REQUIRES updating this hash.
           args:
-            - "wget -qO- https://github.com/viaduct-ai/kustomize-sops/releases/download/v4.4.0/ksops_4.4.0_Linux_x86_64.tar.gz | tar xz -C /custom-tools/ && chmod +x /custom-tools/ksops"
+            - |
+              set -eu
+              KSOPS_VERSION=4.4.0
+              KSOPS_TARBALL="ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
+              KSOPS_SHA256=72973ce5a97d7ad0318c9f6ae4df2aa94a4a564c45fdf71772b759dff4df0cb4
+              cd /custom-tools
+              wget -q "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/${KSOPS_TARBALL}"
+              echo "${KSOPS_SHA256}  ${KSOPS_TARBALL}" | sha256sum -c -
+              tar xzf "${KSOPS_TARBALL}"
+              rm "${KSOPS_TARBALL}"
+              chmod +x /custom-tools/ksops
           volumeMounts:
             - mountPath: /custom-tools
               name: custom-tools
