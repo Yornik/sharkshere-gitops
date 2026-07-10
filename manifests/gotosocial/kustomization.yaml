@@ -10,9 +10,7 @@ resources:
   - middleware-rate-limit-gotosocial.yaml
   - middleware-fail2ban-gotosocial.yaml
   - pvc-sqlite.yaml
-  - pvc-sqlite-old.yaml
   - pvc-storage.yaml
-  - pvc-storage-old.yaml
   - pvc-cache.yaml
 generators:
   - smtp-secret-generator.yaml
