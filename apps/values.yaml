@@ -1214,6 +1214,18 @@ apps:
         # (which would also try to be RWX, requiring NFS).
         persistence:
           enabled: false
+        # The seeder Job runs DB migrations. Job templates are immutable, so
+        # when a chart bump changes the image, ArgoCD's default PATCH fails
+        # ("spec.template: Invalid value"), migrations never run, and the
+        # web/worker pods crash-loop on PendingMigrationError (this took prod
+        # down on the 17.5.1 -> 17.6.0 bump, 2026-07-10). Replace=true makes
+        # ArgoCD delete-and-recreate the Job whenever it drifts; Force=true
+        # covers the immutable-field replacement. Side effect: any sync that
+        # changes the Job (including merging this) re-runs the seeder once —
+        # that's idempotent by design (migrations + seed data).
+        seederJob:
+          annotations:
+            argocd.argoproj.io/sync-options: Force=true,Replace=true
         openproject:
           host: plan.yornik.eu
           https: true
