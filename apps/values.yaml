@@ -738,7 +738,7 @@ apps:
           plugins:
             fail2ban:
               moduleName: github.com/tomMoulard/fail2ban
-              version: v0.8.9
+              version: v0.9.0
         logs:
           general:
             format: json
@@ -1207,7 +1207,7 @@ apps:
                 # literal and in sync with runners.jobNamespace above (which
                 # places the executor Role/RoleBinding in that namespace).
                 namespace = "gitlab-ci"
-                image = "alpine:3.22"
+                image = "alpine:3.24"
                 # Default per-job ceiling — enough for Godot/Rust/Java builds
                 # and most container builds. Cluster has 128 GiB total and
                 # ~95 GiB free, so even 4 concurrent jobs at full default
