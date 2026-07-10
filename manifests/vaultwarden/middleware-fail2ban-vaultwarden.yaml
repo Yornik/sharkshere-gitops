@@ -7,8 +7,15 @@ spec:
   plugin:
     fail2ban:
       rules:
+        # Deliberately very permissive: Vaultwarden has its own login rate
+        # limiting (LOGIN_RATELIMIT_*), and its API returns routine 401s on
+        # expired access tokens before clients refresh. The old 3-in-4h rule
+        # could ban a NAT'd household off the vault for 4h on normal client
+        # behavior (same failure mode already documented and removed for
+        # OpenProject). This backstop only trips on sustained credential
+        # stuffing that even a busy household can't produce.
         statuscode: "401-403"
-        maxretry: 3
-        findtime: 4h
-        bantime: 4h
+        maxretry: 30
+        findtime: 10m
+        bantime: 1h
         enabled: "true"
