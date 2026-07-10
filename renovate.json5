@@ -51,6 +51,35 @@
     },
     {
       matchPackageNames: [
+        'viaduct-ai/kustomize-sops',
+      ],
+      automerge: false,
+      labels: [
+        'renovate',
+        'bootstrap',
+        'manual-apply',
+      ],
+      prBodyNotes: [
+        '> :warning: **Manual steps required.** This bump changes only `KSOPS_VERSION`; the pinned `KSOPS_SHA256` in `bootstrap/argocd/repo-server-ksops-patch.yaml` still matches the OLD version, so the `ksops-checksum` CI job on this PR fails until you update it.',
+        '',
+        '1. Get the new hash and update the patch file:',
+        '',
+        '```bash',
+        'V=<new version>',
+        'curl -fsSL "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${V}/checksums.txt" | grep "ksops_${V}_Linux_x86_64.tar.gz"',
+        '# put that hash into KSOPS_SHA256, push to this branch, CI goes green',
+        '```',
+        '',
+        '2. After merging (bootstrap is not ArgoCD-managed):',
+        '',
+        '```bash',
+        'kubectl --context yornik-sharkshere apply --server-side --force-conflicts -k bootstrap/argocd/',
+        'kubectl --context yornik-sharkshere -n argocd rollout status deploy/argocd-repo-server',
+        '```',
+      ],
+    },
+    {
+      matchPackageNames: [
         'quay.io/argoproj/argocd',
       ],
       // Track ArgoCD with semver, not the default docker versioning. Docker
@@ -107,6 +136,24 @@
         'repoURL:\\s*(?<registryUrl>\\S+)\\s*\\n\\s*chart:\\s*(?<depName>\\S+)\\s*\\n\\s*targetRevision:\\s*[\'"]?(?<currentValue>[^\'"\\s]+)[\'"]?',
       ],
       datasourceTemplate: 'helm',
+    },
+    // Track the ksops version in the repo-server init container. Renovate
+    // bumps KSOPS_VERSION only — it cannot compute the release tarball's
+    // sha256, so KSOPS_SHA256 must be updated by hand (see prBodyNotes on
+    // the viaduct-ai/kustomize-sops packageRule). The `ksops-checksum` CI
+    // job fails until version and hash agree, so a bump PR cannot merge
+    // with a stale hash.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/bootstrap/argocd/repo-server-ksops-patch\\.yaml$/',
+      ],
+      matchStrings: [
+        'KSOPS_VERSION=(?<currentValue>[0-9][0-9.]*)',
+      ],
+      depNameTemplate: 'viaduct-ai/kustomize-sops',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v(?<version>.+)$',
     },
     // Track tool versions pinned in workflow env vars via the standard
     // `# renovate: datasource=... depName=...` comment convention
