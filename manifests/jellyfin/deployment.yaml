@@ -17,6 +17,13 @@ spec:
       labels:
         app: jellyfin
     spec:
+      securityContext:
+        # Belt-and-braces for /dev/dri access: common render (44) and video (226)
+        # GIDs. renderD128 is 0666 on Talos nodes so these are not strictly
+        # required, but they keep transcoding working if permissions tighten.
+        supplementalGroups:
+          - 44
+          - 226
       initContainers:
         - name: patch-network-config
           image: busybox:1.38
@@ -76,12 +83,17 @@ spec:
           args:
             - |
               DB=/config/data/jellyfin.db
+              MARKER=/config/.claude-migration-transcode-perms
+              # One-time migration: guard with a marker file so admin-UI changes
+              # to per-user transcoding settings are not reverted on every pod start.
+              if [ -f "$MARKER" ]; then echo "Migration already applied, skipping"; exit 0; fi
               if [ ! -f "$DB" ]; then echo "DB not found, skipping"; exit 0; fi
               apk add --no-cache sqlite > /dev/null 2>&1
               # Re-enable video transcoding (Kind=9=EnableVideoPlaybackTranscoding) for all users.
               # Previously disabled to work around Apple TV "Stopped at 0ms" cold-start, but that
               # is now solved by HEVC hardware decoding via QSV (see patch-network-config above).
               sqlite3 "$DB" "UPDATE Permissions SET Value = 1 WHERE Kind = 9;"
+              touch "$MARKER"
               echo "Done: video transcoding re-enabled for all users"
           volumeMounts:
             - name: config
@@ -90,7 +102,12 @@ spec:
         - name: jellyfin
           image: jellyfin/jellyfin:10.11.11
           securityContext:
-            privileged: true
+            # Not privileged: QSV transcoding only needs the world-writable
+            # /dev/dri/renderD128 hostPath mount, no extra capabilities.
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8096
               name: http
