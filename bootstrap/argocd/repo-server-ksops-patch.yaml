@@ -17,7 +17,7 @@ spec:
           args:
             - |
               set -eu
-              KSOPS_VERSION=4.4.0
+              KSOPS_VERSION=4.5.1
               KSOPS_TARBALL="ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
               KSOPS_SHA256=72973ce5a97d7ad0318c9f6ae4df2aa94a4a564c45fdf71772b759dff4df0cb4
               cd /custom-tools
