@@ -12,6 +12,13 @@ spec:
       middlewares:
         - name: gitlab-hsts
           namespace: gitlab
+        # Shared edge rate limit — defense-in-depth only; the registry auths
+        # through GitLab (JWT), which has app-level throttling. Deliberately
+        # NO fail2ban: docker clients legitimately get 401 challenges on
+        # every pull before token exchange, so a 401-based ban rule would
+        # ban CI runners and normal docker pulls.
+        - name: rate-limit
+          namespace: traefik
       services:
         - name: gitlab-registry
           port: 5000
