@@ -88,6 +88,19 @@ spec:
           volumeMounts:
             - name: dev-net-tun
               mountPath: /dev/net/tun
+          # Gluetun's internal health server binds 127.0.0.1:9999 (HTTP 200 when the
+          # tunnel is healthy), so kubelet can't reach it over the pod IP — use an
+          # exec probe inside the container (wget is present in the alpine image).
+          # Generous initialDelay: VPN establishment can take 30-60s. period 30s x
+          # failureThreshold 5 = ~2.5 min of tunnel-down before restart, so brief
+          # VPN blips (which gluetun heals itself) don't kill the pod.
+          livenessProbe:
+            exec:
+              command: ["wget", "-qO-", "http://127.0.0.1:9999"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
           resources:
             requests:
               cpu: 100m
@@ -113,6 +126,28 @@ spec:
               mountPath: /media/movies
             - name: series
               mountPath: /media/series
+          # Kubelet probes hit the pod IP; gluetun's firewall accepts anything on
+          # eth0 destined to the local pod subnet (iptables: -d 10.244.0.0/24 -i
+          # eth0 ACCEPT — verified on the live pod), so no FIREWALL_INPUT_PORTS
+          # entry is needed. GET / returns 200 unauthenticated (login page), also
+          # verified against the pod IP, so httpGet is reliable here.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Restart on hung WebUI: 3 x 30s = ~90s unresponsive before restart.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: 100m
