@@ -10,5 +10,9 @@ resources:
   - middleware-redirect-https.yaml
   - middleware-fail2ban-vaultwarden.yaml
   - pvc-data.yaml
+  # Nightly consistent SQLite copy (online backup API) at 23:30 NAS-local,
+  # so the 00:00 ZFS snapshot and daily cloudsync capture a safe db-backup
+  # alongside the live (crash-consistent-only) db file.
+  - cronjob-sqlite-backup.yaml
 generators:
   - secret-generator.yaml
