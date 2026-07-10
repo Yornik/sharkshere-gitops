@@ -36,6 +36,25 @@ jobs:
       - name: Validate signed security.txt
         run: .github/scripts/validate-security-txt.sh
 
+  ksops-checksum:
+    name: Verify ksops pinned hash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Renovate bumps KSOPS_VERSION but cannot compute the new tarball's
+      # sha256 — this job keeps a version/hash mismatch from ever merging.
+      - name: Embedded KSOPS_SHA256 matches upstream checksums.txt
+        run: |
+          PATCH=bootstrap/argocd/repo-server-ksops-patch.yaml
+          VERSION=$(grep -oP 'KSOPS_VERSION=\K[0-9][0-9.]*' "$PATCH")
+          EMBEDDED=$(grep -oP 'KSOPS_SHA256=\K[a-f0-9]{64}' "$PATCH")
+          UPSTREAM=$(curl -fsSL "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${VERSION}/checksums.txt" \
+            | grep -F " ksops_${VERSION}_Linux_x86_64.tar.gz" | awk '{print $1}')
+          echo "version=${VERSION} embedded=${EMBEDDED} upstream=${UPSTREAM}"
+          test -n "$UPSTREAM"
+          test "$EMBEDDED" = "$UPSTREAM"
+
   helm-template:
     name: Helm Template Check
     runs-on: ubuntu-latest

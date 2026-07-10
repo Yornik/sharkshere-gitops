@@ -52,7 +52,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: 87.13.0
+      targetRevision: 87.14.0
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
@@ -151,6 +151,14 @@ apps:
         # Alertmanager
         alertmanager:
           alertmanagerSpec:
+            # Full Alertmanager config comes from the SOPS-encrypted Secret
+            # in manifests/monitoring/alertmanager-config.enc.yaml (key
+            # `alertmanager.yaml`); it routes everything except Watchdog to
+            # email via Resend SMTP. configSecret REPLACES the chart-generated
+            # config entirely, and useExistingSecret stops the chart from
+            # rendering its default null-receiver config Secret alongside it.
+            configSecret: alertmanager-config
+            useExistingSecret: true
             storage:
               volumeClaimTemplate:
                 spec:
