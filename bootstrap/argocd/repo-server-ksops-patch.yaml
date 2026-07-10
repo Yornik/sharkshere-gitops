@@ -12,14 +12,14 @@ spec:
           command:
             - /bin/sh
             - -c
-          # KSOPS_SHA256 pins ksops v4.4.0 (ksops_4.4.0_Linux_x86_64.tar.gz, from the
+          # KSOPS_SHA256 pins ksops v4.5.1 (ksops_4.5.1_Linux_x86_64.tar.gz, from the
           # release's checksums.txt). Bumping the ksops version REQUIRES updating this hash.
           args:
             - |
               set -eu
               KSOPS_VERSION=4.5.1
               KSOPS_TARBALL="ksops_${KSOPS_VERSION}_Linux_x86_64.tar.gz"
-              KSOPS_SHA256=72973ce5a97d7ad0318c9f6ae4df2aa94a4a564c45fdf71772b759dff4df0cb4
+              KSOPS_SHA256=9641e03a301bf2fc4b98d0e837a0351e1ca443ecd7a68b25e6af2149fbb2ef30
               cd /custom-tools
               wget -q "https://github.com/viaduct-ai/kustomize-sops/releases/download/v${KSOPS_VERSION}/${KSOPS_TARBALL}"
               echo "${KSOPS_SHA256}  ${KSOPS_TARBALL}" | sha256sum -c -
