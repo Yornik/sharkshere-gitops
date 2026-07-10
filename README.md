@@ -44,8 +44,8 @@ flowchart LR
     GitlabShell["gitlab-shell<br/>(SSH)"]
   end
   subgraph NAS["TrueNAS SCALE"]
-    HDD["NFS / Big_Pool<br/>(media + bulk)"]
-    SSD_NFS["NFS / ssd_pool<br/>(app config, sync=disabled)"]
+    HDD["SMB + NFS / Big_Pool<br/>(media via SMB; NFS bulk idle)"]
+    SSD_NFS["NFS / ssd_pool<br/>(app config, sync=standard)"]
     SSD_iSCSI["iSCSI / ssd_pool<br/>(Postgres, sync=standard)"]
   end
   subgraph S3["Hetzner Object Storage"]
@@ -70,11 +70,11 @@ flowchart LR
 - **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject and GitLab CE each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All three ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin.
 - **iSCSI over NFS for Postgres.** Block storage on `ssd_pool` with `sync=standard` gives real per-commit `fsync` durability — pgbench notes in `manifests/shared-pg/` document the comparison that drove the decision.
 - **Valkey, not Bitnami Redis.** GitLab chart 10.0 dropped its bundled Redis subchart, and the Bitnami chart went paid in Sept 2025. The cache + queue tier runs the official Valkey chart from `valkey.io` (Linux Foundation Redis fork) with iSCSI persistence.
-- **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains.
+- **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains. Hosted repo data (gitaly on an iSCSI zvol, invisible to NAS file-level backup) is covered by the toolbox backup CronJob — 03:30 daily, `--skip db`, uploading tarballs to `yornik-gitlab-backups`; the database is already protected by CNPG barman base backups + continuous WAL archive.
 - **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
 - **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
 - **SOPS + KSOPS** for in-cluster secret decryption. `.enc.yaml` files are decrypted by the repo-server init container with an age key mounted as a Secret; no plaintext secrets at rest or in git.
-- **PR-gated everything**: yamllint + helm template + kubeconform (raw + rendered) before merge.
+- **PR-gated everything**: seven CI jobs before merge — yamllint, signed `security.txt` validation, a KSOPS version/hash guard, helm template, per-chart values rendering, and kubeconform with CRD schemas on both raw and rendered output (see [CI](#ci)).
 
 ## Repository layout
 
@@ -139,15 +139,15 @@ manifests/      per-app manifests and Kustomize overlays
 | `cert-manager` | `cert-manager` | `cert-manager` |
 | `openproject` | `openproject` | `openproject` |
 | `gitlab-valkey` | `gitlab` | `valkey` (official `valkey/valkey` from `valkey.io`) |
-| `gitlab` | `gitlab` | `gitlab` (CE, chart 10.0) |
+| `gitlab` | `gitlab` | `gitlab` (CE, chart 10.x) |
 | `gitlab-runner` | `gitlab` | `gitlab-runner` (kubernetes executor) |
 
 ## Storage classes
 
 | StorageClass | Protocol | Backing pool | Notes |
 |--------------|----------|--------------|-------|
-| `truenas-nfs` (default) | NFS | `Big_Pool` raidz1 (7× HDD) | Jellyfin media, GoToSocial storage, Vikunja files — bulk/sequential IO only |
-| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | App PVCs — config, attachments, small state (dataset `sync=disabled`, fast but RAM-buffered) |
+| `truenas-nfs` (default) | NFS | `Big_Pool` raidz1 (7× HDD) | Cluster default but currently unused — all app state migrated to `truenas-ssd`; reserved for future bulk/sequential HDD volumes |
+| `truenas-ssd` | NFS | `ssd_pool` mirror (2× Samsung 870 EVO 1 TB) | App PVCs — config, attachments, small state (dataset `sync=standard`) |
 | `truenas-ssd-iscsi` | iSCSI | `ssd_pool` mirror | CNPG Postgres Clusters — ext4 on zvol with `sync=standard` for real per-commit durability |
 | `truenas-iscsi` | iSCSI | `Big_Pool` | Block storage (HDD-backed, rarely used) |
 | `smb` | SMB | `Big_Pool/Share` | Jellyfin media read-only |
@@ -195,14 +195,17 @@ Secrets are encrypted with SOPS (`*.enc.yaml`) and decrypted during sync via KSO
 
 ## CI
 
-PR checks (run on every PR to `main`):
+PR checks (run on every PR to `main`, seven parallel jobs in `.github/workflows/validate.yaml`):
 
-1. YAML lint (`yamllint`)
-2. Helm template (`helm template apps/`)
-3. Kubeconform on raw manifests
-4. Kubeconform on rendered Helm output
+1. YAML lint (`yamllint` over `manifests/` + `bootstrap/`)
+2. Signed `security.txt` validation (`.github/scripts/validate-security-txt.sh`)
+3. KSOPS pinned-hash guard — embedded `KSOPS_SHA256` must match the upstream release `checksums.txt`, so a Renovate version bump can't merge with a stale hash
+4. Helm template of the app-of-apps chart (`helm template apps/`)
+5. Per-chart values rendering (`.github/scripts/validate-helm-values.sh`) — every upstream chart at its pinned version with the exact inline values ArgoCD will pass, catching chart/values schema breaks
+6. Kubeconform with CRD schemas (datree CRDs-catalog) on raw manifests, bootstrap manifests, and the built `bootstrap/argocd/` kustomize overlay
+7. Kubeconform on rendered Helm output
 
-Average run: ~10 seconds.
+Average run: ~20 seconds.
 
 ## Dependency updates
 
