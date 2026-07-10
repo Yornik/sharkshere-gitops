@@ -665,7 +665,11 @@ apps:
             maxUnavailable: 1
             maxSurge: 0
         service:
-          type: ClusterIP
+          # The chart only reads the type from service.spec (merged into the
+          # Service spec); a bare service.type key is silently ignored and the
+          # chart default (LoadBalancer) leaked through, allocating NodePorts.
+          spec:
+            type: ClusterIP
           annotations:
             tailscale.com/expose: "true"
             tailscale.com/hostname: traefik
