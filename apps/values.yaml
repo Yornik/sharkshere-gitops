@@ -223,6 +223,16 @@ apps:
           enabled: false
         test:
           enabled: false
+        # Chart-default chunks-cache memcached reserves 9830Mi request+limit
+        # (allocatedMemory 8192 * 1.2 overhead). Measured 2026-07-10: 632Mi
+        # in use, 37 hits vs 12092 misses (0.3% hit rate) — useless in front
+        # of a SingleBinary filesystem store.
+        chunksCache:
+          enabled: false
+        # Kept for repeated Grafana range queries, but the default 1229Mi
+        # request had 24Mi in use. 256M allocated -> ~307Mi request.
+        resultsCache:
+          allocatedMemory: 256
 
   truenas-monitoring:
     namespace: monitoring
