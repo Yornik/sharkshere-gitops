@@ -681,6 +681,15 @@ apps:
           annotations:
             tailscale.com/expose: "true"
             tailscale.com/hostname: traefik
+        # Trust boundary: external traffic enters via HAProxy (Hetzner) ->
+        # tailnet -> tailscale-operator proxy pod (kernel mode, SNAT) ->
+        # traefik. Verified empirically: non-PROXY connections on the web
+        # entrypoint log ClientAddr = the ts-traefik pod IP (10.244.2.81),
+        # so traefik sees the pod CIDR (10.244.0.0/16), not tailnet 100.64
+        # addresses. 10.244.0.0/16 replaces the former 10.0.0.0/8, which
+        # also trusted the service CIDR and anything else in 10/8;
+        # 100.64.0.0/10 stays for any future source-IP-preserving tailnet
+        # path (e.g. HAProxy dialing traefik directly over the mesh).
         ports:
           web:
             port: 8000
@@ -688,11 +697,11 @@ apps:
             protocol: TCP
             proxyProtocol:
               trustedIPs:
-                - "10.0.0.0/8"
+                - "10.244.0.0/16"
                 - "100.64.0.0/10"
             forwardedHeaders:
               trustedIPs:
-                - "10.0.0.0/8"
+                - "10.244.0.0/16"
                 - "100.64.0.0/10"
             http:
               redirections:
@@ -705,18 +714,18 @@ apps:
             protocol: TCP
             proxyProtocol:
               trustedIPs:
-                - "10.0.0.0/8"
+                - "10.244.0.0/16"
                 - "100.64.0.0/10"
             forwardedHeaders:
               trustedIPs:
-                - "10.0.0.0/8"
+                - "10.244.0.0/16"
                 - "100.64.0.0/10"
             http:
               tls: {}
         certificatesResolvers:
           letsencrypt:
             acme:
-              email: yornik@yornik.nl
+              email: yornik@gmail.com
               storage: /data/acme.json
               keyType: EC384
               httpChallenge:
@@ -835,6 +844,14 @@ apps:
         crds:
           create: true
         replicaCount: 2
+        # Observed usage ~35-56Mi / <10m CPU per replica; requests + memory
+        # limit lift the operator out of BestEffort QoS.
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
         monitoring:
           podMonitorEnabled: true
           # Required so the chart-created PodMonitor matches Prometheus's
