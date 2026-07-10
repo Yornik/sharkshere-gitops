@@ -1,0 +1,20 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-asf
+  namespace: asf
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        # Deliberately very permissive: the ASF IPC web UI polls its API and
+        # can return routine 401s while a session/IPC password is being
+        # (re)entered, and a strict rule could ban a NAT'd household off the
+        # UI on normal client behavior (same failure mode already documented
+        # and removed for OpenProject). This backstop only trips on sustained
+        # credential stuffing that even a busy household can't produce.
+        statuscode: "401-403"
+        maxretry: 30
+        findtime: 10m
+        bantime: 1h
+        enabled: "true"
