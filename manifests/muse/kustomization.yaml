@@ -4,6 +4,5 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - pvc-data.yaml
-  - pvc-data-old.yaml
 generators:
   - secret-generator.yaml
