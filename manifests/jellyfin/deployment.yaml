@@ -104,6 +104,12 @@ spec:
           securityContext:
             # Not privileged: QSV transcoding only needs the world-writable
             # /dev/dri/renderD128 hostPath mount, no extra capabilities.
+            # privileged MUST stay explicitly false: the live object once had
+            # privileged: true, and with server-side apply an omitted field
+            # is retained, not removed — the merge produced the invalid combo
+            # privileged=true + allowPrivilegeEscalation=false and wedged the
+            # app in ComparisonError.
+            privileged: false
             allowPrivilegeEscalation: false
             capabilities:
               drop:
