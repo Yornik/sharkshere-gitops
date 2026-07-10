@@ -990,6 +990,13 @@ apps:
               cron:
                 enabled: true
                 schedule: "30 3 * * *"
+                # --skip db: the toolbox pg_dump client (17.x) cannot dump
+                # the CNPG postgres 18 server (verified failure 2026-07-10),
+                # and the DB is already covered by CNPG barman base backups
+                # (every 3h) + continuous WAL archiving. This job's purpose
+                # is the gitaly repo data. A restore combines this tarball
+                # with a CNPG point-in-time recovery.
+                extraArgs: "--skip db"
               objectStorage:
                 config:
                   secret: gitlab-backup-storage
