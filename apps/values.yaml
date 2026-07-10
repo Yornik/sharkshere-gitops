@@ -52,7 +52,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: 87.13.0
+      targetRevision: 87.14.0
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
@@ -151,6 +151,14 @@ apps:
         # Alertmanager
         alertmanager:
           alertmanagerSpec:
+            # Full Alertmanager config comes from the SOPS-encrypted Secret
+            # in manifests/monitoring/alertmanager-config.enc.yaml (key
+            # `alertmanager.yaml`); it routes everything except Watchdog to
+            # email via Resend SMTP. configSecret REPLACES the chart-generated
+            # config entirely, and useExistingSecret stops the chart from
+            # rendering its default null-receiver config Secret alongside it.
+            configSecret: alertmanager-config
+            useExistingSecret: true
             storage:
               volumeClaimTemplate:
                 spec:
@@ -972,8 +980,27 @@ apps:
               size: 50Gi
           # Backups: toolbox uploads tarballs to yornik-gitlab-backups via
           # s3cmd; auth via gitlab-backup-storage Secret.
+          #
+          # The backup CronJob is the ONLY backup path for hosted git repos:
+          # gitaly lives on an iSCSI zvol, which is invisible to both the
+          # NAS file-based cloudsync tasks and the dataset ZFS snapshot
+          # protection on Big_Pool/Share. 03:30 daily avoids the NAS
+          # cloudsync slots (02:00/04:00/06:00) and the every-3h CNPG
+          # backups (00:00/03:00/06:00/...). Staging uses the default
+          # emptyDir — fine while repos are small (~500 MB); enable
+          # backups.cron.persistence once repo data outgrows node disk.
           toolbox:
             backups:
+              cron:
+                enabled: true
+                schedule: "30 3 * * *"
+                # --skip db: the toolbox pg_dump client (17.x) cannot dump
+                # the CNPG postgres 18 server (verified failure 2026-07-10),
+                # and the DB is already covered by CNPG barman base backups
+                # (every 3h) + continuous WAL archiving. This job's purpose
+                # is the gitaly repo data. A restore combines this tarball
+                # with a CNPG point-in-time recovery.
+                extraArgs: "--skip db"
               objectStorage:
                 config:
                   secret: gitlab-backup-storage
@@ -1218,6 +1245,18 @@ apps:
         # (which would also try to be RWX, requiring NFS).
         persistence:
           enabled: false
+        # The seeder Job runs DB migrations. Job templates are immutable, so
+        # when a chart bump changes the image, ArgoCD's default PATCH fails
+        # ("spec.template: Invalid value"), migrations never run, and the
+        # web/worker pods crash-loop on PendingMigrationError (this took prod
+        # down on the 17.5.1 -> 17.6.0 bump, 2026-07-10). Replace=true makes
+        # ArgoCD delete-and-recreate the Job whenever it drifts; Force=true
+        # covers the immutable-field replacement. Side effect: any sync that
+        # changes the Job (including merging this) re-runs the seeder once —
+        # that's idempotent by design (migrations + seed data).
+        seederJob:
+          annotations:
+            argocd.argoproj.io/sync-options: Force=true,Replace=true
         openproject:
           host: plan.yornik.eu
           https: true
