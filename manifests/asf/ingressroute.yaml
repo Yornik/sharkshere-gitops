@@ -12,6 +12,8 @@ spec:
       middlewares:
         - name: security-headers
           namespace: traefik
+        - name: fail2ban-asf
+          namespace: asf
         - name: no-compression
           namespace: traefik
         - name: rate-limit

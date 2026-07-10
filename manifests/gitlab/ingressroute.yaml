@@ -12,6 +12,13 @@ spec:
       middlewares:
         - name: gitlab-hsts
           namespace: gitlab
+        # Shared edge rate limit — defense-in-depth only; GitLab has its own
+        # app-level throttling (Rack::Attack). Deliberately NO fail2ban here:
+        # git-over-HTTPS clients legitimately answer 401 on every fetch/push
+        # (HTTP Basic credential negotiation), so a 401-based ban rule would
+        # lock out CI runners and normal git clients.
+        - name: rate-limit
+          namespace: traefik
       services:
         # 8181 = workhorse port — handles git push/pull, LFS, large uploads,
         # and reverse-proxies to webservice (8080) for the Rails app. Always
