@@ -1113,8 +1113,12 @@ apps:
             secret: gitlab-initial-root-password
             key: password
 
-  # GitLab Runner — runs CI jobs as ephemeral pods in the `gitlab` namespace,
-  # using the kubernetes executor. Auth via the `gitlab-runner` Secret
+  # GitLab Runner — runs CI jobs as ephemeral pods in the dedicated
+  # `gitlab-ci` namespace (manifests/gitlab/namespace-gitlab-ci.yaml), using
+  # the kubernetes executor. Job pods run arbitrary code from hosted repos,
+  # so they are kept out of the `gitlab` namespace where the GitLab secrets
+  # (pg credentials, S3 keys, root password, SMTP) and the gitlab-pg/valkey
+  # services live. Auth via the `gitlab-runner` Secret
   # (manifests/gitlab/secret-runner-registration.enc.yaml) which holds the
   # `runner-token` issued in the GitLab UI (Admin → CI/CD → Runners).
   # Tags: kubernetes,self-hosted (set on the runner in GitLab, not chart).
@@ -1130,14 +1134,54 @@ apps:
         # tighter memory; each job pod pulls its own image so 4 lets CI parallelize
         # without thrashing the node cache.
         concurrent: 4
-        # RBAC: the runner needs to create Pods/ConfigMaps/Secrets/PVCs in the
-        # gitlab namespace so the kubernetes executor can spawn job pods.
+        # RBAC: the chart creates the Role + RoleBinding in
+        # runners.jobNamespace (gitlab-ci), binding the runner
+        # ServiceAccount that lives in the release namespace (gitlab). The
+        # manager pod itself needs no API access in `gitlab` — its runner
+        # token is volume-mounted from the `gitlab-runner` Secret by the
+        # kubelet, not fetched via the API.
+        #
+        # rules: without this list the chart falls back to a wildcard
+        # (resources: ['*'], verbs: ['*']) Role on the core API group.
+        # This is the minimal kubernetes-executor set from
+        # https://docs.gitlab.com/runner/executors/kubernetes/#configure-runner-api-permissions
+        # (attach execution strategy: scripts go in per-job ConfigMaps,
+        # logs stream via pods/attach; pods list/watch for the informer
+        # code path).
         rbac:
           create: true
+          rules:
+            - apiGroups: [""]
+              resources: ["events"]
+              verbs: ["list", "watch"]
+            - apiGroups: [""]
+              resources: ["pods"]
+              verbs: ["create", "delete", "get", "list", "watch"]
+            - apiGroups: [""]
+              resources: ["pods/attach", "pods/exec"]
+              verbs: ["create", "delete", "get", "patch"]
+            - apiGroups: [""]
+              resources: ["pods/log"]
+              verbs: ["get", "list"]
+            - apiGroups: [""]
+              resources: ["secrets"]
+              verbs: ["create", "delete", "get", "update"]
+            - apiGroups: [""]
+              resources: ["configmaps"]
+              verbs: ["create", "delete", "get", "update"]
+            - apiGroups: [""]
+              resources: ["serviceaccounts"]
+              verbs: ["get"]
+            - apiGroups: [""]
+              resources: ["services"]
+              verbs: ["create", "get"]
         # Don't have the chart re-register on every restart — we set the token
         # ourselves via the gitlab-runner Secret (see manifests/gitlab/).
         runners:
           secret: gitlab-runner
+          # Where the chart puts the executor Role/RoleBinding. Must match
+          # the hardcoded `namespace = "gitlab-ci"` in the TOML below.
+          jobNamespace: gitlab-ci
           config: |
             [[runners]]
               # Bump from default 1 — silences the chart's "long polling
@@ -1146,13 +1190,13 @@ apps:
               # the long-poll channels don't queue behind each other).
               request_concurrency = 4
               [runners.kubernetes]
-                # Hardcoded — the chart writes runners.config to
-                # config.template.toml verbatim (no tpl pass when paired with
-                # the `runners.secret` + runner-token auth path), so a
-                # `{{ .Release.Namespace }}` here would land literal in the
-                # TOML and the runner would try to spawn jobs in a namespace
-                # with that exact string as its name.
-                namespace = "gitlab"
+                # Hardcoded. Chart 0.90.1 runs runners.config through helm
+                # tpl (even on the runners.secret + runner-token auth path),
+                # so template syntax anywhere in this block — comments
+                # included — gets evaluated at render time. Keep this string
+                # literal and in sync with runners.jobNamespace above (which
+                # places the executor Role/RoleBinding in that namespace).
+                namespace = "gitlab-ci"
                 image = "alpine:3.20"
                 # Default per-job ceiling — enough for Godot/Rust/Java builds
                 # and most container builds. Cluster has 128 GiB total and

@@ -1,0 +1,10 @@
+# Dedicated namespace for GitLab CI job pods (kubernetes executor).
+# Keeps arbitrary CI code out of the `gitlab` namespace, away from the
+# GitLab secrets and the gitlab-pg/valkey services. The gitlab-runner
+# chart (apps/values.yaml) targets it via runners.jobNamespace and the
+# hardcoded `namespace = "gitlab-ci"` in the runner TOML, and places its
+# scoped executor Role/RoleBinding here.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab-ci
