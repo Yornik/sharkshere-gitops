@@ -151,6 +151,14 @@ apps:
         # Alertmanager
         alertmanager:
           alertmanagerSpec:
+            # Full Alertmanager config comes from the SOPS-encrypted Secret
+            # in manifests/monitoring/alertmanager-config.enc.yaml (key
+            # `alertmanager.yaml`); it routes everything except Watchdog to
+            # email via Resend SMTP. configSecret REPLACES the chart-generated
+            # config entirely, and useExistingSecret stops the chart from
+            # rendering its default null-receiver config Secret alongside it.
+            configSecret: alertmanager-config
+            useExistingSecret: true
             storage:
               volumeClaimTemplate:
                 spec:
