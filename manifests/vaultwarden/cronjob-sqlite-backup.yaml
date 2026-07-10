@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vaultwarden-sqlite-backup
+  namespace: vaultwarden
+  labels:
+    app: vaultwarden-sqlite-backup
+spec:
+  # 23:30 NAS-local time (Europe/Amsterdam), 30 minutes before the 00:00 ZFS
+  # snapshot on the NAS, so the snapshot (and the 02:00/04:00 cloudsync runs)
+  # always carry a consistent backup made via SQLite's online backup API.
+  schedule: "30 23 * * *"
+  timeZone: "Europe/Amsterdam"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: vaultwarden-sqlite-backup
+        spec:
+          restartPolicy: OnFailure
+          # The data PVC is RWO (NFS): this pod must land on the same node as
+          # the vaultwarden pod or it cannot attach the volume.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app: vaultwarden
+                  topologyKey: kubernetes.io/hostname
+          # Image default USER is 'sqlite'; run as root instead because the db
+          # and its WAL/-shm sidecar files are root-owned, and opening a
+          # WAL-mode database requires write access to the -shm file.
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          containers:
+            - name: sqlite-backup
+              # Statically-linked sqlite3 CLI at /usr/bin/sqlite3 (Alpine base,
+              # no runtime package installs needed).
+              image: keinos/sqlite3:3.53.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  mkdir -p /data/backups
+                  DEST="/data/backups/db-$(date +%a).sqlite3"
+                  # The online backup API takes only a shared lock and copies
+                  # WAL contents too, yielding a consistent standalone db file
+                  # without disrupting Vaultwarden.
+                  /usr/bin/sqlite3 /data/db.sqlite3 ".backup '${DEST}'"
+                  RESULT="$(/usr/bin/sqlite3 "${DEST}" 'PRAGMA integrity_check;')"
+                  if [ "${RESULT}" != "ok" ]; then
+                    echo "integrity_check failed for ${DEST}: ${RESULT}" >&2
+                    exit 1
+                  fi
+                  echo "backup OK: ${DEST} ($(du -h "${DEST}" | cut -f1))"
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: vaultwarden-data-ssd
