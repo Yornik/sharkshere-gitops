@@ -18,7 +18,7 @@ apps:
     helm:
       repoURL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
       chart: csi-driver-smb
-      targetRevision: "v1.*"
+      targetRevision: 1.20.3
       values: |
         controller:
           replicas: 1
@@ -28,7 +28,7 @@ apps:
     helm:
       repoURL: https://kubernetes-sigs.github.io/metrics-server/
       chart: metrics-server
-      targetRevision: "3.*"
+      targetRevision: 3.13.1
       values: |
         # Talos kubelet serving certs are self-signed (not signed by the
         # cluster CA), so metrics-server cannot verify them over TLS.
@@ -52,7 +52,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: "87.*"
+      targetRevision: 87.13.0
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
@@ -169,7 +169,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: loki
-      targetRevision: "7.*"
+      targetRevision: 7.0.0
       values: |
         deploymentMode: SingleBinary
         loki:
@@ -233,7 +233,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: alloy
-      targetRevision: "1.*"
+      targetRevision: 1.10.1
       values: |
         alloy:
           mounts:
@@ -644,7 +644,11 @@ apps:
     helm:
       repoURL: https://traefik.github.io/charts
       chart: traefik
-      targetRevision: "41.*"
+      # Pinned to the deployed release. Chart 41.x enforces a stricter values
+      # schema that rejects the top-level `logs` key used below ("additional
+      # properties 'logs' not allowed" ComparisonError); the 41 upgrade needs
+      # a values migration in its own PR.
+      targetRevision: 40.3.0
       values: |
         updateStrategy:
           rollingUpdate:
