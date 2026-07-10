@@ -13,6 +13,17 @@ spec:
   walStorage:
     storageClass: truenas-ssd-iscsi
     size: 10Gi
+  # Requests sized from observed usage (~75-260Mi, <40m CPU; GitLab is the
+  # busiest DB) + headroom so the pods get Burstable QoS instead of BestEffort
+  # (first evicted under memory pressure). Memory limit ~2x request and well
+  # above shared_buffers (256MB) + work_mem headroom. No CPU limit: throttling
+  # a DB is worse than sharing.
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      memory: 2Gi
   postgresql:
     parameters:
       shared_buffers: 256MB
