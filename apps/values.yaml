@@ -835,6 +835,14 @@ apps:
         crds:
           create: true
         replicaCount: 2
+        # Observed usage ~35-56Mi / <10m CPU per replica; requests + memory
+        # limit lift the operator out of BestEffort QoS.
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
         monitoring:
           podMonitorEnabled: true
           # Required so the chart-created PodMonitor matches Prometheus's
