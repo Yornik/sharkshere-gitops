@@ -968,8 +968,20 @@ apps:
               size: 50Gi
           # Backups: toolbox uploads tarballs to yornik-gitlab-backups via
           # s3cmd; auth via gitlab-backup-storage Secret.
+          #
+          # The backup CronJob is the ONLY backup path for hosted git repos:
+          # gitaly lives on an iSCSI zvol, which is invisible to both the
+          # NAS file-based cloudsync tasks and the dataset ZFS snapshot
+          # protection on Big_Pool/Share. 03:30 daily avoids the NAS
+          # cloudsync slots (02:00/04:00/06:00) and the every-3h CNPG
+          # backups (00:00/03:00/06:00/...). Staging uses the default
+          # emptyDir — fine while repos are small (~500 MB); enable
+          # backups.cron.persistence once repo data outgrows node disk.
           toolbox:
             backups:
+              cron:
+                enabled: true
+                schedule: "30 3 * * *"
               objectStorage:
                 config:
                   secret: gitlab-backup-storage
