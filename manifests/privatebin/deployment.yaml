@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: privatebin
-          image: privatebin/nginx-fpm-alpine:2.0.4
+          image: privatebin/nginx-fpm-alpine:2.0.5
           ports:
             - name: http
               containerPort: 8080
