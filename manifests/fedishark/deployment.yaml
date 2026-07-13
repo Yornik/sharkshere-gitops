@@ -27,11 +27,17 @@ spec:
               mountPath: /usr/share/nginx/html/
               readOnly: true
           resources:
+            # No cpu limit by design. CFS enforces quota per 100ms period, so a 50m
+            # limit granted 5ms per period: nginx drained it on the first request
+            # burst and then sat frozen for the remaining 95ms. Measured 80% of
+            # periods throttled at ~0% of the quota actually used - pure latency
+            # tax on a public site, for nothing. CPU is compressible, so the request
+            # below already guarantees a fair share under contention. The memory
+            # limit stays: memory is NOT compressible and must keep a hard ceiling.
             requests:
-              cpu: 5m
+              cpu: 20m
               memory: 16Mi
             limits:
-              cpu: 50m
               memory: 32Mi
       volumes:
         - name: html

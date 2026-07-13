@@ -27,11 +27,14 @@ spec:
               mountPath: /usr/share/nginx/html/
               readOnly: true
           resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the full
+            # reasoning. 50m = 5ms per 100ms CFS period; measured 67% of periods
+            # throttled while using ~1% of the quota. CPU is compressible and the
+            # request guarantees the share under contention; the memory limit stays.
             requests:
-              cpu: 5m
+              cpu: 20m
               memory: 16Mi
             limits:
-              cpu: 50m
               memory: 32Mi
       volumes:
         - name: html
