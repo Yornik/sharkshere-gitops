@@ -35,11 +35,14 @@ spec:
             - name: mapping
               mountPath: /etc/graphite-exporter
           resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the full
+            # reasoning. graphite-exporter measured 33% of CFS periods throttled
+            # against the old 100m limit while peaking at 4m (4% of it). The
+            # memory limit stays.
             requests:
-              cpu: 10m
+              cpu: 20m
               memory: 32Mi
             limits:
-              cpu: 100m
               memory: 128Mi
       volumes:
         - name: mapping
