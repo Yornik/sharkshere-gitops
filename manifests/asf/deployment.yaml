@@ -40,7 +40,7 @@ spec:
               mountPath: /app/config
       containers:
         - name: asf
-          image: justarchi/archisteamfarm:6.3.7.0
+          image: justarchi/archisteamfarm:6.3.8.0
           ports:
             - name: ipc
               containerPort: 1242
