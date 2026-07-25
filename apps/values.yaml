@@ -903,7 +903,7 @@ apps:
     helm:
       repoURL: https://valkey.io/valkey-helm/
       chart: valkey
-      targetRevision: 0.10.0
+      targetRevision: 0.11.0
       values: |
         replica:
           enabled: false
