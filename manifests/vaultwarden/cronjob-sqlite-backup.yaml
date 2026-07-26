@@ -44,7 +44,7 @@ spec:
             - name: sqlite-backup
               # Statically-linked sqlite3 CLI at /usr/bin/sqlite3 (Alpine base,
               # no runtime package installs needed).
-              image: keinos/sqlite3:3.53.2
+              image: keinos/sqlite3:3.53.3
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
