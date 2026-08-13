@@ -940,7 +940,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.2.1
+      targetRevision: 10.2.2
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
@@ -1137,7 +1137,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab-runner
-      targetRevision: 0.91.0
+      targetRevision: 0.91.2
       values: |
         gitlabUrl: https://git.yornik.eu/
         # Allow up to 4 concurrent jobs — homelab cluster has plenty of CPU but
@@ -1239,7 +1239,7 @@ apps:
     helm:
       repoURL: https://charts.openproject.org/
       chart: openproject
-      targetRevision: 13.10.1
+      targetRevision: 13.10.2
       values: |
         # We ship our own IngressRoute (see manifests/openproject/) so the
         # chart's bundled Ingress stays off.
