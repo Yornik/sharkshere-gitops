@@ -795,7 +795,7 @@ apps:
     helm:
       repoURL: https://pkgs.tailscale.com/helmcharts
       chart: tailscale-operator
-      targetRevision: 1.102.2
+      targetRevision: 1.102.3
       values: |
         oauth:
           clientId: ""
@@ -940,7 +940,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.2.2
+      targetRevision: 10.2.4
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
