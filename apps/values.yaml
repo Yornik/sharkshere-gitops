@@ -28,7 +28,7 @@ apps:
     helm:
       repoURL: https://kubernetes-sigs.github.io/metrics-server/
       chart: metrics-server
-      targetRevision: 3.13.1
+      targetRevision: 3.14.0
       values: |
         # Talos kubelet serving certs are self-signed (not signed by the
         # cluster CA), so metrics-server cannot verify them over TLS.
