@@ -119,6 +119,24 @@
         'Rollback (if needed): revert the commit on `main`, run the same `kubectl apply --server-side --force-conflicts -k bootstrap/argocd/` again to restore the previous version.',
       ],
     },
+    {
+      matchPackageNames: [
+        'jellyfin/jellyfin',
+      ],
+      // Jellyfin dropped the leading "10." from its version scheme: what
+      // would have been 10.12.0 is tagged `12.0` on Docker Hub (two
+      // segments), and 10.11.x was the last branch with three-segment
+      // tags. The default docker versioning only treats tags with the same
+      // number of segments as the current pin as compatible, so `12.0` is
+      // silently rejected against `10.11.11` and no upgrade PR is ever
+      // opened. This regex accepts `MAJOR.MINOR` and `MAJOR.MINOR.PATCH`
+      // alike, treats `-rcN` as a prerelease (ignored while pinned to a
+      // stable), and rejects the `latest`/`unstable`/`preview`, the
+      // date-stamped nightlies (`2026090709`) and the per-arch build tags
+      // (`12.0-amd64.20260908-012347`), which never match the anchored
+      // pattern.
+      versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)(\\.(?<patch>\\d+))?(-(?<prerelease>rc\\d+))?$',
+    },
   ],
   kubernetes: {
     managerFilePatterns: [
