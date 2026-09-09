@@ -907,6 +907,14 @@ apps:
       values: |
         replica:
           enabled: false
+        # Single replica on an RWO iSCSI PVC. The chart default RollingUpdate
+        # (maxSurge 25%) schedules the new pod on another node before the old
+        # one stops, and it deadlocks on FailedAttachVolume ("Volume is already
+        # used by pod ...") -- exactly what happened on the 0.11.0 -> 0.12.0
+        # bump (2026-09-08). Recreate terminates the old pod first so the
+        # volume detaches; the short outage per bump is unavoidable with one
+        # RWO replica anyway. Same class of fix as Grafana's maxSurge: 0.
+        deploymentStrategy: Recreate
         dataStorage:
           enabled: true
           requestedSize: 8Gi
