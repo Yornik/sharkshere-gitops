@@ -2,8 +2,6 @@
 
 This repository holds the desired state of the sharkshere Kubernetes cluster. ArgoCD reads this repository and makes the cluster agree with it.
 
-This document uses a style based on ASD-STE100 Simplified Technical English. Sentences are short. Each sentence gives one instruction or one fact.
-
 ## What this repository does
 
 - It defines about 40 ArgoCD Applications for a 4-node Talos Linux cluster.
@@ -23,6 +21,7 @@ This repository is one of three:
 | Document | Content |
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
+| [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 
 ## Repository layout
@@ -31,7 +30,7 @@ This repository is one of three:
 apps/           Helm chart. It renders one ArgoCD Application for each entry in apps/values.yaml.
 bootstrap/      Manifests that install ArgoCD and the root Application on an empty cluster.
 manifests/      Plain manifests and Kustomize overlays, one directory for each application.
-docs/           Technical overview and incident write-ups.
+docs/           Technical overview, style guide and incident write-ups.
 ```
 
 ## How a change reaches the cluster
