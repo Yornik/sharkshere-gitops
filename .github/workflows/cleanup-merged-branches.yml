@@ -1,0 +1,62 @@
+---
+name: Cleanup merged branches
+
+# Manual, one-shot cleanup of remote branches left behind after a merge.
+# A branch is deleted only when every pull request that ever used it as the
+# head branch is closed or merged. A branch with an open pull request is
+# kept. A branch that never had a pull request is kept, because it can hold
+# work that reached no review.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Only list the branches. Do not delete them.
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    name: Delete branches with no open pull request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select and delete
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          gh api "repos/$REPO/branches" --paginate -q '.[] | select(.protected == false) | .name' \
+            | while read -r branch; do
+              if [ "$branch" = "$DEFAULT_BRANCH" ]; then
+                continue
+              fi
+
+              states=$(gh pr list --repo "$REPO" --head "$branch" --state all --json state -q '.[].state')
+
+              if [ -z "$states" ]; then
+                echo "keep    $branch (no pull request ever opened for it)"
+                continue
+              fi
+
+              if echo "$states" | grep -q '^OPEN$'; then
+                echo "keep    $branch (open pull request)"
+                continue
+              fi
+
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "would delete  $branch"
+              else
+                gh api -X DELETE "repos/$REPO/git/refs/heads/$branch"
+                echo "deleted $branch"
+              fi
+            done
+
+          echo "Done. Set dry_run to false to apply."
