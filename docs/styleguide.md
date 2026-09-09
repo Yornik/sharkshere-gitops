@@ -1,6 +1,6 @@
 # Style guide for documents
 
-This guide applies to `README.md`, to the files in `docs/` and to comments in manifests. The style is based on ASD-STE100 Simplified Technical English. The goal is text that an operator can read once, at speed, under stress.
+This guide applies to `README.md`, to the files in `docs/` and to comments in code. The style is based on ASD-STE100 Simplified Technical English. The goal is text that an operator can read once, at speed, under stress.
 
 ## Sentences
 
@@ -53,9 +53,11 @@ Give the reason in the note. Write "CAUTION: Do not edit the file on the host. T
 - Use a code block for each command, path or error message. Do not put a command in a sentence.
 - Do not describe the style of the document inside the document. Link this guide instead.
 
-## Comments in manifests
+## Comments in code
 
-- Give the reason, not the description. The key already says what the value is.
+This applies to a comment in a manifest, in a Terraform file or in a playbook.
+
+- Give the reason, not the description. The name of the key or the argument already says what the value is.
 - Give the date when the comment records a measurement or an incident. Use the format `YYYY-MM-DD`.
 - Point to the incident file when one exists.
 
