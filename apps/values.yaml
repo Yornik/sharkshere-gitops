@@ -817,7 +817,7 @@ apps:
     helm:
       repoURL: https://charts.jetstack.io
       chart: cert-manager
-      targetRevision: v1.21.1
+      targetRevision: v1.21.2
       values: |
         crds:
           enabled: true
@@ -948,7 +948,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.3.1
+      targetRevision: 10.3.2
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
