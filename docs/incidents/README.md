@@ -11,6 +11,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-07-10 | [loki-chunks-cache-oversized.md](2026-07-10-loki-chunks-cache-oversized.md) | Loki reserved 9.8 GiB of memory for a cache with a 0.3 % hit rate |
 | not recorded | [grafana-rwo-multi-attach.md](grafana-rwo-multi-attach.md) | Grafana rollout stopped on a volume that only one node can attach |
 | 2026-09-08 | [gitlab-valkey-rollingupdate-multi-attach.md](2026-09-08-gitlab-valkey-rollingupdate-multi-attach.md) | Valkey rollout stopped on a volume that only one node can attach, then the correction was rejected by the API server |
+| 2026-09-09 | [prometheus-release-label-selector.md](2026-09-09-prometheus-release-label-selector.md) | A monitor without the `release` label is invisible to Prometheus |
 
 ## How to add an incident
 
