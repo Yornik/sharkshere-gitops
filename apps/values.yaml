@@ -113,7 +113,7 @@ apps:
               cnpg-cluster:
                 # Pinned to the commit that added barman_cloud_* support;
                 # Renovate tracks via the customManager in renovate.json5.
-                url: https://raw.githubusercontent.com/cloudnative-pg/grafana-dashboards/e74d67fa33e498d317d8e7e108e36edbc00e68a7/charts/cluster/grafana-dashboard.json
+                url: https://raw.githubusercontent.com/cloudnative-pg/grafana-dashboards/47e4c51219fdbb3c7ef2c4d91a2d8855e9ca1880/charts/cluster/grafana-dashboard.json
                 sha256: 292cdeb3f17506d75623749fdfdfcaf51fbd9a414d6faa197434771fcff05bd2
 
         # Prometheus
