@@ -54,11 +54,17 @@ spec:
               value: "nl-NL"
             # Postgres is milestone 2 of the roadmap: v0.2.1 ships neither a
             # store nor any database wiring, and cmd/soiree/main.go reads no
-            # DATABASE_URL or session secret at all. Wiring a secretKeyRef now
-            # would only add a CreateContainerConfigError failure mode to a
-            # binary that ignores both variables. The Secret and the soiree-pg
-            # Cluster exist already (see secret.enc.yaml / cluster.yaml); this
-            # block is what connects them once a release consumes them.
+            # DATABASE_URL or session secret at all - on main either. Wiring a
+            # secretKeyRef now would only add a CreateContainerConfigError
+            # failure mode to a binary that ignores both variables. The Secret
+            # and the soiree-pg Cluster exist already (see soiree-app.enc.yaml
+            # / cluster.yaml); this block is what connects them once a release
+            # consumes them.
+            #
+            # The two variable names below are PROVISIONAL. They are not read
+            # from the app source, because no version of it reads either one -
+            # check what the release actually expects before uncommenting, and
+            # rename the keys in soiree-app.enc.yaml to match.
             # - name: DATABASE_URL
             #   valueFrom:
             #     secretKeyRef:
