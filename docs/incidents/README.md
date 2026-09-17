@@ -12,6 +12,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | not recorded | [grafana-rwo-multi-attach.md](grafana-rwo-multi-attach.md) | Grafana rollout stopped on a volume that only one node can attach |
 | 2026-09-08 | [gitlab-valkey-rollingupdate-multi-attach.md](2026-09-08-gitlab-valkey-rollingupdate-multi-attach.md) | Valkey rollout stopped on a volume that only one node can attach, then the correction was rejected by the API server |
 | 2026-09-09 | [prometheus-release-label-selector.md](2026-09-09-prometheus-release-label-selector.md) | A monitor without the `release` label is invisible to Prometheus |
+| 2026-09-17 | [stale-checkout-bootstrap-apply.md](2026-09-17-stale-checkout-bootstrap-apply.md) | A stale checkout rolled ArgoCD and its Redis backwards; one cache replica could not start |
 
 ## How to add an incident
 
