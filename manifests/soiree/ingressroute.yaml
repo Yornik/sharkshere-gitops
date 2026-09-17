@@ -1,0 +1,25 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: soiree
+  namespace: soiree
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # PLACEHOLDER hostname; a human substitutes it. DNS must resolve before
+    # this route exists - Traefik does not retry a failed ACME order.
+    - match: Host(`REPLACE_ME_HOSTNAME`)
+      kind: Rule
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: csp
+          namespace: soiree
+        - name: rate-limit
+          namespace: traefik
+      services:
+        - name: soiree
+          port: 8080
+  tls:
+    certResolver: letsencrypt

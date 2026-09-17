@@ -1,0 +1,24 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: soiree-pg-store
+  namespace: soiree
+spec:
+  configuration:
+    destinationPath: s3://cnpg-wal/
+    endpointURL: https://nbg1.your-objectstorage.com
+    # The credentials Secret is namespaced, so soiree needs its own copy of
+    # cnpg-s3-wal exactly as shared-pg, openproject and gitlab each have one.
+    # See secret-s3-wal.enc.yaml - it currently holds placeholders.
+    s3Credentials:
+      accessKeyId:
+        name: cnpg-s3-wal
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: cnpg-s3-wal
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+    data:
+      compression: gzip
+  retentionPolicy: 14d

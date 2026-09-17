@@ -1,0 +1,18 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: soiree-web
+  namespace: soiree
+spec:
+  entryPoints:
+    - web
+  routes:
+    # PLACEHOLDER hostname; a human substitutes it.
+    - match: Host(`REPLACE_ME_HOSTNAME`)
+      kind: Rule
+      middlewares:
+        - name: redirect-https
+          namespace: soiree
+      services:
+        - name: soiree
+          port: 8080

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: soiree
+  namespace: soiree
+  labels:
+    app.kubernetes.io/name: soiree
+    app.kubernetes.io/instance: soiree
+  annotations:
+    # ExternalDNS runs with --source=service --source=ingress. It does not
+    # watch Traefik IngressRoute CRDs, so the public name has to be declared
+    # here or it never resolves - same pattern as vaultwarden/fedishark.
+    # PLACEHOLDER hostname; a human substitutes it.
+    external-dns.alpha.kubernetes.io/hostname: REPLACE_ME_HOSTNAME
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  selector:
+    app.kubernetes.io/name: soiree
+    app.kubernetes.io/instance: soiree
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

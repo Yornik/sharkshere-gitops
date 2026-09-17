@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soiree
+  namespace: soiree
+  labels:
+    app.kubernetes.io/name: soiree
+    app.kubernetes.io/instance: soiree
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: soiree
+      app.kubernetes.io/instance: soiree
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: soiree
+        app.kubernetes.io/instance: soiree
+    spec:
+      containers:
+        - name: soiree
+          # Static Go binary on a scratch base. Source + CI:
+          # github.com/Yornik/soiree
+          image: ghcr.io/yornik/soiree:v0.2.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # PLACEHOLDER — a human fills these in before this reaches main.
+            # Everything event-specific is configuration, not source, which is
+            # what lets one image serve any event without a rebuild.
+            - name: SOIREE_EVENT_NAME
+              value: "REPLACE_ME_EVENT_NAME"
+            - name: SOIREE_EVENT_TAGLINE
+              value: "REPLACE_ME_EVENT_TAGLINE"
+            # PLACEHOLDER date, but a syntactically valid one on purpose. The
+            # app parses this with time.Parse(time.RFC3339) and exits non-zero
+            # if it does not carry an explicit offset — a REPLACE_ME string
+            # here would be a CrashLoopBackOff rather than a visible default.
+            # An empty value is also accepted and simply disables the
+            # countdown.
+            - name: SOIREE_EVENT_DATE
+              value: "2027-01-01T00:00:00+01:00"
+            - name: SOIREE_CURRENCY
+              value: "IDR"
+            - name: SOIREE_LOCALE
+              value: "id-ID"
+            - name: SOIREE_SECONDARY_CURRENCY
+              value: "EUR"
+            - name: SOIREE_SECONDARY_LOCALE
+              value: "nl-NL"
+            # Postgres is milestone 2 of the roadmap: v0.2.1 ships neither a
+            # store nor any database wiring, and cmd/soiree/main.go reads no
+            # DATABASE_URL or session secret at all. Wiring a secretKeyRef now
+            # would only add a CreateContainerConfigError failure mode to a
+            # binary that ignores both variables. The Secret and the soiree-pg
+            # Cluster exist already (see secret.enc.yaml / cluster.yaml); this
+            # block is what connects them once a release consumes them.
+            # - name: DATABASE_URL
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: soiree-app
+            #       key: DATABASE_URL
+            # - name: SOIREE_SESSION_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: soiree-app
+            #       key: SESSION_SECRET
+          # v0.2.1 serves /healthz only. /readyz was split out from it after
+          # the release (so the future database check has a home that is not
+          # the liveness probe) and is not in any tag yet — pointing the
+          # readiness probe at it today means a permanent 404, no Service
+          # endpoints and a 503 behind the IngressRoute. Move readiness to
+          # /readyz on the first release that ships it.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the
+            # full reasoning. This is the same shape: a small Go HTTP server
+            # whose work arrives in request bursts, where a CFS quota turns a
+            # burst into a multi-period stall for no gain. CPU is compressible,
+            # so the request below already guarantees a fair share under
+            # contention. The memory limit stays: the whole site is held in
+            # memory (raw + gzip + brotli per asset), and memory is NOT
+            # compressible, so it must keep a hard ceiling.
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
