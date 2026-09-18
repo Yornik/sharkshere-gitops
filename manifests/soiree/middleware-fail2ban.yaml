@@ -7,24 +7,26 @@ spec:
   plugin:
     fail2ban:
       rules:
-        # A backstop, not the primary control. soiree does its own login
-        # throttling with four separate buckets - login by IP, login by
-        # account, reset request, and token redemption - so credential
-        # stuffing is already answered before it reaches here. This only has
-        # to catch sustained abuse from one address.
+        # A backstop, not the primary control. soiree does its own throttling
+        # with four separate buckets - login by IP, login by account, reset
+        # request, and token redemption - so credential stuffing is already
+        # answered before it reaches here. This only has to catch sustained
+        # abuse of the login doors from one address.
         #
-        # Deliberately permissive, for a reason specific to this app: an
-        # unauthenticated visitor's very first page load calls
-        # GET /api/v1/auth/session, which answers 401 by design. A strict rule
-        # would count that and ban people who have not attempted to log in at
-        # all. The guests here are a family, several of them behind one
-        # household NAT and some behind CGNAT, so a ban lands on everyone
-        # sharing that address.
+        # Attached to the login routes ONLY - see ingressroute.yaml. It must
+        # never go back on the catch-all route: every path under /api/v1
+        # answers 401 without a session, so on the whole application this rule
+        # counts ordinary signed-out traffic, and the guests here are a family,
+        # several of them behind one household NAT and some behind CGNAT, so a
+        # ban lands on everyone sharing that address.
         #
         # The estate already learned this the hard way: a 3-in-4h rule on
         # Vaultwarden banned NAT'd households off the vault on normal client
         # behaviour, and the same failure was documented and removed for
-        # OpenProject. Matching the settled Vaultwarden numbers.
+        # OpenProject. The numbers match the settled Vaultwarden ones. Scoped
+        # to logins they could be tighter, and are left loose on purpose: a
+        # person who has forgotten which password they used, trying from the
+        # same sofa as three relatives, is the traffic this most resembles.
         statuscode: "401-403"
         maxretry: 30
         findtime: 10m

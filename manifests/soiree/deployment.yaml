@@ -23,6 +23,17 @@ spec:
           # Static Go binary on a scratch base. Source + CI:
           # github.com/Yornik/soiree
           #
+          # DO NOT MERGE AT THIS TAG. In every release up to and including
+          # v0.4.0 the plan API checks nobody: GET /api/v1/plan, the event
+          # stream and every write on every collection answer anything that can
+          # reach them, and this IngressRoute makes that the whole internet.
+          # The ledger is people's names against money. The guard is in
+          # v1.0.0 (RequireWrite around the /api/v1 subtree). This line moves
+          # to v1.0.0 once that image is on GHCR, this paragraph and the
+          # "not in any released tag" notes below are deleted in the same
+          # commit, and only then does this merge. ArgoCD syncs on merge with
+          # selfHeal - there is no window in which to fix it afterwards.
+          #
           # v0.4.0 is the newest published release. Renovate tracks this tag;
           # do not move it to `latest`, which would make the running version
           # unknowable and silently change it under a restart.

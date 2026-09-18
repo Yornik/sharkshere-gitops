@@ -10,8 +10,28 @@ spec:
     # DNS must resolve before this route exists - Traefik does not retry a
     # failed ACME order, so an IngressRoute that appears first burns the
     # attempt and the cert has to be prompted by restarting Traefik.
-    - match: Host(`bokings-driessen.party`) || Host(`www.bokings-driessen.party`)
+
+    # The two doors somebody can try a credential at, and the only place
+    # fail2ban watches. Same shape as jellyfin/ingressroute.yaml, and for the
+    # same reason: a ban rule that counts refusals across a whole application
+    # ends up counting the application's own ordinary traffic.
+    #
+    # Here that traffic is 401s. Everything under /api/v1 answers 401 without a
+    # session, by design - the very first page load of a signed-out visitor
+    # produces two of them - and a tab left open past its session used to ask
+    # the event stream again every thirty seconds. Counted per address, that
+    # is a household behind one NAT banned by somebody's forgotten laptop. The
+    # page now stands down when its session ends, but a ban rule should not
+    # depend on every client being well behaved.
+    #
+    # Not listed, on purpose: /api/v1/auth/set-password and
+    # /api/v1/auth/password-reset. A wrong token is a 400 and a reset request
+    # is always a 202, so neither can ever reach a rule that counts 401-403;
+    # naming them here would only look like protection. The app rate-limits
+    # both itself.
+    - match: (Host(`bokings-driessen.party`) || Host(`www.bokings-driessen.party`)) && (PathPrefix(`/api/v1/auth/login`) || PathPrefix(`/api/v1/auth/passkeys/login`))
       kind: Rule
+      priority: 10
       middlewares:
         - name: security-headers
           namespace: traefik
@@ -20,6 +40,23 @@ spec:
         - name: csp
           namespace: soiree
         - name: fail2ban-soiree
+          namespace: soiree
+        - name: rate-limit
+          namespace: traefik
+      services:
+        - name: soiree
+          port: 8080
+
+    # Everything else: the same chain without fail2ban.
+    - match: Host(`bokings-driessen.party`) || Host(`www.bokings-driessen.party`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: redirect-www-to-apex
+          namespace: soiree
+        - name: csp
           namespace: soiree
         - name: rate-limit
           namespace: traefik
