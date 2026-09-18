@@ -275,9 +275,15 @@ spec:
             # The bucket's name is in the Secret with the credentials. It is not
             # secret; it is simply nobody else's business, in a public repository
             # where this namespace is already the one thing named after people.
-            # Its own key, not the CNPG WAL one: this secret signs addresses
-            # that are handed to browsers, and should not also be able to read
-            # the estate's database backups.
+            #
+            # The credential is the OpenProject attachments one, reused. That
+            # costs nothing in isolation, because there was none to keep: a
+            # Hetzner S3 key is valid for every bucket in its project, so any
+            # key here can already reach the WAL archive and the NAS backups.
+            # Separating them would take a second Hetzner project, not a
+            # second key. A signed address shows the key's id and never its
+            # secret; what would expose the secret is this pod being taken
+            # over, which is equally true of OpenProject's.
             - name: SOIREE_S3_ENDPOINT
               value: "https://nbg1.your-objectstorage.com"
             - name: SOIREE_S3_REGION

@@ -14,6 +14,8 @@ stringData:
     EVENT_TAGLINE: ENC[AES256_GCM,data:YyT+q7MZyRhfuiamtFSSBzKbHcC7QQ==,iv:r3wDb5O3CZD9lCmVv63N87ltgpXbGYhxzC5ZhcGQcgc=,tag:Q+9SNcL2XE+0A/QbhjgOvA==,type:str]
     EVENT_DATE: ENC[AES256_GCM,data:+jW/zmN6i3cbOHbds6ffNVszOVQRYgewkg==,iv:+dPNNyd8b9vjnM2p9V9gxjDeq1lzF2YrbHP7/G0Qhhc=,tag:rRl+GBMtyK1IZH4J0nYQyQ==,type:str]
     REMINDER_TZ: ENC[AES256_GCM,data:2LVuFaKO4m5Kk3cV,iv:1nI9Udh1/iM6CSTlDzWVblI/9cxRqNVtThHxmib9pVY=,tag:GjvTgJWQ66r67XMbBY4jhw==,type:str]
+    S3_ACCESS_KEY_ID: ENC[AES256_GCM,data:1GWsl7kercozs7K9mqZ/nosg2os=,iv:75ZdOCPmUWXETH5SffMDhuvZZUpaaJzdAlZCDDYxviY=,tag:hKBiJ0HtxgJFCsgiunloYg==,type:str]
+    S3_SECRET_ACCESS_KEY: ENC[AES256_GCM,data:xqno3oo9iF023T3skgdipCYY1crAcjAC+wX9jorVs/ZpZQvkfjzttw==,iv:kpyyBji53JxTPtbDlRFEi7y9KsHMpvEwqw0mWZuSk9c=,tag:Jpr3hdPkry0Nr6fDLLYeuw==,type:str]
 sops:
     age:
         - recipient: age1uhgqfcm3tfuzv3tq8d62medf04g977zas2hr9wmntc8wjn2e3asqvp7adp
@@ -25,7 +27,7 @@ sops:
             YnJBWFJzTHRqUXNBMWI4VHlUZG1jaEEKbKVna5Zn+w+f8U/aLos6HUz6FaoTEk2d
             vkBwgU0C2reF/C+tBpfzgmslmGdV0OsHqgO8Myr4TI7/EEZBjckseg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-09-18T14:17:39Z"
-    mac: ENC[AES256_GCM,data:Q8yh2besiN6Q8DrT00EbNK/ifODsXiMmEBqmVPDuwgbmzkQIk249vQMPgHNUI8nU/CHr/qfhDKuQQ1Lvxy6rr+cDy7QGGNDFyunB6wGmuHNMWdwF2sAmYqG7TPhtLLtz7KSw3l1sXV+gEVRrRapZxvcDGMOkT91RhBkLAN2Vq6c=,iv:ZgMdUdE1OG7HpAI74WLF3LIvSVxpTjLegEWs9CGeSxQ=,tag:ztB/T02h1C4D5aWavFMOFg==,type:str]
+    lastmodified: "2026-09-18T18:52:59Z"
+    mac: ENC[AES256_GCM,data:/S5aVhFuRzH1um4iHNVzxLqfSvJdopjv6UJ/tC3w0WOJAri1xNmaQPpd2/gEP1lRqQTtDnirDKIoaCU3y2F8WP6fUc9sZSDnf2amzRKgVWIPMNqlzS86eKCDc6OTSsX3cq+9IIrXlPAwVnDCSzPM7ol4jK9QZlnlk396orYN5+g=,iv:cA7TBjY87AtjrTRkqinr3eWQipciFMv7/GKQgY3ZAuE=,tag:38eMtZJD0JShui2gY8rFJw==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.12.2
