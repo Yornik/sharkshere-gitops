@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: backup-prune
+resources:
+  - namespace.yaml
+  - cronjob-gitlab.yaml
+  - cronjob-omni.yaml
+# The script is a real file rather than a block of text inside a ConfigMap, so
+# that test_prune.py beside it can import it:
+#
+#   cd manifests/backup-prune && python3 test_prune.py
+#
+# Run that before changing a line of the policy. This job deletes backups.
+# The generated name carries a hash of the contents, so a changed script is a
+# changed CronJob and the next run picks it up without anybody restarting it.
+configMapGenerator:
+  - name: backup-prune-script
+    files:
+      - prune.py
+generators:
+  - secret-generator.yaml
