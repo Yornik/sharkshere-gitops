@@ -100,7 +100,7 @@ manifests/      per-app manifests and Kustomize overlays
 | App | Namespace | Purpose |
 |-----|-----------|---------|
 | `local-path-provisioner` | `local-path-storage` | node-local default storage class |
-| `external-dns` | `external-dns` | DNS automation for `fedishark.eu` + `yornik.eu` |
+| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu` + `bokings-driessen.party` |
 | `monitoring` | `monitoring` | monitoring namespace, ingress, secrets |
 | `tibber-exporter` | `monitoring` | energy metrics exporter |
 | `gotosocial` | `gotosocial` | fediverse service (`pub.fedishark.eu`) |
@@ -110,6 +110,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `democratic-csi` | `democratic-csi` | CSI config bootstrap |
 | `muse` | `muse` | app workload |
 | `argocd-config` | `argocd` | ArgoCD IngressRoute + fail2ban middleware |
+| `soiree` | `soiree` | shared event budget/task planner + its CNPG cluster (`bokings-driessen.party`) |
 | `vaultwarden` | `vaultwarden` | password manager (`passwords.yornik.eu`) |
 | `vikunja` | `vikunja` | task management (`todo.yornik.eu`) |
 | `asf` | `asf` | app workload |
@@ -174,8 +175,9 @@ manifests/      per-app manifests and Kustomize overlays
 | `plan.yornik.eu` | OpenProject |
 | `git.yornik.eu` | GitLab CE (web + git over HTTPS + git over SSH on `:2222`) |
 | `registry.git.yornik.eu` | GitLab Container Registry |
+| `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
 
-ExternalDNS manages all subdomains for `fedishark.eu` and `yornik.eu`. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
+ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu` and `bokings-driessen.party` — the third is a zone of its own, so it needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
 ## Bootstrap
 
