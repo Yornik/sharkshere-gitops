@@ -36,7 +36,7 @@ spec:
           # restart. v1.0.1 rather than v1.0.0 for one fix: a session that ends
           # under an open page opens the sign-in screen at once instead of
           # waiting on a second request that can be lost.
-          image: ghcr.io/yornik/soiree:v1.0.1
+          image: ghcr.io/yornik/soiree:v1.0.2
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
