@@ -7,8 +7,10 @@ resources:
   - ingressroute.yaml
   - pv-movies.yaml
   - pv-series.yaml
+  - pv-music.yaml
   - pvc-config.yaml
   - pvc-movies.yaml
   - pvc-series.yaml
+  - pvc-music.yaml
 generators:
   - secret-generator.yaml
