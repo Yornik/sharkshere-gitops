@@ -9,6 +9,7 @@ resources:
   - middleware-redirect-https.yaml
   - middleware-csp.yaml
   - middleware-redirect-www-to-apex.yaml
+  - middleware-fail2ban.yaml
   - servicemonitor.yaml
   - objectstore.yaml
   - cluster.yaml

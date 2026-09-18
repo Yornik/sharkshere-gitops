@@ -19,6 +19,8 @@ spec:
           namespace: soiree
         - name: csp
           namespace: soiree
+        - name: fail2ban-soiree
+          namespace: soiree
         - name: rate-limit
           namespace: traefik
       services:
