@@ -141,3 +141,42 @@ spec:
     - name: dummy
       port: 80
       targetPort: 80
+---
+# soiree is served from the zone apex, so these must be direct A/AAAA records
+# rather than the `target: jump.fedishark.eu` CNAME the subdomains above use:
+# a CNAME at an apex is invalid, and it collides with the DANE TLSA records
+# this estate publishes. Same four addresses as the yornik.eu apex — both jump
+# hosts, v4 and v6 — so the name survives losing either one.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-bokings-driessen-party
+  namespace: external-dns
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: bokings-driessen.party
+    external-dns.alpha.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
+---
+# www is a plain CNAME to the jump hosts and is redirected to the apex by
+# Traefik, matching how www.yornik.eu is handled.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-www-bokings-driessen-party
+  namespace: external-dns
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: www.bokings-driessen.party
+    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
+    external-dns.alpha.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
