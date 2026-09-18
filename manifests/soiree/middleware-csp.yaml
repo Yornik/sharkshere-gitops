@@ -9,5 +9,13 @@ spec:
     # the runtime config the page needs is emitted as a
     # <script type="application/json"> data block, which is never executed and
     # therefore never checked against script-src.
+    #
+    # One departure from that policy, in connect-src: the object storage
+    # endpoint. Attachments go from the browser straight to the bucket, over an
+    # address soiree signs, and connect-src 'self' alone blocks that upload
+    # without a word in any server log - the request never leaves the browser.
+    # It has to be the same endpoint as SOIREE_S3_ENDPOINT in deployment.yaml.
+    # The endpoint only: addresses are path-style, so the bucket is not named.
+    # Downloads are ordinary navigations and need nothing here.
     customResponseHeaders:
-      Content-Security-Policy: "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; upgrade-insecure-requests"
+      Content-Security-Policy: "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://nbg1.your-objectstorage.com; upgrade-insecure-requests"

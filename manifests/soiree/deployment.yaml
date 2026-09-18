@@ -255,6 +255,61 @@ spec:
             - name: SOIREE_VAPID_SUBJECT
               value: "mailto:soiree@yornik.eu"
 
+            # Attachments: files on budget lines and tasks, from v1.1.0. An
+            # older image ignores all of this.
+            #
+            # The browser talks to the bucket directly - soiree only signs the
+            # addresses - so no file crosses the home uplink or meets the 60 s
+            # Traefik read timeout. Two things outside this file follow from
+            # that, and an upload fails silently in the browser without either:
+            #   - middleware-csp.yaml allows the endpoint below in connect-src;
+            #   - the bucket has a CORS rule allowing PUT from this site
+            #     (the rule and the command are in soiree's docs/operating.md).
+            #
+            # ALL FIVE OR NONE. soiree refuses to start on a partial set, on
+            # purpose: a bucket with no secret would draw the upload control and
+            # fail every upload in somebody's hand. So the three keys below must
+            # exist in soiree-app before this is merged, or the new pod stops at
+            # CreateContainerConfigError and the rollout hangs on the old one.
+            #
+            # The bucket's name is in the Secret with the credentials. It is not
+            # secret; it is simply nobody else's business, in a public repository
+            # where this namespace is already the one thing named after people.
+            #
+            # The credential is the OpenProject attachments one, reused. That
+            # costs nothing in isolation, because there was none to keep: a
+            # Hetzner S3 key is valid for every bucket in its project, so any
+            # key here can already reach the WAL archive and the NAS backups.
+            # Separating them would take a second Hetzner project, not a
+            # second key. A signed address shows the key's id and never its
+            # secret; what would expose the secret is this pod being taken
+            # over, which is equally true of OpenProject's.
+            - name: SOIREE_S3_ENDPOINT
+              value: "https://nbg1.your-objectstorage.com"
+            - name: SOIREE_S3_REGION
+              value: "nbg1"
+            - name: SOIREE_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: S3_BUCKET
+            - name: SOIREE_S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: S3_ACCESS_KEY_ID
+            - name: SOIREE_S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: S3_SECRET_ACCESS_KEY
+            # The app's own defaults, written down so the limits are visible
+            # where the volume they have to fit in is decided.
+            - name: SOIREE_ATTACHMENT_MAX_MB
+              value: "25"
+            - name: SOIREE_ATTACHMENTS_TOTAL_MB
+              value: "2048"
+
             # Traefik terminates TLS and sets X-Forwarded-For. Without this the
             # per-IP rate limits would see the proxy's address for everyone and
             # one person could exhaust the allowance for all of them.
