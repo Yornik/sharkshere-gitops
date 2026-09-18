@@ -6,9 +6,9 @@ metadata:
   labels:
     app: jellyfin
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: jelly.yornik.eu
-    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
-    external-dns.alpha.kubernetes.io/ttl: "3600"
+    external-dns.kubernetes.io/hostname: jelly.yornik.eu
+    external-dns.kubernetes.io/target: jump.fedishark.eu
+    external-dns.kubernetes.io/ttl: "3600"
 spec:
   type: ClusterIP
   selector:
