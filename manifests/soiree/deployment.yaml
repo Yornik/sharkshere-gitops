@@ -29,21 +29,25 @@ spec:
               containerPort: 8080
               protocol: TCP
           env:
-            # PLACEHOLDER — a human fills these in before this reaches main.
             # Everything event-specific is configuration, not source, which is
-            # what lets one image serve any event without a rebuild.
+            # what lets one public image serve any event without a rebuild.
+            # This block is the only place the occasion is named.
             - name: SOIREE_EVENT_NAME
-              value: "REPLACE_ME_EVENT_NAME"
+              value: "Oma's 90th"
             - name: SOIREE_EVENT_TAGLINE
-              value: "REPLACE_ME_EVENT_TAGLINE"
+              value: "Invitation-only dinner"
             # PLACEHOLDER date, but a syntactically valid one on purpose. The
             # app parses this with time.Parse(time.RFC3339) and exits non-zero
             # if it does not carry an explicit offset — a REPLACE_ME string
             # here would be a CrashLoopBackOff rather than a visible default.
             # An empty value is also accepted and simply disables the
             # countdown.
+            # Jakarta is UTC+7. The offset is mandatory: the app refuses to
+            # start without one, because a bare local time is read in the
+            # viewer's zone and the countdown then differs by a day between
+            # the people planning together.
             - name: SOIREE_EVENT_DATE
-              value: "2027-01-01T00:00:00+01:00"
+              value: "2027-02-21T00:00:00+07:00"
             - name: SOIREE_CURRENCY
               value: "IDR"
             - name: SOIREE_LOCALE

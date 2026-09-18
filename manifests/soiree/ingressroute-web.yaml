@@ -8,7 +8,7 @@ spec:
     - web
   routes:
     # PLACEHOLDER hostname; a human substitutes it.
-    - match: Host(`REPLACE_ME_HOSTNAME`)
+    - match: Host(`bokings-driessen.party`) || Host(`www.bokings-driessen.party`)
       kind: Rule
       middlewares:
         - name: redirect-https

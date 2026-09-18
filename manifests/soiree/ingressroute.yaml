@@ -7,13 +7,16 @@ spec:
   entryPoints:
     - websecure
   routes:
-    # PLACEHOLDER hostname; a human substitutes it. DNS must resolve before
-    # this route exists - Traefik does not retry a failed ACME order.
-    - match: Host(`REPLACE_ME_HOSTNAME`)
+    # DNS must resolve before this route exists - Traefik does not retry a
+    # failed ACME order, so an IngressRoute that appears first burns the
+    # attempt and the cert has to be prompted by restarting Traefik.
+    - match: Host(`bokings-driessen.party`) || Host(`www.bokings-driessen.party`)
       kind: Rule
       middlewares:
         - name: security-headers
           namespace: traefik
+        - name: redirect-www-to-apex
+          namespace: soiree
         - name: csp
           namespace: soiree
         - name: rate-limit

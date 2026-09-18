@@ -6,14 +6,12 @@ metadata:
   labels:
     app.kubernetes.io/name: soiree
     app.kubernetes.io/instance: soiree
-  annotations:
-    # ExternalDNS runs with --source=service --source=ingress. It does not
-    # watch Traefik IngressRoute CRDs, so the public name has to be declared
-    # here or it never resolves - same pattern as vaultwarden/fedishark.
-    # PLACEHOLDER hostname; a human substitutes it.
-    external-dns.alpha.kubernetes.io/hostname: REPLACE_ME_HOSTNAME
-    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
-    external-dns.alpha.kubernetes.io/ttl: "3600"
+  # Deliberately no ExternalDNS annotations. This app is served from the zone
+  # apex, and the annotation pattern the subdomains use would publish a CNAME
+  # to jump.fedishark.eu — invalid at an apex, and in conflict with the DANE
+  # TLSA records this estate publishes. The apex A/AAAA records and the www
+  # CNAME are declared instead as dummy Services in
+  # manifests/external-dns/dns-records.yaml, the same way yornik.eu is.
 spec:
   selector:
     app.kubernetes.io/name: soiree

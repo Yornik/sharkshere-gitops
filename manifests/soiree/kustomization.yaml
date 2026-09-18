@@ -8,6 +8,7 @@ resources:
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
   - middleware-csp.yaml
+  - middleware-redirect-www-to-apex.yaml
   - servicemonitor.yaml
   - objectstore.yaml
   - cluster.yaml
