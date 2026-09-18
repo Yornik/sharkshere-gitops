@@ -23,29 +23,20 @@ spec:
           # Static Go binary on a scratch base. Source + CI:
           # github.com/Yornik/soiree
           #
-          # DO NOT MERGE AT THIS TAG. In every release up to and including
-          # v0.4.0 the plan API checks nobody: GET /api/v1/plan, the event
-          # stream and every write on every collection answer anything that can
-          # reach them, and this IngressRoute makes that the whole internet.
-          # The ledger is people's names against money. The guard is in
-          # v1.0.0 (RequireWrite around the /api/v1 subtree). This line moves
-          # to v1.0.0 once that image is on GHCR, this paragraph and the
-          # "not in any released tag" notes below are deleted in the same
-          # commit, and only then does this merge. ArgoCD syncs on merge with
-          # selfHeal - there is no window in which to fix it afterwards.
+          # NEVER PIN ANYTHING OLDER THAN v1.0.0. In every release up to and
+          # including v0.4.0 the plan API checks nobody: GET /api/v1/plan, the
+          # event stream and every write on every collection answer anything
+          # that can reach them, and this IngressRoute makes that the whole
+          # internet. The ledger is people's names against money. The guard
+          # (RequireWrite around the /api/v1 subtree) arrived in v1.0.0. Do not
+          # pin a 0.x image even to try something out.
           #
-          # v0.4.0 is the newest published release. Renovate tracks this tag;
-          # do not move it to `latest`, which would make the running version
-          # unknowable and silently change it under a restart.
-          #
-          # Read the note on SOIREE_VAPID_* below before assuming a feature
-          # present in the app's main branch is present in this image. Web
-          # push, passkeys and SSE live-sync are all merged upstream but are
-          # NOT in any released tag yet: release-please cut v0.4.0 from a
-          # parallel lineage, and the merge that brought those features to
-          # main happened after the tag. Over v0.3.0 this brings exactly one
-          # change - the deadline digest now goes to every active admin.
-          image: ghcr.io/yornik/soiree:v0.4.0
+          # Renovate tracks this tag; do not move it to `latest`, which would
+          # make the running version unknowable and silently change it under a
+          # restart. v1.0.1 rather than v1.0.0 for one fix: a session that ends
+          # under an open page opens the sign-in screen at once instead of
+          # waiting on a second request that can be lost.
+          image: ghcr.io/yornik/soiree:v1.0.1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -104,8 +95,8 @@ spec:
             # built from a forged Host would point somebody's one-time secret
             # at whatever host the attacker named.
             #
-            # This also becomes the WebAuthn Relying Party identity once an
-            # image with passkeys is pinned. config.loadPasskeys takes the
+            # This is also the WebAuthn Relying Party identity.
+            # config.loadPasskeys takes the
             # URL's hostname, strips a leading `www.` and nothing else, so the
             # RP ID derived here is exactly `bokings-driessen.party` - which
             # matches the Host() this deployment is actually served on, and is
@@ -185,7 +176,7 @@ spec:
             # records the period it sent for, so three replicas and a restart
             # in the same window still produce one mail.
             #
-            # From v0.4.0 the recipients are every active admin PLUS whatever
+            # The recipients are every active admin PLUS whatever
             # SOIREE_REMINDER_TO names, deduplicated and resolved per send
             # rather than at startup - so an admin added or disabled later is
             # picked up without a restart. REMINDER_TO is therefore still live
@@ -214,21 +205,15 @@ spec:
             # sentence on a lock screen whose click opens the planner, where
             # the mail above carries the whole thing.
             #
-            # INERT AT THE PINNED TAG, deliberately so. internal/push does not
-            # exist in v0.4.0; it was merged to main after release-please cut
-            # that tag, so this image reads none of these three variables and
-            # nothing here changes its behaviour. They are set now rather than
-            # later because of the next paragraph.
-            #
             # GENERATED ONCE, ON 2026-09-18, AND NEVER ROTATED. Web Push has no
             # account and no API key: the server proves who it is by signing
             # each request with a P-256 pair it generated itself, and the
             # browser pins the public half at the moment it subscribes. A new
             # pair therefore invalidates every subscription in existence, and
             # it does it silently - the push service keeps accepting the sends
-            # and not one notification ever arrives. Doing it now, while there
-            # are no subscriptions to lose, is free; doing it after the feature
-            # ships is not. Regenerate with push.GenerateKeys() only if the
+            # and not one notification ever arrives. It was generated before the
+            # first subscription existed, which is the only time doing so is
+            # free. Regenerate with push.GenerateKeys() only if the
             # private half leaks, and expect every subscriber to have to turn
             # notifications on again.
             #
