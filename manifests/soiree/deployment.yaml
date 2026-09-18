@@ -115,11 +115,24 @@ spec:
             - name: SOIREE_BASE_URL
               value: "https://bokings-driessen.party"
 
-            # Mail, via the same Resend relay the rest of the estate uses. The
-            # sender is on this event's own domain: its DKIM, SPF and MX are
-            # published and verified in Resend. Only the API key is secret -
-            # host, port, user and sender are not, and putting them in the
-            # Secret would only make them harder to read.
+            # Mail, via the same Resend relay the rest of the estate uses, and
+            # from yornik.eu like the rest of the estate.
+            #
+            # It was on the event's own domain for one afternoon. Every check
+            # passed - SPF, DKIM and DMARC, aligned - and the first mail still
+            # went to spam with a score of 8: the domain was 19 hours old, on
+            # a TLD filters distrust by default, carrying a plain-text "set a
+            # new password" with one link in it. Authentication says who sent
+            # a mail, not whether to believe them, and there is no record to
+            # publish that fixes being new. yornik.eu has years behind it and
+            # a p=quarantine DMARC policy of its own.
+            #
+            # The link inside the mail still points at the event's domain,
+            # because that is where the application is.
+            #
+            # Only the API key is secret - host, port, user and sender are
+            # not, and putting them in the Secret would only make them harder
+            # to read.
             - name: SOIREE_SMTP_HOST
               value: "smtp.resend.com"
             - name: SOIREE_SMTP_PORT
@@ -127,7 +140,7 @@ spec:
             - name: SOIREE_SMTP_USER
               value: "resend"
             - name: SOIREE_SMTP_FROM
-              value: "soiree@bokings-driessen.party"
+              value: "bokings-driessen-party@yornik.eu"
             - name: SOIREE_SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -231,9 +244,8 @@ spec:
             # Where a push service complains when this deployment misbehaves,
             # so it has to be an address somebody can actually receive at.
             # yornik.eu publishes an MX and bokings-driessen.party does not:
-            # the event's own domain is a Resend *sending* identity, verified
-            # for DKIM/SPF so SOIREE_SMTP_FROM above can use it, but nothing
-            # accepts inbound mail there and a complaint would land nowhere.
+            # nothing accepts inbound mail on the event's own domain, and a
+            # complaint sent there would land nowhere.
             #
             # All three of these must be set or push stays off entirely -
             # VAPIDConfig.Enabled() requires the subject too, because a push
