@@ -6,9 +6,9 @@ metadata:
   labels:
     app: fedishark
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: www.fedishark.eu
-    external-dns.alpha.kubernetes.io/target: jump.fedishark.eu
-    external-dns.alpha.kubernetes.io/ttl: "3600"
+    external-dns.kubernetes.io/hostname: www.fedishark.eu
+    external-dns.kubernetes.io/target: jump.fedishark.eu
+    external-dns.kubernetes.io/ttl: "3600"
 spec:
   selector:
     app: fedishark
