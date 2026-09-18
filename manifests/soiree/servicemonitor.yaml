@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: soiree
+  namespace: soiree
+  labels:
+    # kube-prometheus-stack runs with the default selectors, so this label is
+    # what makes Prometheus adopt the ServiceMonitor; the namespace selector
+    # is empty by default, so living outside `monitoring` is fine.
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: soiree
+      app.kubernetes.io/instance: soiree
+  namespaceSelector:
+    matchNames:
+      - soiree
+  endpoints:
+    # The metrics port, not the site port. The IngressRoute routes only to
+    # http, so the exposition is reachable from Prometheus and from nowhere
+    # outside the cluster.
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
