@@ -142,6 +142,9 @@ spec:
             - name: series
               mountPath: /media/series
               readOnly: true
+            - name: music
+              mountPath: /media/music
+              readOnly: true
             - name: cache
               mountPath: /cache
             - name: dri
@@ -170,6 +173,9 @@ spec:
         - name: series
           persistentVolumeClaim:
             claimName: jellyfin-series
+        - name: music
+          persistentVolumeClaim:
+            claimName: jellyfin-music
         - name: cache
           emptyDir: {}
         - name: dri
