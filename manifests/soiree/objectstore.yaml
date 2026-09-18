@@ -7,9 +7,14 @@ spec:
   configuration:
     destinationPath: s3://cnpg-wal/
     endpointURL: https://nbg1.your-objectstorage.com
-    # The credentials Secret is namespaced, so soiree needs its own copy of
-    # cnpg-s3-wal exactly as shared-pg, openproject and gitlab each have one.
-    # See secret-s3-wal.enc.yaml - it currently holds placeholders.
+    # The credentials Secret is namespaced, so soiree carries its own copy of
+    # cnpg-s3-wal exactly as shared-pg, openproject and gitlab each do. The
+    # values are in secret-s3-wal.enc.yaml, copied from shared-pg.
+    #
+    # All four clusters write to this one bucket and are kept apart by
+    # serverName (soiree-pg, see cluster.yaml). That name is the whole
+    # separation: two clusters sharing one would interleave their WAL into a
+    # single timeline and neither could be restored.
     s3Credentials:
       accessKeyId:
         name: cnpg-s3-wal
