@@ -779,8 +779,9 @@ apps:
     path: manifests/soiree
 
   # Thins old backups in object storage by age: the GitLab tarballs and Omni's
-  # etcd snapshots, neither of which anything else ever deletes. Ships in dry
-  # run - see PRUNE_APPLY in manifests/backup-prune/.
+  # etcd snapshots, neither of which anything else ever deletes. Live: it
+  # deletes. PRUNE_APPLY in manifests/backup-prune/ is the switch back to a dry
+  # run, and the first thing to set before touching the policy.
   backup-prune:
     namespace: backup-prune
     path: manifests/backup-prune
