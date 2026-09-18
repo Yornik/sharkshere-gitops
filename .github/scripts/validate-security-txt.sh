@@ -61,6 +61,28 @@ GNUPGHOME="$gnupg_home" gpg --batch --decrypt "$security_txt" > "$plain_txt"
 
 grep -q '^Contact: ' "$plain_txt" || { echo "missing Contact field" >&2; exit 1; }
 grep -q '^Expires: ' "$plain_txt" || { echo "missing Expires field" >&2; exit 1; }
+
+# RFC 9116 says a security.txt past its Expires is invalid, and nothing renews
+# this one - the date is written by hand into the ConfigMap. Checking only that
+# the field exists means the file lapses silently and stays lapsed, so fail the
+# build with enough notice to actually do something about it.
+expires_raw="$(grep -m1 '^Expires: ' "$plain_txt" | cut -d' ' -f2-)"
+if ! expires_epoch="$(date -u -d "$expires_raw" +%s 2>/dev/null)"; then
+  echo "Expires is not a date this system can parse: $expires_raw" >&2
+  exit 1
+fi
+now_epoch="$(date -u +%s)"
+days_left=$(( (expires_epoch - now_epoch) / 86400 ))
+
+if [ "$days_left" -le 0 ]; then
+  echo "security.txt expired ${days_left#-} day(s) ago ($expires_raw); RFC 9116 makes it invalid" >&2
+  exit 1
+fi
+if [ "$days_left" -lt "${SECURITY_TXT_MIN_DAYS:-30}" ]; then
+  echo "security.txt expires in ${days_left} day(s) ($expires_raw) - renew and re-sign it" >&2
+  exit 1
+fi
+echo "security.txt expires in ${days_left} day(s)"
 grep -q '^Encryption: https://.*' "$plain_txt" || { echo "missing valid Encryption field" >&2; exit 1; }
 grep -q '^Canonical: https://.*/\.well-known/security\.txt$' "$plain_txt" || {
   echo "missing Canonical field" >&2
