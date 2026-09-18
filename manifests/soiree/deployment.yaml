@@ -1,0 +1,343 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soiree
+  namespace: soiree
+  labels:
+    app.kubernetes.io/name: soiree
+    app.kubernetes.io/instance: soiree
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: soiree
+      app.kubernetes.io/instance: soiree
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: soiree
+        app.kubernetes.io/instance: soiree
+    spec:
+      containers:
+        - name: soiree
+          # Static Go binary on a scratch base. Source + CI:
+          # github.com/Yornik/soiree
+          #
+          # NEVER PIN ANYTHING OLDER THAN v1.0.0. In every release up to and
+          # including v0.4.0 the plan API checks nobody: GET /api/v1/plan, the
+          # event stream and every write on every collection answer anything
+          # that can reach them, and this IngressRoute makes that the whole
+          # internet. The ledger is people's names against money. The guard
+          # (RequireWrite around the /api/v1 subtree) arrived in v1.0.0. Do not
+          # pin a 0.x image even to try something out.
+          #
+          # Renovate tracks this tag; do not move it to `latest`, which would
+          # make the running version unknowable and silently change it under a
+          # restart. v1.0.1 rather than v1.0.0 for one fix: a session that ends
+          # under an open page opens the sign-in screen at once instead of
+          # waiting on a second request that can be lost.
+          image: ghcr.io/yornik/soiree:v1.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            # The Prometheus exposition listens separately, on purpose: the
+            # IngressRoute in front of :8080 has no path constraint, so
+            # /metrics served there would be world-readable and
+            # soiree_build_info would name the running commit to anyone who
+            # asked. Nothing routes to this port from outside the cluster.
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            # Everything event-specific is configuration, not source, which is
+            # what lets one public image serve any event without a rebuild.
+            #
+            # The event's name, tagline and date come from the Secret, and not
+            # because they are secret: THIS REPOSITORY IS PUBLIC. A name that
+            # says whose birthday it is and which one, beside a date, beside a
+            # hostname made of the family's surnames, is a living person's date
+            # of birth published with their family name. The same reasoning
+            # already puts the admin's address in the Secret below. Read them
+            # with `sops -d manifests/soiree/soiree-app.enc.yaml`.
+            #
+            # The date must be RFC3339 with an explicit offset: the app parses
+            # it with time.Parse(time.RFC3339) and refuses to start without
+            # one, because a bare local time is read in the viewer's zone and
+            # the countdown then differs by a day between the people planning
+            # together. An empty value is accepted and disables the countdown.
+            - name: SOIREE_EVENT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: EVENT_NAME
+            - name: SOIREE_EVENT_TAGLINE
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: EVENT_TAGLINE
+            - name: SOIREE_EVENT_DATE
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: EVENT_DATE
+            - name: SOIREE_CURRENCY
+              value: "IDR"
+            - name: SOIREE_LOCALE
+              value: "id-ID"
+            - name: SOIREE_SECONDARY_CURRENCY
+              value: "EUR"
+            - name: SOIREE_SECONDARY_LOCALE
+              value: "nl-NL"
+            # Canonical origin. Set-password links are built from this and
+            # never from the request Host, which is attacker-supplied: a link
+            # built from a forged Host would point somebody's one-time secret
+            # at whatever host the attacker named.
+            #
+            # This is also the WebAuthn Relying Party identity.
+            # config.loadPasskeys takes the
+            # URL's hostname, strips a leading `www.` and nothing else, so the
+            # RP ID derived here is exactly `bokings-driessen.party` - which
+            # matches the Host() this deployment is actually served on, and is
+            # a registrable-domain suffix of the www form as well. The app
+            # accepts exactly one origin (RPOrigins has a single entry), so www
+            # cannot serve the app directly; middleware-redirect-www-to-apex
+            # 301s it to the apex before any ceremony can start, which is what
+            # keeps the collected origin equal to PasskeyOrigin.
+            #
+            # There is no SOIREE_PASSKEYS_ENABLED here on purpose: passkeys
+            # default to on whenever this is set, and the variable exists only
+            # to turn them off. Changing this hostname later silently breaks
+            # every credential already registered - the RP ID is hashed into
+            # each one, and a mismatch reports nothing more useful to the
+            # browser than "no credentials available".
+            - name: SOIREE_BASE_URL
+              value: "https://bokings-driessen.party"
+
+            # Mail, via the same Resend relay the rest of the estate uses. The
+            # sender is on this event's own domain: its DKIM, SPF and MX are
+            # published and verified in Resend. Only the API key is secret -
+            # host, port, user and sender are not, and putting them in the
+            # Secret would only make them harder to read.
+            - name: SOIREE_SMTP_HOST
+              value: "smtp.resend.com"
+            - name: SOIREE_SMTP_PORT
+              value: "465"
+            - name: SOIREE_SMTP_USER
+              value: "resend"
+            - name: SOIREE_SMTP_FROM
+              value: "soiree@bokings-driessen.party"
+            - name: SOIREE_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: SMTP_PASSWORD
+
+            # From the Secret CloudNativePG generates for the cluster's owner
+            # role, not a copy of our own. A duplicated DSN is a rotation
+            # hazard: CNPG can change that password and a hand-maintained copy
+            # would keep the old one, failing at the next restart rather than
+            # at the moment of the change.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-pg-app
+                  key: uri
+
+            # The first admin, and a password so that first login does not
+            # depend on mail working. Both are consumed only while no admin
+            # exists, so they are safe to leave set: neither can resurrect a
+            # disabled account nor overwrite a password since changed. In the
+            # Secret because the address is personal, not because it is secret.
+            - name: SOIREE_BOOTSTRAP_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: BOOTSTRAP_ADMIN
+            - name: SOIREE_BOOTSTRAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: BOOTSTRAP_PASSWORD
+
+            # The deadline digest. Not a reminder about the event itself: it
+            # reports budget lines whose lock_by date is close or past — the
+            # date a vendor has to be committed to before the price or the
+            # slot is gone — plus tasks with a due date, and sends nothing at
+            # all when nothing is due.
+            #
+            # Weekly, in the event's own timezone so "today" means the day it
+            # is where the event is. The window is whole days rather than a duration
+            # because adding 336h to a wall clock across a DST boundary lands
+            # on the wrong calendar day.
+            #
+            # One instance sends: the job takes a Postgres advisory lock and
+            # records the period it sent for, so three replicas and a restart
+            # in the same window still produce one mail.
+            #
+            # The recipients are every active admin PLUS whatever
+            # SOIREE_REMINDER_TO names, deduplicated and resolved per send
+            # rather than at startup - so an admin added or disabled later is
+            # picked up without a restart. REMINDER_TO is therefore still live
+            # configuration and not superseded: it is how the digest reaches
+            # somebody who is not an admin of the planner.
+            - name: SOIREE_REMINDER_ENABLED
+              value: "true"
+            - name: SOIREE_REMINDER_SCHEDULE
+              value: "weekly"
+            - name: SOIREE_REMINDER_WINDOW_DAYS
+              value: "14"
+            # In the Secret for the same reason as the event's date: it says
+            # where.
+            - name: SOIREE_REMINDER_TZ
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: REMINDER_TZ
+            - name: SOIREE_REMINDER_TO
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: REMINDER_TO
+
+            # Web Push: the second channel for that same deadline digest - a
+            # sentence on a lock screen whose click opens the planner, where
+            # the mail above carries the whole thing.
+            #
+            # GENERATED ONCE, ON 2026-09-18, AND NEVER ROTATED. Web Push has no
+            # account and no API key: the server proves who it is by signing
+            # each request with a P-256 pair it generated itself, and the
+            # browser pins the public half at the moment it subscribes. A new
+            # pair therefore invalidates every subscription in existence, and
+            # it does it silently - the push service keeps accepting the sends
+            # and not one notification ever arrives. It was generated before the
+            # first subscription existed, which is the only time doing so is
+            # free. Regenerate with push.GenerateKeys() only if the
+            # private half leaks, and expect every subscriber to have to turn
+            # notifications on again.
+            #
+            # The public key is public by design and belongs in plain text: the
+            # browser cannot subscribe without having seen it, and the app
+            # publishes it to the page itself in ClientConfig. Only the private
+            # half is a secret, and config.ClientConfig has no field for it.
+            - name: SOIREE_VAPID_PUBLIC_KEY
+              value: "BJZ84imBdpO50FKGjVGL-Cda1Zvn96eMdPA-UVSxEoMtB9JBo3hRP_0TtQMVzp6KyI6Gfz00DAj851_xVxyud5E"
+            - name: SOIREE_VAPID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: VAPID_PRIVATE_KEY
+            # Where a push service complains when this deployment misbehaves,
+            # so it has to be an address somebody can actually receive at.
+            # yornik.eu publishes an MX and bokings-driessen.party does not:
+            # the event's own domain is a Resend *sending* identity, verified
+            # for DKIM/SPF so SOIREE_SMTP_FROM above can use it, but nothing
+            # accepts inbound mail there and a complaint would land nowhere.
+            #
+            # All three of these must be set or push stays off entirely -
+            # VAPIDConfig.Enabled() requires the subject too, because a push
+            # service may reject a JWT that carries no `sub` and finding that
+            # out one notification at a time is worse than the feature being
+            # visibly off.
+            - name: SOIREE_VAPID_SUBJECT
+              value: "mailto:soiree@yornik.eu"
+
+            # Traefik terminates TLS and sets X-Forwarded-For. Without this the
+            # per-IP rate limits would see the proxy's address for everyone and
+            # one person could exhaust the allowance for all of them.
+            - name: SOIREE_TRUST_PROXY_HEADERS
+              value: "true"
+
+            # Read by the Go runtime, not by the app. A soft ceiling for the
+            # collector, below the container's hard one: finished 19 MiB
+            # hashing blocks are garbage until a collection runs, and without
+            # this the runtime has no idea a limit exists and lets them pile up
+            # to it. See the note on resources below for the measurements.
+            - name: GOMEMLIMIT
+              value: "192MiB"
+
+            # There is no SOIREE_SESSION_SECRET. Sessions are rows in the
+            # database keyed by a random token, so there is nothing to sign and
+            # no key to rotate. An earlier draft of this manifest guessed at
+            # one; it was never read by any version of the app.
+            #
+            # The rest of what internal/config reads is left unset on purpose,
+            # so that a later reader does not have to re-derive why:
+            #
+            #   SOIREE_LISTEN_ADDR      defaults to :8080, SOIREE_METRICS_ADDR
+            #   SOIREE_METRICS_ADDR     to :9090 - already the containerPorts
+            #                           declared above and the ports the
+            #                           Service and ServiceMonitor select.
+            #                           Setting them would create a second
+            #                           place for one truth, and the app exits
+            #                           if the two ever name the same socket.
+            #   SOIREE_ALLOW_INDEXING   defaults to false, which is the state
+            #                           this deployment wants: the planner
+            #                           holds guests' names against amounts of
+            #                           money, and none of them agreed to have
+            #                           that indexed. Writing "false" here
+            #                           would only invite someone to flip it.
+            #   SOIREE_DEMO_DATA        defaults to false. Real event, real
+            #                           ledger; seeded rows would have to be
+            #                           told apart from real ones by hand.
+            #   SOIREE_PASSKEYS_ENABLED defaults to on once SOIREE_BASE_URL is
+            #                           set - see the note there. The variable
+            #                           exists only to turn passkeys off.
+            #   SOIREE_BUDGET_CEILING   no default, and no value to invent: the
+            #                           ceiling is a decision the people paying
+            #                           for this event make. Unset simply means
+            #                           the UI shows no budget bar.
+          # Liveness checks the process only. Readiness checks the database
+          # as well, which is the distinction that matters: an instance that
+          # cannot reach Postgres should leave the Service rather than be
+          # restarted, because restarting it will not bring the database back.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the
+            # full reasoning. This is the same shape: a small Go HTTP server
+            # whose work arrives in request bursts, where a CFS quota turns a
+            # burst into a multi-period stall for no gain. CPU is compressible,
+            # so the request below already guarantees a fair share under
+            # contention.
+            #
+            # The memory limit is set from measurement, not from the size of
+            # the site. What costs memory here is logging in: every login is
+            # one Argon2id evaluation at 19 MiB - deliberately including a
+            # login for an address with no account - so it is a cost an
+            # anonymous caller can ask for, twenty at a time under the app's
+            # own per-address limit. From v1.0.0 the app runs four at once and
+            # queues the rest; measured under three bursts of twenty, hashing
+            # alone peaks at 191 MiB held, or 151 MiB with the collector told
+            # where the ceiling is (GOMEMLIMIT, above). Add the server, the
+            # pool and the assets and 256Mi is the first round number that is
+            # not a guess. At the 128Mi this started with, seven concurrent
+            # logins got the pod OOM-killed.
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 256Mi

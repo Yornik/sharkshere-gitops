@@ -1,0 +1,14 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: soiree-pg-3h
+  namespace: soiree
+spec:
+  schedule: 0 0 */3 * * *
+  cluster:
+    name: soiree-pg
+  backupOwnerReference: self
+  immediate: true
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io

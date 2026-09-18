@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingressroute.yaml
+  - ingressroute-web.yaml
+  - middleware-redirect-https.yaml
+  - middleware-csp.yaml
+  - middleware-redirect-www-to-apex.yaml
+  - middleware-fail2ban.yaml
+  - servicemonitor.yaml
+  - objectstore.yaml
+  - cluster.yaml
+  - scheduled-backup.yaml
+  - podmonitor.yaml
+generators:
+  - secret-generator.yaml

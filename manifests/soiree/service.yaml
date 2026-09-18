@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: soiree
+  namespace: soiree
+  labels:
+    app.kubernetes.io/name: soiree
+    app.kubernetes.io/instance: soiree
+  # Deliberately no ExternalDNS annotations. This app is served from the zone
+  # apex, and the annotation pattern the subdomains use would publish a CNAME
+  # to jump.fedishark.eu — invalid at an apex, and in conflict with the DANE
+  # TLSA records this estate publishes. The apex A/AAAA records and the www
+  # CNAME are declared instead as dummy Services in
+  # manifests/external-dns/dns-records.yaml, the same way yornik.eu is.
+spec:
+  selector:
+    app.kubernetes.io/name: soiree
+    app.kubernetes.io/instance: soiree
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    # Selected by the ServiceMonitor. Present on the Service but absent from
+    # the IngressRoute, which is what keeps the exposition reachable from
+    # Prometheus and from nowhere else.
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP

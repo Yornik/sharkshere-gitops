@@ -774,6 +774,10 @@ apps:
     namespace: yornik
     path: manifests/yornik
 
+  soiree:
+    namespace: soiree
+    path: manifests/soiree
+
   privatebin:
     namespace: privatebin
     path: manifests/privatebin

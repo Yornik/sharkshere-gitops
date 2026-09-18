@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-www-to-apex
+  namespace: soiree
+spec:
+  # One canonical origin. The app builds set-password links from
+  # SOIREE_BASE_URL rather than from the request Host, so a visitor arriving on
+  # www would otherwise be bounced between two origins mid-flow — and the
+  # service worker caches per origin, so the second one is a cold start every
+  # time. Mirrors manifests/yornik/middleware-redirect-www-to-apex.yaml.
+  redirectRegex:
+    regex: ^https?://www\.bokings-driessen\.party/(.*)
+    replacement: https://bokings-driessen.party/${1}
+    permanent: true

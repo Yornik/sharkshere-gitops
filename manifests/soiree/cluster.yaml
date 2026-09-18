@@ -1,0 +1,50 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: soiree-pg
+  namespace: soiree
+  annotations:
+    # Never let a pruned Application take the database with it.
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  instances: 3
+  storage:
+    storageClass: truenas-ssd-iscsi
+    size: 10Gi
+  walStorage:
+    storageClass: truenas-ssd-iscsi
+    size: 5Gi
+  # Same shape as shared-pg/openproject-pg: requests high enough for Burstable
+  # QoS rather than BestEffort (first evicted under memory pressure), memory
+  # limit ~2x request and comfortably above shared_buffers + work_mem headroom.
+  # No CPU limit: throttling a DB is worse than sharing.
+  #
+  # soiree v1.0.0 keeps everything here: the plan, the accounts, sessions,
+  # passkeys, push subscriptions and the append-only change log. It is a small
+  # database and an important one - for the people using it, this is the only
+  # copy of who agreed to pay for what. 3x(10Gi + 5Gi) on ssd_pool, 3x512Mi RAM.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  postgresql:
+    parameters:
+      shared_buffers: 256MB
+      work_mem: 16MB
+      effective_cache_size: 1GB
+  bootstrap:
+    initdb:
+      database: soiree
+      owner: soiree
+  monitoring:
+    # Deprecated in CNPG; will be removed. We ship our own PodMonitor in
+    # podmonitor.yaml so we control the release label Prometheus filters on.
+    enablePodMonitor: false
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: soiree-pg-store
+        serverName: soiree-pg
