@@ -22,7 +22,19 @@ spec:
         - name: soiree
           # Static Go binary on a scratch base. Source + CI:
           # github.com/Yornik/soiree
-          image: ghcr.io/yornik/soiree:v0.3.0
+          #
+          # v0.4.0 is the newest published release. Renovate tracks this tag;
+          # do not move it to `latest`, which would make the running version
+          # unknowable and silently change it under a restart.
+          #
+          # Read the note on SOIREE_VAPID_* below before assuming a feature
+          # present in the app's main branch is present in this image. Web
+          # push, passkeys and SSE live-sync are all merged upstream but are
+          # NOT in any released tag yet: release-please cut v0.4.0 from a
+          # parallel lineage, and the merge that brought those features to
+          # main happened after the tag. Over v0.3.0 this brings exactly one
+          # change - the deadline digest now goes to every active admin.
+          image: ghcr.io/yornik/soiree:v0.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -66,6 +78,24 @@ spec:
             # never from the request Host, which is attacker-supplied: a link
             # built from a forged Host would point somebody's one-time secret
             # at whatever host the attacker named.
+            #
+            # This also becomes the WebAuthn Relying Party identity once an
+            # image with passkeys is pinned. config.loadPasskeys takes the
+            # URL's hostname, strips a leading `www.` and nothing else, so the
+            # RP ID derived here is exactly `bokings-driessen.party` - which
+            # matches the Host() this deployment is actually served on, and is
+            # a registrable-domain suffix of the www form as well. The app
+            # accepts exactly one origin (RPOrigins has a single entry), so www
+            # cannot serve the app directly; middleware-redirect-www-to-apex
+            # 301s it to the apex before any ceremony can start, which is what
+            # keeps the collected origin equal to PasskeyOrigin.
+            #
+            # There is no SOIREE_PASSKEYS_ENABLED here on purpose: passkeys
+            # default to on whenever this is set, and the variable exists only
+            # to turn them off. Changing this hostname later silently breaks
+            # every credential already registered - the RP ID is hashed into
+            # each one, and a mismatch reports nothing more useful to the
+            # browser than "no credentials available".
             - name: SOIREE_BASE_URL
               value: "https://bokings-driessen.party"
 
@@ -129,6 +159,13 @@ spec:
             # One instance sends: the job takes a Postgres advisory lock and
             # records the period it sent for, so three replicas and a restart
             # in the same window still produce one mail.
+            #
+            # From v0.4.0 the recipients are every active admin PLUS whatever
+            # SOIREE_REMINDER_TO names, deduplicated and resolved per send
+            # rather than at startup - so an admin added or disabled later is
+            # picked up without a restart. REMINDER_TO is therefore still live
+            # configuration and not superseded: it is how the digest reaches
+            # somebody who is not an admin of the planner.
             - name: SOIREE_REMINDER_ENABLED
               value: "true"
             - name: SOIREE_REMINDER_SCHEDULE
@@ -143,6 +180,54 @@ spec:
                   name: soiree-app
                   key: REMINDER_TO
 
+            # Web Push: the second channel for that same deadline digest - a
+            # sentence on a lock screen whose click opens the planner, where
+            # the mail above carries the whole thing.
+            #
+            # INERT AT THE PINNED TAG, deliberately so. internal/push does not
+            # exist in v0.4.0; it was merged to main after release-please cut
+            # that tag, so this image reads none of these three variables and
+            # nothing here changes its behaviour. They are set now rather than
+            # later because of the next paragraph.
+            #
+            # GENERATED ONCE, ON 2026-09-18, AND NEVER ROTATED. Web Push has no
+            # account and no API key: the server proves who it is by signing
+            # each request with a P-256 pair it generated itself, and the
+            # browser pins the public half at the moment it subscribes. A new
+            # pair therefore invalidates every subscription in existence, and
+            # it does it silently - the push service keeps accepting the sends
+            # and not one notification ever arrives. Doing it now, while there
+            # are no subscriptions to lose, is free; doing it after the feature
+            # ships is not. Regenerate with push.GenerateKeys() only if the
+            # private half leaks, and expect every subscriber to have to turn
+            # notifications on again.
+            #
+            # The public key is public by design and belongs in plain text: the
+            # browser cannot subscribe without having seen it, and the app
+            # publishes it to the page itself in ClientConfig. Only the private
+            # half is a secret, and config.ClientConfig has no field for it.
+            - name: SOIREE_VAPID_PUBLIC_KEY
+              value: "BJZ84imBdpO50FKGjVGL-Cda1Zvn96eMdPA-UVSxEoMtB9JBo3hRP_0TtQMVzp6KyI6Gfz00DAj851_xVxyud5E"
+            - name: SOIREE_VAPID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: VAPID_PRIVATE_KEY
+            # Where a push service complains when this deployment misbehaves,
+            # so it has to be an address somebody can actually receive at.
+            # yornik.eu publishes an MX and bokings-driessen.party does not:
+            # the event's own domain is a Resend *sending* identity, verified
+            # for DKIM/SPF so SOIREE_SMTP_FROM above can use it, but nothing
+            # accepts inbound mail there and a complaint would land nowhere.
+            #
+            # All three of these must be set or push stays off entirely -
+            # VAPIDConfig.Enabled() requires the subject too, because a push
+            # service may reject a JWT that carries no `sub` and finding that
+            # out one notification at a time is worse than the feature being
+            # visibly off.
+            - name: SOIREE_VAPID_SUBJECT
+              value: "mailto:soiree@yornik.eu"
+
             # Traefik terminates TLS and sets X-Forwarded-For. Without this the
             # per-IP rate limits would see the proxy's address for everyone and
             # one person could exhaust the allowance for all of them.
@@ -153,6 +238,33 @@ spec:
             # database keyed by a random token, so there is nothing to sign and
             # no key to rotate. An earlier draft of this manifest guessed at
             # one; it was never read by any version of the app.
+            #
+            # The rest of what internal/config reads is left unset on purpose,
+            # so that a later reader does not have to re-derive why:
+            #
+            #   SOIREE_LISTEN_ADDR      defaults to :8080, SOIREE_METRICS_ADDR
+            #   SOIREE_METRICS_ADDR     to :9090 - already the containerPorts
+            #                           declared above and the ports the
+            #                           Service and ServiceMonitor select.
+            #                           Setting them would create a second
+            #                           place for one truth, and the app exits
+            #                           if the two ever name the same socket.
+            #   SOIREE_ALLOW_INDEXING   defaults to false, which is the state
+            #                           this deployment wants: the planner
+            #                           holds guests' names against amounts of
+            #                           money, and none of them agreed to have
+            #                           that indexed. Writing "false" here
+            #                           would only invite someone to flip it.
+            #   SOIREE_DEMO_DATA        defaults to false. Real event, real
+            #                           ledger; seeded rows would have to be
+            #                           told apart from real ones by hand.
+            #   SOIREE_PASSKEYS_ENABLED defaults to on once SOIREE_BASE_URL is
+            #                           set - see the note there. The variable
+            #                           exists only to turn passkeys off.
+            #   SOIREE_BUDGET_CEILING   no default, and no value to invent: the
+            #                           ceiling is a decision the people paying
+            #                           for this event make. Unset simply means
+            #                           the UI shows no budget bar.
           # Liveness checks the process only. Readiness checks the database
           # as well, which is the distinction that matters: an instance that
           # cannot reach Postgres should leave the Service rather than be
