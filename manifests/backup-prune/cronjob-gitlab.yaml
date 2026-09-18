@@ -1,0 +1,104 @@
+# Thins the GitLab backup tarballs by age.
+#
+# The toolbox CronJob writes one tarball a day at 03:30 and never removes one:
+# 71 of them, 97 GB, on 2026-09-18, growing 42 GB a month. Its own
+# --maximum-backups can only keep the newest N. This keeps the last fortnight
+# in full, then one a week for eight weeks, then one a month for six - about 22
+# tarballs, 30 GB.
+#
+# Worth knowing before trusting an old one: gitlab-pg keeps 14 days of database
+# backups, so a tarball older than that can restore the git repositories by
+# themselves and nothing else. The issues and merge requests of that date are
+# gone. That is the reason the full-resolution band is 14 days and not longer.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: prune-gitlab-backups
+  namespace: backup-prune
+spec:
+  # After the 03:30 backup, which takes about eight minutes, and clear of the
+  # NAS cloudsync slots (02:00/04:00/06:00) and the three-hourly CNPG backups.
+  schedule: "15 5 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 604800
+      template:
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: prune
+              image: python:3.13-alpine
+              imagePullPolicy: IfNotPresent
+              command: ["python3", "/scripts/prune.py"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              env:
+                # DRY RUN. With anything but the exact string "true" the script
+                # lists what it would delete and deletes nothing. Read a run's
+                # log first (kubectl -n backup-prune logs job/...), then flip it.
+                - name: PRUNE_APPLY
+                  value: "false"
+                - name: S3_ENDPOINT
+                  value: "https://nbg1.your-objectstorage.com"
+                - name: S3_REGION
+                  value: "nbg1"
+                - name: S3_BUCKET
+                  value: "yornik-gitlab-backups"
+                # Only these are ever considered. The bucket is also GitLab's
+                # tmpBucket; anything else in it is not this job's to touch.
+                - name: KEY_REGEX
+                  value: '_gitlab_backup\.tar$'
+                - name: KEEP_ALL_DAYS
+                  value: "14"
+                - name: KEEP_DAILY_DAYS
+                  value: "14"
+                - name: KEEP_WEEKLY_WEEKS
+                  value: "8"
+                - name: KEEP_MONTHLY_MONTHS
+                  value: "6"
+                # Kept whatever their age, and the script refuses to delete at
+                # all when the newest backup is older than STALE_DAYS: if the
+                # backup job has stopped, thinning what is left is the wrong
+                # response, and a failed Job is what should get noticed.
+                - name: MIN_KEEP
+                  value: "7"
+                - name: STALE_DAYS
+                  value: "3"
+                - name: S3_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-prune-s3
+                      key: S3_ACCESS_KEY_ID
+                - name: S3_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-prune-s3
+                      key: S3_SECRET_ACCESS_KEY
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: backup-prune-script

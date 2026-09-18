@@ -778,6 +778,13 @@ apps:
     namespace: soiree
     path: manifests/soiree
 
+  # Thins old backups in object storage by age: the GitLab tarballs and Omni's
+  # etcd snapshots, neither of which anything else ever deletes. Ships in dry
+  # run - see PRUNE_APPLY in manifests/backup-prune/.
+  backup-prune:
+    namespace: backup-prune
+    path: manifests/backup-prune
+
   privatebin:
     namespace: privatebin
     path: manifests/privatebin

@@ -1,0 +1,96 @@
+# Thins the cluster's etcd snapshots by age.
+#
+# Omni takes one every three hours and uploads it to the omni-yornik bucket in
+# fsn1. It never removes one: 1511 of them, 103 GB, on 2026-09-18. This keeps
+# every snapshot of the last three days, then one a day for a fortnight, one a
+# week for eight weeks and one a month for six - about 48 snapshots, 4.4 GB.
+#
+# An etcd snapshot ages badly. The cluster is reconciled from git, so after a
+# few days a snapshot describes workloads that have since moved on, and the
+# realistic use of one is "the control plane died this afternoon". The old ones
+# are kept thin rather than not at all because they are small and because being
+# able to look at how the cluster stood in June has been useful before.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: prune-omni-snapshots
+  namespace: backup-prune
+spec:
+  schedule: "45 5 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 604800
+      template:
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: prune
+              image: python:3.13-alpine
+              imagePullPolicy: IfNotPresent
+              command: ["python3", "/scripts/prune.py"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              env:
+                # DRY RUN. See cronjob-gitlab.yaml.
+                - name: PRUNE_APPLY
+                  value: "false"
+                # fsn1, not nbg1 like everything else in the estate: that is
+                # where the bucket was made. The same project key reaches both.
+                - name: S3_ENDPOINT
+                  value: "https://fsn1.your-objectstorage.com"
+                - name: S3_REGION
+                  value: "fsn1"
+                - name: S3_BUCKET
+                  value: "omni-yornik"
+                - name: KEY_REGEX
+                  value: '\.snapshot$'
+                - name: KEEP_ALL_DAYS
+                  value: "3"
+                - name: KEEP_DAILY_DAYS
+                  value: "14"
+                - name: KEEP_WEEKLY_WEEKS
+                  value: "8"
+                - name: KEEP_MONTHLY_MONTHS
+                  value: "6"
+                - name: MIN_KEEP
+                  value: "8"
+                - name: STALE_DAYS
+                  value: "2"
+                - name: S3_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-prune-s3
+                      key: S3_ACCESS_KEY_ID
+                - name: S3_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-prune-s3
+                      key: S3_SECRET_ACCESS_KEY
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: backup-prune-script

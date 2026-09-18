@@ -3,3 +3,6 @@
 *~
 .DS_Store
 *.dec.yaml
+
+# python3 manifests/backup-prune/test_prune.py leaves this behind
+__pycache__/
