@@ -17,12 +17,13 @@ spec:
     matchNames:
       - soiree
   endpoints:
-    # WARNING: /metrics landed upstream after v0.2.1 was cut, so the pinned
-    # image answers 404 here. Prometheus will record the target as up == 0
-    # and the stack's default TargetDown rule will fire until the image is
-    # bumped to a release that serves it. Either merge this together with
-    # that bump, or accept the alert in the meantime.
-    - port: http
+    # WARNING: the pinned image cannot serve this yet. Both /metrics and the
+    # separate listener it now lives on landed upstream after v0.2.1 was cut,
+    # so in that image port 9090 is not open at all and the scrape fails to
+    # connect rather than 404ing. Prometheus records up == 0 and the stack's
+    # default TargetDown rule fires until the image is bumped to a release
+    # that has it. Merge this together with that bump.
+    - port: metrics
       path: /metrics
       interval: 30s
       scrapeTimeout: 10s

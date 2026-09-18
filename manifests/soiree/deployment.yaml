@@ -28,6 +28,14 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            # The Prometheus exposition listens separately, on purpose: the
+            # IngressRoute in front of :8080 has no path constraint, so
+            # /metrics served there would be world-readable and
+            # soiree_build_info would name the running commit to anyone who
+            # asked. Nothing routes to this port from outside the cluster.
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
           env:
             # Everything event-specific is configuration, not source, which is
             # what lets one public image serve any event without a rebuild.
