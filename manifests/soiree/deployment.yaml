@@ -64,29 +64,69 @@ spec:
               value: "EUR"
             - name: SOIREE_SECONDARY_LOCALE
               value: "nl-NL"
-            # Postgres is milestone 2 of the roadmap: v0.2.1 ships neither a
-            # store nor any database wiring, and cmd/soiree/main.go reads no
-            # DATABASE_URL or session secret at all - on main either. Wiring a
-            # secretKeyRef now would only add a CreateContainerConfigError
-            # failure mode to a binary that ignores both variables. The Secret
-            # and the soiree-pg Cluster exist already (see soiree-app.enc.yaml
-            # / cluster.yaml); this block is what connects them once a release
-            # consumes them.
-            #
-            # The two variable names below are PROVISIONAL. They are not read
-            # from the app source, because no version of it reads either one -
-            # check what the release actually expects before uncommenting, and
-            # rename the keys in soiree-app.enc.yaml to match.
-            # - name: DATABASE_URL
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: soiree-app
-            #       key: DATABASE_URL
-            # - name: SOIREE_SESSION_SECRET
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: soiree-app
-            #       key: SESSION_SECRET
+            # Canonical origin. Set-password links are built from this and
+            # never from the request Host, which is attacker-supplied: a link
+            # built from a forged Host would point somebody's one-time secret
+            # at whatever host the attacker named.
+            - name: SOIREE_BASE_URL
+              value: "https://bokings-driessen.party"
+
+            # Mail, via the same Resend relay the rest of the estate uses. The
+            # sender is on this event's own domain: its DKIM, SPF and MX are
+            # published and verified in Resend. Only the API key is secret -
+            # host, port, user and sender are not, and putting them in the
+            # Secret would only make them harder to read.
+            - name: SOIREE_SMTP_HOST
+              value: "smtp.resend.com"
+            - name: SOIREE_SMTP_PORT
+              value: "465"
+            - name: SOIREE_SMTP_USER
+              value: "resend"
+            - name: SOIREE_SMTP_FROM
+              value: "soiree@bokings-driessen.party"
+            - name: SOIREE_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: SMTP_PASSWORD
+
+            # From the Secret CloudNativePG generates for the cluster's owner
+            # role, not a copy of our own. A duplicated DSN is a rotation
+            # hazard: CNPG can change that password and a hand-maintained copy
+            # would keep the old one, failing at the next restart rather than
+            # at the moment of the change.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-pg-app
+                  key: uri
+
+            # The first admin, and a password so that first login does not
+            # depend on mail working. Both are consumed only while no admin
+            # exists, so they are safe to leave set: neither can resurrect a
+            # disabled account nor overwrite a password since changed. In the
+            # Secret because the address is personal, not because it is secret.
+            - name: SOIREE_BOOTSTRAP_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: BOOTSTRAP_ADMIN
+            - name: SOIREE_BOOTSTRAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: BOOTSTRAP_PASSWORD
+
+            # Traefik terminates TLS and sets X-Forwarded-For. Without this the
+            # per-IP rate limits would see the proxy's address for everyone and
+            # one person could exhaust the allowance for all of them.
+            - name: SOIREE_TRUST_PROXY_HEADERS
+              value: "true"
+
+            # There is no SOIREE_SESSION_SECRET. Sessions are rows in the
+            # database keyed by a random token, so there is nothing to sign and
+            # no key to rotate. An earlier draft of this manifest guessed at
+            # one; it was never read by any version of the app.
           # v0.2.1 serves /healthz only. /readyz was split out from it after
           # the release (so the future database check has a home that is not
           # the liveness probe) and is not in any tag yet — pointing the
