@@ -9,13 +9,5 @@ spec:
     # the runtime config the page needs is emitted as a
     # <script type="application/json"> data block, which is never executed and
     # therefore never checked against script-src.
-    #
-    # NOTE: v0.2.1's index.html still carries nine inline style="..."
-    # attributes, which style-src-attr (falling back to style-src 'self')
-    # blocks. The effect is cosmetic only - app.js sets widths through the
-    # CSSOM, which CSP does not govern - and upstream's design pass has
-    # already removed all nine, so the next release closes this by itself.
-    # Weakening the header with 'unsafe-inline' to paper over one version is
-    # not worth it.
     customResponseHeaders:
       Content-Security-Policy: "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; upgrade-insecure-requests"

@@ -22,7 +22,7 @@ spec:
         - name: soiree
           # Static Go binary on a scratch base. Source + CI:
           # github.com/Yornik/soiree
-          image: ghcr.io/yornik/soiree:v0.2.1
+          image: ghcr.io/yornik/soiree:v0.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -46,10 +46,8 @@ spec:
               value: "Invitation-only dinner"
             # PLACEHOLDER date, but a syntactically valid one on purpose. The
             # app parses this with time.Parse(time.RFC3339) and exits non-zero
-            # if it does not carry an explicit offset — a REPLACE_ME string
-            # here would be a CrashLoopBackOff rather than a visible default.
-            # An empty value is also accepted and simply disables the
-            # countdown.
+            # if it does not carry an explicit offset. An empty value is
+            # accepted and simply disables the countdown.
             # Jakarta is UTC+7. The offset is mandatory: the app refuses to
             # start without one, because a bare local time is read in the
             # viewer's zone and the countdown then differs by a day between
@@ -127,12 +125,10 @@ spec:
             # database keyed by a random token, so there is nothing to sign and
             # no key to rotate. An earlier draft of this manifest guessed at
             # one; it was never read by any version of the app.
-          # v0.2.1 serves /healthz only. /readyz was split out from it after
-          # the release (so the future database check has a home that is not
-          # the liveness probe) and is not in any tag yet — pointing the
-          # readiness probe at it today means a permanent 404, no Service
-          # endpoints and a 503 behind the IngressRoute. Move readiness to
-          # /readyz on the first release that ships it.
+          # Liveness checks the process only. Readiness checks the database
+          # as well, which is the distinction that matters: an instance that
+          # cannot reach Postgres should leave the Service rather than be
+          # restarted, because restarting it will not bring the database back.
           livenessProbe:
             httpGet:
               path: /healthz
@@ -143,7 +139,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /readyz
               port: http
             initialDelaySeconds: 2
             periodSeconds: 10

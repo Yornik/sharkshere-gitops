@@ -17,12 +17,9 @@ spec:
     matchNames:
       - soiree
   endpoints:
-    # WARNING: the pinned image cannot serve this yet. Both /metrics and the
-    # separate listener it now lives on landed upstream after v0.2.1 was cut,
-    # so in that image port 9090 is not open at all and the scrape fails to
-    # connect rather than 404ing. Prometheus records up == 0 and the stack's
-    # default TargetDown rule fires until the image is bumped to a release
-    # that has it. Merge this together with that bump.
+    # The metrics port, not the site port. The IngressRoute routes only to
+    # http, so the exposition is reachable from Prometheus and from nowhere
+    # outside the cluster.
     - port: metrics
       path: /metrics
       interval: 30s
