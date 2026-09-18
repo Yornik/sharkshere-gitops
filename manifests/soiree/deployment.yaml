@@ -115,6 +115,34 @@ spec:
                   name: soiree-app
                   key: BOOTSTRAP_PASSWORD
 
+            # The deadline digest. Not a reminder about the event itself: it
+            # reports budget lines whose lock_by date is close or past — the
+            # date a vendor has to be committed to before the price or the
+            # slot is gone — plus tasks with a due date, and sends nothing at
+            # all when nothing is due.
+            #
+            # Weekly, in Jakarta time so "today" means the day it is where the
+            # event is. The window is whole days rather than a duration
+            # because adding 336h to a wall clock across a DST boundary lands
+            # on the wrong calendar day.
+            #
+            # One instance sends: the job takes a Postgres advisory lock and
+            # records the period it sent for, so three replicas and a restart
+            # in the same window still produce one mail.
+            - name: SOIREE_REMINDER_ENABLED
+              value: "true"
+            - name: SOIREE_REMINDER_SCHEDULE
+              value: "weekly"
+            - name: SOIREE_REMINDER_WINDOW_DAYS
+              value: "14"
+            - name: SOIREE_REMINDER_TZ
+              value: "Asia/Jakarta"
+            - name: SOIREE_REMINDER_TO
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: REMINDER_TO
+
             # Traefik terminates TLS and sets X-Forwarded-For. Without this the
             # per-IP rate limits would see the proxy's address for everyone and
             # one person could exhaust the allowance for all of them.

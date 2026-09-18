@@ -1,25 +1,26 @@
-apiVersion: ENC[AES256_GCM,data:KWE=,iv:089nwZxUkG4QNGM+ayYkAeFU85rML/yMIRlH1YJey/I=,tag:3Q1Di7yNrIcVGXx6TTPkQw==,type:str]
-kind: ENC[AES256_GCM,data:00Tc/Sga,iv:zBHRYmYLomU4TSIEPb8U9soWyzSMe4tk0i7wQNKILOw=,tag:0u+CBkqVH6+nwbWRxwNjvQ==,type:str]
+apiVersion: ENC[AES256_GCM,data:SKY=,iv:KBGkcwe6CgEz/bfouaTrGpmTGot47znhqhu6e1r/vYQ=,tag:hB1R0K4a+ZFXtO/qxOzX+Q==,type:str]
+kind: ENC[AES256_GCM,data:mUkLSHgG,iv:L/y2u4HU+SZ35dymDkWOgoKgWAyQCfi6key3b9TnZuA=,tag:VzUMapum8BLCm4uwKPbVhA==,type:str]
 metadata:
-    name: ENC[AES256_GCM,data:eQ9cjot13Www9g==,iv:IUMU83nyVcNizxJ1Q0Q1twCwiq5OAPXc3wiQmMkyApo=,tag:VqJW8gBBVSPaPUdNbdYrpQ==,type:str]
-    namespace: ENC[AES256_GCM,data:6JIzjLGX,iv:VZfnCjQD87U/UzJE76X5WsMX1lyGTyNxzS3HG3Z8fp8=,tag:QTooK3fOt7KtT0oAMyThVg==,type:str]
-type: ENC[AES256_GCM,data:aihD8V5q,iv:K+JmMbV27YYaLoJMrNrl95fRWttn8mC1d07kPR7zJBQ=,tag:Frg40HO6aEJax6ke4TFFHg==,type:str]
+    name: ENC[AES256_GCM,data:bGjcNKAul2417Q==,iv:58tEiRacyIurSkW4oJpZz3iH6FtJhYMMOW/5dKpVKv4=,tag:3i5PehqAqsus6JcKPTo1gA==,type:str]
+    namespace: ENC[AES256_GCM,data:okVHbwah,iv:rEyZEd52OuDApqX7dSsCFSheKCKruM7k2yOdPlNNVT0=,tag:KgGgUUDIfrlyxvfbDxT5sw==,type:str]
+type: ENC[AES256_GCM,data:uRor6u1B,iv:E2Iqz4DcMiRTXxe94WNKCISOVvhkcob+vz4LoeQl9C8=,tag:O2re73NbebaAgJmzp8eoBw==,type:str]
 stringData:
-    SMTP_PASSWORD: ENC[AES256_GCM,data:OH3NpoqHji/UKpqIjLDdfRjX1DTT+xwFX7kh1jGSEWQW9ypx,iv:ZkvAxhkqAXJNy6zJ1KexsBhBE8s6RCl00hWcWwGs6W4=,tag:B7gKe/pH0FXmShkk7U/meA==,type:str]
-    BOOTSTRAP_ADMIN: ENC[AES256_GCM,data:RWSHdTwvJ0ozDz3dwxQ0tw==,iv:Ak6saCuyXvAYOgIPXbPE44X2NOcr2DnarmbtyVXUHEs=,tag:0pN7P4WvSjTfpvCb/OohbQ==,type:str]
-    BOOTSTRAP_PASSWORD: ENC[AES256_GCM,data:j6OVmhC3/GSwYpVjSX9w,iv:7YD8zQz7a7nNa1Q4Bb2WNda3SOmVms/su0vAY2i+6YA=,tag:26ktFttJbKQlmzNpIz+MbA==,type:str]
+    SMTP_PASSWORD: ENC[AES256_GCM,data:OQ+YRvOvjw40K6vpXmxVqIBEsM/X10E1on1N8PgomGM3P7O7,iv:XZ63S4QF7j3ihYgcokPAFqf6JrXr99zXHNQYJx9H5hE=,tag:HAxTtf7oIcVpN/LXrNhx2A==,type:str]
+    BOOTSTRAP_ADMIN: ENC[AES256_GCM,data:HTU3bDP9Pjc9OCOyrrDhHg==,iv:mX+0XYwyzKx37OgKB5SXqGBq4QdwIxi3h7LOpjJxUMo=,tag:3jyyasmIvFYD1kvycj3VRw==,type:str]
+    BOOTSTRAP_PASSWORD: ENC[AES256_GCM,data:Gu3UWwH0CYxZK1q47CWf,iv:lsCyUIsbeAt2qvKbpRUziyugvvRxXjJCX2NufcWshqs=,tag:UZDOWHImIawIJgJU1yonMw==,type:str]
+    REMINDER_TO: ENC[AES256_GCM,data:39fKuZlfTJ1soxdum0fT7Q==,iv:fZB6BLN9OTeGTHGLbAIKEAAmsIcAoRxc4BFQPWZFeMU=,tag:zAgQeire1SEXJlPdKlpGUw==,type:str]
 sops:
     age:
         - recipient: age1uhgqfcm3tfuzv3tq8d62medf04g977zas2hr9wmntc8wjn2e3asqvp7adp
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB3bmNwVDA5YXhDdHVGWlFH
-            Q1VOaHM1WGlVNVMxU0R3MzVNLzl6enFCUDN3CkJsT2hGenpHckZ1bStYeDZicDNn
-            WEFyQStqa0xTeGlJK0g1OEpwY1NGR2cKLS0tIG1uMlFLbGg0akh4dW92eU1ncERm
-            TThUODJBVER0VDBhNVB6MEtnSzQwZmMKsh7skJ02uPhlVoC7i18g6ZqHA1nO5Qn5
-            jNKyfrWk2ytSYVLABwZqz5wyHhJvc0xdI4kR/zQLC+1cGsb1GspWRA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBvd3laMmhHTXArNFd5Yjdh
+            WDZZTnQwTnRLZ0xjVCsrblZSa1hYTVhwQW4wCkk5dk1zc1pENFhaSWpuLzc1OHdY
+            WURCUEF0dlBZSVJnVWRuNmhLU21EL3MKLS0tIHREYi9KdGhGL1QvNmdMcWxNYndX
+            YnJBWFJzTHRqUXNBMWI4VHlUZG1jaEEKbKVna5Zn+w+f8U/aLos6HUz6FaoTEk2d
+            vkBwgU0C2reF/C+tBpfzgmslmGdV0OsHqgO8Myr4TI7/EEZBjckseg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-09-18T08:32:08Z"
-    mac: ENC[AES256_GCM,data:LKPQKrccKz+lH0fOAlN72Yr3sXHfgIu/SU84/MevMEyJ0V+nXv2NcR2MZBbD6Lp1PdyHrrrudzwNK+nqtecY5SVVdt5NNGTuhZXoyOyAa3/B4apwDCem6Xlyzq7JiG6Q0bgi4KSqVWu9dTkxPM8Z9L/jUtGZsx2cp4I0K4JI9mI=,iv:CBJq3p6xCsS6bJ5vATdaH1JuJGtOmRdpo1ZO2fSTl7w=,tag:odmerAqMxmd4wqQyenwY+w==,type:str]
+    lastmodified: "2026-09-18T09:07:41Z"
+    mac: ENC[AES256_GCM,data:W6IeS4Fpl9dfdfabSv8u5FqeAz4O3TLFHMG5tESqckh42JmjQ1Tf1IY/BuD3f49IH1ql/dVNZ8wbEG2fovX8TMsRzuQL1OPWAIqNJ4mBik9tjYorZv5TdLMY5Z31705iiDM1TYBdVrS+J3i0sE9OF5s3qvcoaFW4fjxV/nH1GVw=,iv:7U6YV5xMeA2bdf4JS6TN8afPdswtRjT0n0abfH0AYJg=,tag:hyG6EVfl6p0d72ML890Smw==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.12.2
