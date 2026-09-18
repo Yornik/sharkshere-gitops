@@ -53,11 +53,13 @@ spec:
                 limits:
                   memory: 128Mi
               env:
-                # DRY RUN. With anything but the exact string "true" the script
-                # lists what it would delete and deletes nothing. Read a run's
-                # log first (kubectl -n backup-prune logs job/...), then flip it.
+                # LIVE since 2026-09-18, after a dry run in the cluster was read
+                # against the bucket: keep 22 tarballs (30 GB), delete 49
+                # (67 GB). With anything but the exact string "true" the script
+                # lists what it would delete and deletes nothing - set it back to
+                # "false" before changing the policy below, and read a run first.
                 - name: PRUNE_APPLY
-                  value: "false"
+                  value: "true"
                 - name: S3_ENDPOINT
                   value: "https://nbg1.your-objectstorage.com"
                 - name: S3_REGION

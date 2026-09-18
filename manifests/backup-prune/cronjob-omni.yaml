@@ -51,9 +51,12 @@ spec:
                 limits:
                   memory: 128Mi
               env:
-                # DRY RUN. See cronjob-gitlab.yaml.
+                # LIVE since 2026-09-18, after a dry run in the cluster was read
+                # against the bucket: keep 48 snapshots (4.4 GB), delete 1463
+                # (98 GB). Set it back to "false" before changing the policy
+                # below, and read a run first. See cronjob-gitlab.yaml.
                 - name: PRUNE_APPLY
-                  value: "false"
+                  value: "true"
                 # fsn1, not nbg1 like everything else in the estate: that is
                 # where the bucket was made. The same project key reaches both.
                 - name: S3_ENDPOINT
