@@ -62,21 +62,35 @@ spec:
           env:
             # Everything event-specific is configuration, not source, which is
             # what lets one public image serve any event without a rebuild.
-            # This block is the only place the occasion is named.
+            #
+            # The event's name, tagline and date come from the Secret, and not
+            # because they are secret: THIS REPOSITORY IS PUBLIC. A name that
+            # says whose birthday it is and which one, beside a date, beside a
+            # hostname made of the family's surnames, is a living person's date
+            # of birth published with their family name. The same reasoning
+            # already puts the admin's address in the Secret below. Read them
+            # with `sops -d manifests/soiree/soiree-app.enc.yaml`.
+            #
+            # The date must be RFC3339 with an explicit offset: the app parses
+            # it with time.Parse(time.RFC3339) and refuses to start without
+            # one, because a bare local time is read in the viewer's zone and
+            # the countdown then differs by a day between the people planning
+            # together. An empty value is accepted and disables the countdown.
             - name: SOIREE_EVENT_NAME
-              value: "Oma's 90th"
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: EVENT_NAME
             - name: SOIREE_EVENT_TAGLINE
-              value: "Invitation-only dinner"
-            # PLACEHOLDER date, but a syntactically valid one on purpose. The
-            # app parses this with time.Parse(time.RFC3339) and exits non-zero
-            # if it does not carry an explicit offset. An empty value is
-            # accepted and simply disables the countdown.
-            # Jakarta is UTC+7. The offset is mandatory: the app refuses to
-            # start without one, because a bare local time is read in the
-            # viewer's zone and the countdown then differs by a day between
-            # the people planning together.
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: EVENT_TAGLINE
             - name: SOIREE_EVENT_DATE
-              value: "2027-02-21T00:00:00+07:00"
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: EVENT_DATE
             - name: SOIREE_CURRENCY
               value: "IDR"
             - name: SOIREE_LOCALE
@@ -162,8 +176,8 @@ spec:
             # slot is gone — plus tasks with a due date, and sends nothing at
             # all when nothing is due.
             #
-            # Weekly, in Jakarta time so "today" means the day it is where the
-            # event is. The window is whole days rather than a duration
+            # Weekly, in the event's own timezone so "today" means the day it
+            # is where the event is. The window is whole days rather than a duration
             # because adding 336h to a wall clock across a DST boundary lands
             # on the wrong calendar day.
             #
@@ -183,8 +197,13 @@ spec:
               value: "weekly"
             - name: SOIREE_REMINDER_WINDOW_DAYS
               value: "14"
+            # In the Secret for the same reason as the event's date: it says
+            # where.
             - name: SOIREE_REMINDER_TZ
-              value: "Asia/Jakarta"
+              valueFrom:
+                secretKeyRef:
+                  name: soiree-app
+                  key: REMINDER_TZ
             - name: SOIREE_REMINDER_TO
               valueFrom:
                 secretKeyRef:
@@ -244,6 +263,14 @@ spec:
             # one person could exhaust the allowance for all of them.
             - name: SOIREE_TRUST_PROXY_HEADERS
               value: "true"
+
+            # Read by the Go runtime, not by the app. A soft ceiling for the
+            # collector, below the container's hard one: finished 19 MiB
+            # hashing blocks are garbage until a collection runs, and without
+            # this the runtime has no idea a limit exists and lets them pile up
+            # to it. See the note on resources below for the measurements.
+            - name: GOMEMLIMIT
+              value: "192MiB"
 
             # There is no SOIREE_SESSION_SECRET. Sessions are rows in the
             # database keyed by a random token, so there is nothing to sign and
@@ -310,11 +337,22 @@ spec:
             # whose work arrives in request bursts, where a CFS quota turns a
             # burst into a multi-period stall for no gain. CPU is compressible,
             # so the request below already guarantees a fair share under
-            # contention. The memory limit stays: the whole site is held in
-            # memory (raw + gzip + brotli per asset), and memory is NOT
-            # compressible, so it must keep a hard ceiling.
+            # contention.
+            #
+            # The memory limit is set from measurement, not from the size of
+            # the site. What costs memory here is logging in: every login is
+            # one Argon2id evaluation at 19 MiB - deliberately including a
+            # login for an address with no account - so it is a cost an
+            # anonymous caller can ask for, twenty at a time under the app's
+            # own per-address limit. From v1.0.0 the app runs four at once and
+            # queues the rest; measured under three bursts of twenty, hashing
+            # alone peaks at 191 MiB held, or 151 MiB with the collector told
+            # where the ceiling is (GOMEMLIMIT, above). Add the server, the
+            # pool and the assets and 256Mi is the first round number that is
+            # not a guess. At the 128Mi this started with, seven concurrent
+            # logins got the pod OOM-killed.
             requests:
               cpu: 20m
-              memory: 32Mi
+              memory: 64Mi
             limits:
-              memory: 128Mi
+              memory: 256Mi

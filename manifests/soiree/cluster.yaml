@@ -19,9 +19,10 @@ spec:
   # limit ~2x request and comfortably above shared_buffers + work_mem headroom.
   # No CPU limit: throttling a DB is worse than sharing.
   #
-  # Nothing reads this cluster yet - soiree's Postgres layer is milestone 2 of
-  # its roadmap and no released image connects to a database. It is provisioned
-  # ahead of that, at a cost of 3x(10Gi + 5Gi) on ssd_pool and 3x512Mi RAM.
+  # soiree v1.0.0 keeps everything here: the plan, the accounts, sessions,
+  # passkeys, push subscriptions and the append-only change log. It is a small
+  # database and an important one - for the people using it, this is the only
+  # copy of who agreed to pay for what. 3x(10Gi + 5Gi) on ssd_pool, 3x512Mi RAM.
   resources:
     requests:
       cpu: 100m
