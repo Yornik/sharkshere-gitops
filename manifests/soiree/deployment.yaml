@@ -329,6 +329,22 @@ spec:
             # no key to rotate. An earlier draft of this manifest guessed at
             # one; it was never read by any version of the app.
             #
+            # From v1.3.0 the binary can send its own Content-Security-Policy.
+            # Here it must not. Two policies on one response are intersected by
+            # the browser, and the two are not the same: middleware-csp.yaml
+            # allows `font-src 'self' data:` where the binary allows only
+            # 'self', so leaving both on would quietly narrow what the page may
+            # load. The proxy also sends upgrade-insecure-requests, which the
+            # binary does not, so the proxy is the more complete of the two and
+            # the one to keep.
+            #
+            # If middleware-csp.yaml is ever dropped, delete this and let the
+            # binary own the policy: it is the only party that knows the bucket
+            # origin, which is the line the two have to agree on for an
+            # attachment upload to work at all.
+            - name: SOIREE_CSP
+              value: "off"
+
             # The rest of what internal/config reads is left unset on purpose,
             # so that a later reader does not have to re-derive why:
             #
