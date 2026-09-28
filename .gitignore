@@ -6,3 +6,7 @@
 
 # python3 manifests/backup-prune/test_prune.py leaves this behind
 __pycache__/
+
+# The Review Renovate PR workflow writes these on the runner. Do not commit them.
+claude-review.md
+comment.md
