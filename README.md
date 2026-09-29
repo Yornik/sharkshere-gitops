@@ -21,6 +21,8 @@ This repository is one of three:
 | Document | Content |
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
+| [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
+| [`REVIEW.md`](REVIEW.md) | Checklist for a dependency pull request. The `Review Renovate PR` CI job uses it. |
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 
@@ -105,7 +107,17 @@ CI runs on each pull request. All seven checks must pass before a merge.
 | Validate Kubernetes Schemas | Runs `kubeconform` with CRD schemas on the plain manifests and the bootstrap overlay. |
 | Validate Rendered Helm Output | Runs `kubeconform` on the rendered Helm output. |
 
-A full run takes about 20 seconds.
+The seven checks run in parallel and take about 20 seconds.
+
+One more check runs on a Renovate pull request that Renovate does not automerge. It does not gate the merge.
+
+| Check | What it does |
+|---|---|
+| Claude review | Reviews the bump against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
+
+The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check skips a pull request that automerges, so it runs about 15 times each month. See [`.github/workflows/renovate-review.yml`](.github/workflows/renovate-review.yml).
+
+NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the bump is bad.
 
 ## Known limits
 
