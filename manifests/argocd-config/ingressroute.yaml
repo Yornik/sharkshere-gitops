@@ -8,7 +8,14 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`argocd.fedishark.eu`)
+    # Only the webhook stays public. GitHub sends a push event here and
+    # cannot join the tailnet, so this one path must keep a public route.
+    # The UI and the gRPC endpoint the argocd CLI uses are on the tailnet.
+    # See manifests/argocd-config/service-tailnet.yaml.
+    #
+    # WARNING: Do not widen this match. The path is the boundary. A match on
+    # the host alone puts the whole API and the UI back on the internet.
+    - match: Host(`argocd.fedishark.eu`) && Path(`/api/webhook`)
       kind: Rule
       middlewares:
         - name: security-headers
@@ -22,18 +29,5 @@ spec:
       services:
         - name: argocd-server
           port: 80
-    - match: Host(`argocd.fedishark.eu`) && Header(`Content-Type`, `application/grpc`)
-      kind: Rule
-      middlewares:
-        - name: fail2ban-argocd
-          namespace: argocd
-        - name: rate-limit
-          namespace: traefik
-        - name: no-compression
-          namespace: traefik
-      services:
-        - name: argocd-server
-          port: 80
-          scheme: h2c
   tls:
     certResolver: letsencrypt

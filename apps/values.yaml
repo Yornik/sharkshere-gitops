@@ -66,6 +66,19 @@ apps:
 
         # Grafana
         grafana:
+          # Grafana is reachable on the tailnet only, at
+          # grafana.hedgehog-wage.ts.net. The public record and the
+          # IngressRoute are gone; nothing in the cluster consumed the public
+          # URL. The annotation goes on the chart's own Service so the
+          # selector always matches the chart's pods.
+          #
+          # NOTE: Tailnet traffic does not pass through Traefik, so the
+          # shared security-headers, fail2ban and rate-limit middleware do
+          # not apply to it. The tailnet is the boundary instead.
+          service:
+            annotations:
+              tailscale.com/expose: "true"
+              tailscale.com/hostname: grafana
           # Grafana has an RWO PVC (truenas-ssd); a surge during rollout would
           # schedule a 2nd pod on another node and deadlock on Multi-Attach.
           # The chart key is `deploymentStrategy` (top-level), NOT
