@@ -14,6 +14,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-09-09 | [prometheus-release-label-selector.md](2026-09-09-prometheus-release-label-selector.md) | A monitor without the `release` label is invisible to Prometheus |
 | 2026-09-17 | [stale-checkout-bootstrap-apply.md](2026-09-17-stale-checkout-bootstrap-apply.md) | A stale checkout rolled ArgoCD and its Redis backwards; one cache replica could not start |
 | 2026-09-18 | [external-dns-annotation-prefix.md](2026-09-18-external-dns-annotation-prefix.md) | An auto-merged minor bump stopped ExternalDNS publishing anything, silently, for days |
+| 2026-09-29 | [qbittorrent-middleware-order.md](2026-09-29-qbittorrent-middleware-order.md) | A failed qBittorrent login skipped fail2ban and rate-limit, and got no security headers |
 
 ## How to add an incident
 
