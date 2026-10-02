@@ -896,7 +896,7 @@ apps:
     helm:
       repoURL: https://cloudnative-pg.github.io/charts
       chart: plugin-barman-cloud
-      targetRevision: 0.8.0
+      targetRevision: 0.8.1
       values: |
         # Single replica: the chart enables --leader-elect and the readiness
         # probe is a tcp dial on :9090, which only the leader opens. A second
