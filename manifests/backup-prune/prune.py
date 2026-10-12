@@ -27,6 +27,7 @@ import hmac
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -120,11 +121,37 @@ def list_objects(cfg):
         token = nxt.text
 
 
-def delete_object(cfg, key):
-    url = presign("DELETE", cfg["endpoint"], cfg["region"], cfg["access"], cfg["secret"], f"/{cfg['bucket']}/{key}")
-    req = urllib.request.Request(url, method="DELETE")
-    with urllib.request.urlopen(req, timeout=60) as res:
-        return res.status
+# Object storage answers one of these to a request that was fine, and will be
+# fine again. Anything else is a real answer and is not worth repeating.
+TRANSIENT = {429, 500, 502, 503, 504}
+
+
+def delete_object(cfg, key, attempts=4):
+    """Deletes one object, repeating a transient failure.
+
+    DELETE is idempotent, so repeating one is safe. Hetzner returned a 504 on
+    one delete of eight on 2026-10-11: the Job exited 1, and KubeJobFailed
+    then fired for the seven days the failed Job lives, for an object the next
+    run removed anyway. A 4xx is a real answer - wrong key, no permission -
+    and is raised at once.
+    """
+    for attempt in range(1, attempts + 1):
+        url = presign("DELETE", cfg["endpoint"], cfg["region"], cfg["access"], cfg["secret"], f"/{cfg['bucket']}/{key}")
+        try:
+            req = urllib.request.Request(url, method="DELETE")
+            with urllib.request.urlopen(req, timeout=60) as res:
+                return res.status
+        except urllib.error.HTTPError as err:          # a subclass of URLError: catch it first
+            if err.code not in TRANSIENT or attempt == attempts:
+                raise
+            why = f"HTTP {err.code}"
+        except urllib.error.URLError as err:
+            if attempt == attempts:
+                raise
+            why = str(err.reason)
+        delay = 2 ** (attempt - 1)
+        print(f"  {key}: {why}, retrying in {delay}s ({attempt} of {attempts - 1})")
+        time.sleep(delay)
 
 
 # ------------------------------------------------------------------ main
