@@ -161,6 +161,43 @@ apps:
                   - record: namespace:container_memory_working_set:avg5m
                     expr: sum by(namespace) (container_memory_working_set_bytes{container!=""})
 
+          # A TrueNAS update on 2026-10-12 took the iSCSI targets away while
+          # Postgres was writing. ext4 mounts with errors=remount-ro, so those
+          # filesystems went read-only and stayed read-only. Nothing alerted on
+          # the cause: gitlab-pg-2 kept its readiness probe green for 3 hours
+          # with every query failing, because the probe only proves the process
+          # accepts connections. See
+          # docs/incidents/2026-10-12-truenas-update-readonly-pv-remount.md.
+          storage:
+            groups:
+              - name: storage-readonly
+                rules:
+                  # Alert on the transition, not the state. 6 mounts read 1 at
+                  # all times and none of them is a fault: 3 orphaned iSCSI
+                  # globalmounts that no PV owns, and the 3 Jellyfin CIFS media
+                  # shares, which are ReadOnlyMany with `ro` on purpose. A rule
+                  # on `== 1` alone fires on all 6 forever. `changes()` fires
+                  # only when a mount that was read-write turns read-only,
+                  # which is the event. Measured 2026-10-12: `== 1` matched 7
+                  # series, this expression matched 0.
+                  - alert: VolumeRemountedReadOnly
+                    expr: |-
+                      node_filesystem_readonly{mountpoint=~".*/csi/.*/globalmount",fstype!~"cifs|nfs|nfs4|iso9660|squashfs"} == 1
+                      and changes(node_filesystem_readonly[2h]) > 0
+                    for: 5m
+                    labels:
+                      severity: critical
+                    annotations:
+                      summary: A CSI volume turned read-only on {{ $labels.instance }}.
+                      description: >-
+                        The filesystem on {{ $labels.device }} at {{ $labels.mountpoint }}
+                        was read-write and is now read-only. The storage backend returned
+                        an I/O error and ext4 remounted the volume read-only. A read-only
+                        ext4 does not recover by itself. Find the pods that use the volume
+                        and delete them, so that kubelet unmounts and mounts it again.
+                        A Postgres instance can stay Ready with every query failing, so do
+                        not trust the readiness probe here.
+
         # Alertmanager
         alertmanager:
           alertmanagerSpec:
