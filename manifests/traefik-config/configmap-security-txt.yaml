@@ -13,23 +13,27 @@ data:
     Expires: 2027-02-19T00:00:00.000Z
     Preferred-Languages: en, nl
     Canonical: https://fedishark.eu/.well-known/security.txt
-    Canonical: https://yornik.eu/.well-known/security.txt
+    Canonical: https://www.fedishark.eu/.well-known/security.txt
     Canonical: https://pub.fedishark.eu/.well-known/security.txt
-    Canonical: https://jelly.yornik.eu/.well-known/security.txt
-    Canonical: https://secrets.yornik.eu/.well-known/security.txt
-    Canonical: https://grafana.fedishark.eu/.well-known/security.txt
-    Canonical: https://passwords.yornik.eu/.well-known/security.txt
-    Canonical: https://todo.yornik.eu/.well-known/security.txt
-    Canonical: https://asf.fedishark.eu/.well-known/security.txt
-    Canonical: https://qbittorrent.fedishark.eu/.well-known/security.txt
     Canonical: https://omni.fedishark.eu/.well-known/security.txt
     Canonical: https://argocd.fedishark.eu/.well-known/security.txt
+    Canonical: https://yornik.eu/.well-known/security.txt
+    Canonical: https://www.yornik.eu/.well-known/security.txt
+    Canonical: https://jelly.yornik.eu/.well-known/security.txt
+    Canonical: https://passwords.yornik.eu/.well-known/security.txt
+    Canonical: https://todo.yornik.eu/.well-known/security.txt
+    Canonical: https://secrets.yornik.eu/.well-known/security.txt
+    Canonical: https://plan.yornik.eu/.well-known/security.txt
+    Canonical: https://git.yornik.eu/.well-known/security.txt
+    Canonical: https://registry.git.yornik.eu/.well-known/security.txt
+    Canonical: https://bokings-driessen.party/.well-known/security.txt
+    Canonical: https://www.bokings-driessen.party/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaa1ccwAKCRDt+zCFSkKz
-    8I3BAQCDCKnNlp+MOcdDFeIh/KDYNQEqzdETn5U0ftZYZ91kJAD+KlytzEodud7N
-    le7AHD4nL/bMdG2d5PgriCwh6R9vKQI=
-    =CqmF
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCas6AlwAKCRDt+zCFSkKz
+    8KgSAQC2d5yv0bwmjekGUtxVBlkavZ9cBS/otj5f5axATMDekwEAu5yt6IYNUfgV
+    reuCRXBc70m0izB/NcOuh0ezMsWDHwQ=
+    =VPAY
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----

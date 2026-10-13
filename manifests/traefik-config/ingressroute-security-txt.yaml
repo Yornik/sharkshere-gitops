@@ -10,6 +10,9 @@ spec:
     - match: Path(`/.well-known/security.txt`) || Path(`/.well-known/pgp-key.txt`)
       kind: Rule
       priority: 9999
+      middlewares:
+        - name: security-txt-content-type
+          namespace: traefik
       services:
         - name: security-txt
           port: 80

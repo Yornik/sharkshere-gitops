@@ -296,11 +296,6 @@ The command returns nothing.
 - `middleware-fail2ban-asf.yaml`, the 2 `middleware-redirect-https.yaml`
   files and qBittorrent's `middleware-auth.yaml` are no longer referenced.
   They are kept for the same reason.
-- The published `security.txt` still lists `grafana.`, `asf.` and
-  `qbittorrent.fedishark.eu` as Canonical URLs. They stop working once the
-  records are deleted. The file is PGP-signed and CI
-  verifies the signature, so the entries have to be removed and the file
-  re-signed by the key holder.
 - `url` in `bootstrap/argocd/argocd-cm-patch.yaml` is still
   `https://argocd.fedishark.eu`. ArgoCD uses it for links and SSO callbacks,
   not for a local login. A change needs the manual bootstrap apply.

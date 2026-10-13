@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-txt-content-type
+  namespace: traefik
+spec:
+  headers:
+    # RFC 9116 section 3: the file MUST be served as text/plain with
+    # charset=utf-8. nginx sends text/plain with no charset, so validators
+    # such as internet.nl report the media type as wrong.
+    customResponseHeaders:
+      Content-Type: text/plain; charset=utf-8

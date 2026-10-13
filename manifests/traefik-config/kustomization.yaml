@@ -5,6 +5,7 @@ resources:
   - middleware-fail2ban.yaml
   - middleware-hsts.yaml
   - middleware-no-compression.yaml
+  - middleware-security-txt-content-type.yaml
   - configmap-security-txt.yaml
   - deployment-security-txt.yaml
   - service-security-txt.yaml
