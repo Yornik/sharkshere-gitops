@@ -15,9 +15,9 @@ The bridge only reads. It cannot lock, unlock or control the car. CI in the sour
 
 WARNING: The Secret holds the Mazda email, the password and a verified device ID. Together they are a full login to the Mazda account. Anyone with all three can start climate control, flash the lights or change the charge limit from other software. Keep the values only in the SOPS file.
 
-## How to activate the bridge
+## How to set up the bridge from the start
 
-Do this once. The Application cannot start without the Secret.
+The bridge was activated on 2026-10-13. The encrypted Secret is in git. Do this procedure again only for a new Mazda account or a new device ID. To change only the password, see [How to replace the credentials](#how-to-replace-the-credentials).
 
 Prerequisites:
 
@@ -99,32 +99,19 @@ Expected result: the log shows `polled 1 of 1 vehicle(s)`. The metrics show `maz
 
 If the result is different, see [Problems](#problems).
 
-### 4. Encrypt the Secret
+### 4. Put the values in the Secret
 
-WARNING: Do not commit the plain file. The plain file holds a full login to the Mazda account. Encrypt it before `git add`.
+CAUTION: Do not write a new plain file over `mazda6e-api-secret.enc.yaml`. The file is in git and holds the encrypted login. Edit it with `sops`. `sops` decrypts the file into a temporary copy and encrypts it again when you save.
 
-1. Write the file `manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml`:
-
-   ```yaml
-   apiVersion: v1
-   kind: Secret
-   metadata:
-     name: mazda6e-api
-     namespace: monitoring
-   type: Opaque
-   stringData:
-     MAZDA_EMAIL: you@example.com
-     MAZDA_PASSWORD: your-mazda-app-password
-     MAZDA_DEVICE_ID: the-uuid-from-step-1
-   ```
-
-2. Encrypt the file in place:
+1. Open the file:
 
    ```sh
-   sops --encrypt --in-place manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml
+   sops manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml
    ```
 
-3. Check that the values are encrypted:
+2. Set `MAZDA_EMAIL`, `MAZDA_PASSWORD` and `MAZDA_DEVICE_ID` under `stringData`.
+3. Save the file and close the editor.
+4. Check that the values are encrypted:
 
    ```sh
    grep -c 'ENC\[' manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml
@@ -132,19 +119,26 @@ WARNING: Do not commit the plain file. The plain file holds a full login to the 
 
    Expected result: a number greater than 0. Each value starts with `ENC[`.
 
-4. Clear the plain values from your shell:
+5. Clear the plain values from your shell:
 
    ```sh
    unset MAZDA_EMAIL MAZDA_PASSWORD MAZDA_DEVICE_ID
    ```
 
+NOTE: If the file does not exist, `sops` creates it and opens an example. Replace the example with a Secret named `mazda6e-api` in namespace `monitoring`, with the 3 keys under `stringData`. `sops` encrypts it when you save. The rule in `.sops.yaml` matches the `.enc.yaml` name.
+
 ### 5. Deploy
 
-1. Commit the encrypted file to the branch of the pull request that adds the bridge.
-2. Push the branch.
+1. Commit the encrypted file.
+2. Open a pull request.
 3. Make sure that CI is green.
 4. Merge the pull request.
 5. Check the Application in ArgoCD. Make sure it reports Synced and Healthy.
+6. Restart the pod. The pod reads the Secret only when it starts:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n monitoring rollout restart deploy/mazda6e-bridge
+   ```
 
 ### 6. Check the bridge in the cluster
 
