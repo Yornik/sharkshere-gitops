@@ -110,8 +110,9 @@ CAUTION: Do not write a new plain file over `mazda6e-api-secret.enc.yaml`. The f
    ```
 
 2. Set `MAZDA_EMAIL`, `MAZDA_PASSWORD` and `MAZDA_DEVICE_ID` under `stringData`.
-3. Save the file and close the editor.
-4. Check that the values are encrypted:
+3. Save the file.
+4. Close the editor.
+5. Check that the values are encrypted:
 
    ```sh
    grep -c 'ENC\[' manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml
@@ -119,7 +120,7 @@ CAUTION: Do not write a new plain file over `mazda6e-api-secret.enc.yaml`. The f
 
    Expected result: a number greater than 0. Each value starts with `ENC[`.
 
-5. Clear the plain values from your shell:
+6. Clear the plain values from your shell:
 
    ```sh
    unset MAZDA_EMAIL MAZDA_PASSWORD MAZDA_DEVICE_ID
@@ -133,7 +134,7 @@ NOTE: If the file does not exist, `sops` creates it and opens an example. Replac
 2. Open a pull request.
 3. Make sure that CI is green.
 4. Merge the pull request.
-5. Check the Application in ArgoCD. Make sure it reports Synced and Healthy.
+5. Make sure that the Application reports Synced and Healthy in ArgoCD.
 6. Restart the pod. The pod reads the Secret only when it starts:
 
    ```sh
