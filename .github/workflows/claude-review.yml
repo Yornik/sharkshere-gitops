@@ -10,9 +10,9 @@ on:
     # added to any pull request starts a run, not only to a Renovate one.
     types: [opened, synchronize, reopened, ready_for_review, labeled]
 
-# Renovate rebases a branch whenever main moves, and a person pushes to a branch
-# while they work on it. Each push is a new `synchronize` event, so without this
-# the same pull request is reviewed -- and paid for -- once per push.
+# Renovate rebases a branch whenever main moves. A person pushes to a branch
+# while they work on it. Each push sends a new `synchronize` event. Without this,
+# GitHub reviews the same pull request once per push, and bills each review.
 concurrency:
   group: claude-review-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -43,8 +43,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # The review diffs the head against the merge base, so the full
-          # history is needed. A shallow clone has no merge base.
+          # The review diffs the head against the merge base. It needs the
+          # full history. A shallow clone has no merge base.
           fetch-depth: 0
           # Checkout writes GITHUB_TOKEN into .git/config by default. The
           # review reads third-party release notes, so an instruction inside
@@ -118,8 +118,8 @@ jobs:
 
       - name: Post the review
         # Not always(): the concurrency group cancels the run in flight on each
-        # new push, and always() then reports "No review was written" for a run
-        # that was stopped on purpose.
+        # new push. always() then reports "No review was written" for a run that
+        # GitHub stopped on purpose.
         if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
