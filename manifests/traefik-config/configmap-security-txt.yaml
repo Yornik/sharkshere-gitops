@@ -9,36 +9,40 @@ data:
     Hash: SHA256
 
     Contact: mailto:yornik@yornik.nl
-    Encryption: https://fedishark.eu/.well-known/pgp-key.txt
-    Expires: 2027-02-19T00:00:00.000Z
+    Encryption: https://api.protonmail.ch/pks/lookup?op=get&search=yornik@yornik.nl
+    Expires: 2027-10-12T00:00:00.000Z
     Preferred-Languages: en, nl
     Canonical: https://fedishark.eu/.well-known/security.txt
-    Canonical: https://yornik.eu/.well-known/security.txt
+    Canonical: https://www.fedishark.eu/.well-known/security.txt
     Canonical: https://pub.fedishark.eu/.well-known/security.txt
-    Canonical: https://jelly.yornik.eu/.well-known/security.txt
-    Canonical: https://secrets.yornik.eu/.well-known/security.txt
-    Canonical: https://grafana.fedishark.eu/.well-known/security.txt
-    Canonical: https://passwords.yornik.eu/.well-known/security.txt
-    Canonical: https://todo.yornik.eu/.well-known/security.txt
-    Canonical: https://asf.fedishark.eu/.well-known/security.txt
-    Canonical: https://qbittorrent.fedishark.eu/.well-known/security.txt
     Canonical: https://omni.fedishark.eu/.well-known/security.txt
     Canonical: https://argocd.fedishark.eu/.well-known/security.txt
+    Canonical: https://yornik.eu/.well-known/security.txt
+    Canonical: https://www.yornik.eu/.well-known/security.txt
+    Canonical: https://jelly.yornik.eu/.well-known/security.txt
+    Canonical: https://passwords.yornik.eu/.well-known/security.txt
+    Canonical: https://todo.yornik.eu/.well-known/security.txt
+    Canonical: https://secrets.yornik.eu/.well-known/security.txt
+    Canonical: https://plan.yornik.eu/.well-known/security.txt
+    Canonical: https://git.yornik.eu/.well-known/security.txt
+    Canonical: https://registry.git.yornik.eu/.well-known/security.txt
+    Canonical: https://bokings-driessen.party/.well-known/security.txt
+    Canonical: https://www.bokings-driessen.party/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCaa1ccwAKCRDt+zCFSkKz
-    8I3BAQCDCKnNlp+MOcdDFeIh/KDYNQEqzdETn5U0ftZYZ91kJAD+KlytzEodud7N
-    le7AHD4nL/bMdG2d5PgriCwh6R9vKQI=
-    =CqmF
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCas6EngAKCRDt+zCFSkKz
+    8DxvAQC44zCCVPoMwbhobJHyt17x4ZruP3m+WumXQdUhLtpkYAD9Go3eiUy5WV8E
+    eusTTMt80goKymZWXiJ821iSWsTlKQU=
+    =jx63
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
 
     mDMEaZd5AxYJKwYBBAHaRw8BAQdA+F5FrdhHQYLTZJxmqTH5cUP+x0rkmEjZi4Em
     ovZf21a0JUZlZGlTaGFyayBTZWN1cml0eSA8eW9ybmlrQHlvcm5pay5ubD6IlgQT
-    FggAPhYhBDBFpDkbqDAG0O7kB+37MIVKQrPwBQJpl3kDAhsDBQkB4TOABQsJCAcC
-    BhUKCQgLAgQWAgMBAh4BAheAAAoJEO37MIVKQrPwZnYBALJatQ8zxDPPaD7EZuKH
-    8PCmi/9agbqEvVM1joL9Nm/gAP9dxrg5bnWZqf8viggtKNff070PhEFBg9GJXCAA
-    HsZlAg==
-    =0uRZ
+    FggAPgIbAwULCQgHAgYVCgkICwIEFgIDAQIeAQIXgBYhBDBFpDkbqDAG0O7kB+37
+    MIVKQrPwBQJqzoSABQkE+XJ9AAoJEO37MIVKQrPwEOsA/iEaPCRJ8dUD+kteF3eX
+    ozL6azkefydXICiMLm3ZDHCJAQCyrYBfRM1zLkLtW+4hvTs4RLYjB2BRWez3QDtM
+    a7V3CQ==
+    =TEPt
     -----END PGP PUBLIC KEY BLOCK-----
