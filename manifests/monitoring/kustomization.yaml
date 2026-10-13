@@ -4,5 +4,6 @@ resources:
   - namespace.yaml
   - middleware-fail2ban-grafana.yaml
   - grafana-datasource-loki.yaml
+  - ingress-grafana-tailnet.yaml
 generators:
   - secret-generator.yaml
