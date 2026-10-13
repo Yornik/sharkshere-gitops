@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vaultwarden-admin-tailnet
+  namespace: vaultwarden
+  annotations:
+    # The proxy serves port 443 only. Without the redirect, an http://
+    # address times out instead of reaching the HTTPS one.
+    tailscale.com/http-redirect: "true"
+spec:
+  # The Tailscale operator runs 1 proxy device for this Ingress. Open
+  # https://vaultwarden-admin.hedgehog-wage.ts.net/admin from a tailnet device.
+  # The public IngressRoute does not serve /admin.
+  #
+  # NOTE: The proxy sends every path to Vaultwarden, not only /admin. That is
+  # acceptable: the vault is public anyway.
+  #
+  # NOTE: The certificate for this name is published in the public
+  # Certificate Transparency logs, as for argocd and grafana. The name tells a
+  # reader that an admin panel exists, not how to reach it.
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: vaultwarden
+      port:
+        number: 80
+  tls:
+    # The first label is the device name.
+    - hosts:
+        - vaultwarden-admin

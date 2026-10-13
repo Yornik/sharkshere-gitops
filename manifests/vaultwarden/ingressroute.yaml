@@ -7,7 +7,14 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`passwords.yornik.eu`)
+    # The vault stays public, because a password manager must work from any
+    # network. The admin panel does not need to. /admin is on the tailnet
+    # only, through manifests/vaultwarden/ingress-admin-tailnet.yaml. A public
+    # request for /admin matches no route and gets a 404 from Traefik.
+    #
+    # WARNING: Keep the negation. A match on the host alone puts the admin
+    # login back on the internet.
+    - match: Host(`passwords.yornik.eu`) && !PathPrefix(`/admin`)
       kind: Rule
       middlewares:
         - name: vaultwarden-hsts
