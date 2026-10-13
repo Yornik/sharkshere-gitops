@@ -3,8 +3,7 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - ingressroute.yaml
-  - ingressroute-web.yaml
+  - ingress-tailnet.yaml
   - middleware-auth.yaml
   - middleware-redirect-https.yaml
   - pvc-config.yaml

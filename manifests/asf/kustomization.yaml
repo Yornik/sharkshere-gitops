@@ -4,8 +4,7 @@ resources:
   - namespace.yaml
   - deployment.yaml
   - service.yaml
-  - ingressroute.yaml
-  - ingressroute-web.yaml
+  - ingress-tailnet.yaml
   - middleware-redirect-https.yaml
   - middleware-fail2ban-asf.yaml
   - pvc-config.yaml

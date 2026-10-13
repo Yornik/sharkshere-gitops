@@ -5,10 +5,9 @@ metadata:
   namespace: jellyfin
   labels:
     app: qbittorrent
-  annotations:
-    external-dns.kubernetes.io/hostname: qbittorrent.fedishark.eu
-    external-dns.kubernetes.io/target: jump.fedishark.eu
-    external-dns.kubernetes.io/ttl: "3600"
+# No external-dns annotation. The UI is on the tailnet only, through
+# ingress-tailnet.yaml. ExternalDNS runs with --policy=upsert-only, so an
+# annotation here would recreate a public record that was deleted by hand.
 spec:
   selector:
     app: qbittorrent
