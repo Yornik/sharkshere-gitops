@@ -172,42 +172,44 @@ apps:
             groups:
               - name: storage-readonly
                 rules:
-                  # Alert on the transition, not the state. Several mounts
-                  # read 1 at all times and none of them is a fault: the
+                  # Alert on the transition, not the state. Some mounts read
+                  # 1 at all times and none of them is a fault. They are the
                   # orphaned iSCSI globalmounts that no PV owns, and the 3
                   # Jellyfin CIFS media shares, which are ReadOnlyMany with
                   # `ro` on purpose. A rule on `== 1` alone fires on each of
                   # them for ever. `changes()` fires only when a mount that was
-                  # read-write turns read-only, which is the event.
+                  # read-write turns read-only. That is the event.
                   #
                   # keep_firing_for holds the alert after the expression stops
                   # matching. Without it the alert clears itself while the
                   # volume is still read-only, because the transition leaves
-                  # the 2 hour window. The mount for soiree-pg-2 turned
-                  # read-only at 23:44 UTC on 2026-10-12. The alert fired at
-                  # 23:50 and cleared at 01:44, which is 23:44 plus the 2 hour
-                  # window. The fault ran on until KubePodCrashLooping raised
-                  # it at 14:04, 14 hours after the start. 24 hours covers a
-                  # fault that starts at night.
+                  # the 2 hour window. That happened on 2026-10-12. The mount
+                  # for soiree-pg-2 turned read-only at 23:44 UTC. The alert
+                  # fired at 23:50 and cleared at 01:44, which is 23:44 plus
+                  # the window. KubePodCrashLooping raised the fault at 14:04,
+                  # 14 hours after the start. 24 hours covers a fault that
+                  # starts at night. See
+                  # docs/incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md.
                   #
                   # CAUTION: keep_firing_for does not read the repair. The
-                  # expression stops matching both when the volume is mounted
-                  # read-write again and when the 2 hour window expires, so the
-                  # alert goes on firing for 24 hours after an operator repairs
-                  # the volume. Alertmanager repeats a firing alert every 12
+                  # expression stops matching when an operator mounts the
+                  # volume read-write again. It also stops matching when the 2
+                  # hour window expires. In both cases the alert fires for 24
+                  # more hours. Alertmanager repeats a firing alert every 12
                   # hours, so a repaired volume sends about 2 more mails. Read
                   # `node_filesystem_readonly` for the mount to tell a repair
-                  # from a fault that continues. A volume that turns read-only
-                  # again inside the hold raises no second alert, so the mail
-                  # for it reads the same as the mail for the first fault.
+                  # from a fault that continues.
+                  #
+                  # CAUTION: A volume that turns read-only again inside the
+                  # hold raises no second alert. Its mail reads the same as the
+                  # mail for the first fault.
                   #
                   # CAUTION: The alert clears about 26 hours after the
-                  # transition, which is the 2 hour window and then the 24 hour
-                  # hold, even when the volume is still read-only. Remove the
+                  # transition. That is the 2 hour window and then the 24 hour
+                  # hold. The volume can still be read-only. Remove the
                   # orphaned globalmounts from the nodes, then drop the
                   # `changes()` guard and the keep_firing_for, and alert on
-                  # `== 1` alone. That state ends when the repair ends it, and
-                  # at no other time. Measured 2026-10-13, after the repair: 2
+                  # `== 1` alone. Measured 2026-10-13, after the repair: 2
                   # orphaned globalmounts read 1, and `== 1` alone and a 7 day
                   # window match the same 2.
                   - alert: VolumeRemountedReadOnly
