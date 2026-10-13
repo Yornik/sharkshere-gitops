@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-12
 **Component:** `truenas-ssd-iscsi` volumes; the `gitlab-pg` and `openproject-pg` CNPG clusters
-**Severity:** OpenProject down about 5 hours; GitLab accepted connections but served no query for the same time
+**Severity:** OpenProject down about 5 hours; GitLab accepted connections but served no query for the same time.
 
 ## Effect
 
@@ -98,7 +98,18 @@ NOTE: Do not add an alert on `cnpg_collector_up == 0`. The measurement on 2026-1
 
 ## Open item
 
-3 `globalmount` paths on `talos-3xg-mwx`, `talos-0wq-zph` and `talos-ako-s53` are read-only and no PersistentVolume owns them. They hold a device each. They are left from volumes that are gone. They have no effect on a workload. Remove them from the node.
+2 `globalmount` paths are read-only and no PersistentVolume owns them, measured 2026-10-13:
+
+| Node | Device | Volume handle |
+|---|---|---|
+| `talos-3xg-mwx` | `/dev/sdb` | `4ae9607f...` |
+| `talos-ako-s53` | `/dev/sdb` | `3d144e6b...` |
+
+They are left from volumes that are gone. They have no effect on a workload. Remove them from the node.
+
+NOTE: A third path on `talos-0wq-zph` was read-only on 2026-10-12 and is read-write on 2026-10-13. No PersistentVolume owns it either. It changed when kubelet mounted a volume on that node again. A repair on a node can therefore clear an orphaned mount on the same node.
+
+These paths are the reason the `VolumeRemountedReadOnly` rule reads the change and not the state. Remove them, and the rule reads `node_filesystem_readonly == 1` alone. See [`2026-10-13-readonly-alert-cleared-while-volume-broken.md`](2026-10-13-readonly-alert-cleared-while-volume-broken.md).
 
 ## Evidence
 
