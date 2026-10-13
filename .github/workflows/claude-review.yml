@@ -74,7 +74,60 @@ jobs:
             echo "what=a change to this repository" >> "$GITHUB_OUTPUT"
           fi
 
+      # A review costs about $0.30, so a push that changes only prose is not
+      # worth one. `paths-ignore` on a pull_request event does not do this: it
+      # reads every file in the pull request, not the files in the push, so a
+      # pull request that touched 1 manifest keeps paying for each later
+      # documentation push. On 2026-10-13 that cost 5 reviews in 15 minutes on
+      # a single pull request. This step reads the push instead.
+      #
+      # REVIEW.md, AGENTS.md and CLAUDE.md are Markdown, and they are not
+      # documentation for this test: they set the rules the review follows, so
+      # a change to 1 of them gets a review.
+      - name: Decide whether to review this push
+        id: gate
+        env:
+          ACTION: ${{ github.event.action }}
+          BEFORE: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          # A Renovate rebase force-pushes, so the `before` commit can be gone.
+          # Read the whole pull request when it is not there.
+          if [ "$ACTION" = "synchronize" ] && [ -n "${BEFORE:-}" ] \
+             && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            RANGE="${BEFORE} ${HEAD_SHA}"
+            SCOPE="this push"
+          else
+            RANGE="${BASE_SHA} ${HEAD_SHA}"
+            SCOPE="the whole pull request"
+          fi
+
+          CHANGED=$(git diff --name-only $RANGE)
+          echo "Files changed in ${SCOPE}:"
+          echo "$CHANGED" | sed 's/^/  /'
+
+          if [ -z "$CHANGED" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No file changed. Skipping the review."
+            exit 0
+          fi
+
+          if echo "$CHANGED" | grep -qvE '\.md$'; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Reviewing: a file that is not Markdown changed."
+          elif echo "$CHANGED" | grep -qE '^(REVIEW|AGENTS|CLAUDE)\.md$'; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Reviewing: a file that sets the rules of the review changed."
+          else
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: ${SCOPE} changes Markdown only."
+          fi
+
       - name: Review the pull request
+        if: steps.gate.outputs.skip != 'true'
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -145,8 +198,9 @@ jobs:
       - name: Post the review
         # Not always(): the concurrency group cancels the run in flight on each
         # new push. always() then reports "No review was written" for a run that
-        # GitHub stopped on purpose.
-        if: ${{ !cancelled() }}
+        # GitHub stopped on purpose. The gate skips a push that changes prose
+        # only, and then there is no review to post.
+        if: ${{ !cancelled() && steps.gate.outputs.skip != 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
