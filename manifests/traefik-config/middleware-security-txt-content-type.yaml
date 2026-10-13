@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-txt-content-type
+  namespace: traefik
+spec:
+  headers:
+    # RFC 9116 section 3: the file MUST be served as text/plain with
+    # charset=utf-8. On 2026-10-13 nginx sent text/plain with no charset.
+    # internet.nl and sectxt assume utf-8 when the charset is missing, so
+    # they do not flag it, but the RFC requires the parameter.
+    customResponseHeaders:
+      Content-Type: text/plain; charset=utf-8
