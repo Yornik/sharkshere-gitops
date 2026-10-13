@@ -977,7 +977,7 @@ apps:
     helm:
       repoURL: https://cloudnative-pg.github.io/charts
       chart: plugin-barman-cloud
-      targetRevision: 0.8.0
+      targetRevision: 0.8.1
       values: |
         # Single replica: the chart enables --leader-elect and the readiness
         # probe is a tcp dial on :9090, which only the leader opens. A second
@@ -1054,7 +1054,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.4.1
+      targetRevision: 10.4.2
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
