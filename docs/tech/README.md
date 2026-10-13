@@ -103,6 +103,8 @@ manifests/      per-app manifests and Kustomize overlays
 | `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu` + `bokings-driessen.party` |
 | `monitoring` | `monitoring` | monitoring namespace, ingress, secrets |
 | `tibber-exporter` | `monitoring` | energy metrics exporter |
+| `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
+| `mazda6e-bridge` | `monitoring` | read-only Mazda 6e car metrics exporter (Mazda cloud API) — see [runbook](../runbooks/mazda6e-bridge.md) |
 | `gotosocial` | `gotosocial` | fediverse service (`pub.fedishark.eu`) |
 | `jellyfin` | `jellyfin` | media service (`jelly.yornik.eu`) |
 | `omni-tools` | `omni-tools` | utility services |

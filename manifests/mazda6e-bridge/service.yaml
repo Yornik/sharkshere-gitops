@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mazda6e-bridge
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: mazda6e-bridge
+    app.kubernetes.io/instance: mazda6e-bridge
+spec:
+  selector:
+    app.kubernetes.io/name: mazda6e-bridge
+    app.kubernetes.io/instance: mazda6e-bridge
+  ports:
+    - name: http
+      port: 9120
+      targetPort: http
