@@ -21,7 +21,7 @@ Do this once. The Application cannot start without the Secret.
 
 Prerequisites:
 
-- The release `v0.1.0` of the image exists. See [If the image does not exist](#if-the-image-does-not-exist).
+- The release `v1.0.0` of the image exists. See [If the image does not exist](#if-the-image-does-not-exist).
 - Docker and `sops` on your computer.
 - The Mazda app account that has the car.
 
@@ -54,7 +54,7 @@ Mazda sends a six-digit code by email the first time a device ID logs in. Do thi
    ```sh
    docker run --rm -it \
      -e MAZDA_EMAIL -e MAZDA_PASSWORD -e MAZDA_DEVICE_ID \
-     ghcr.io/yornik/mazda6e-grafana-bridge:v0.1.0 verify-device
+     ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0 verify-device
    ```
 
 3. Find the code in the email from Mazda.
@@ -73,7 +73,7 @@ This step proves that the login and the data work before the cluster depends on 
    ```sh
    docker run --rm -d --name mazda6e-test -p 9120:9120 \
      -e MAZDA_EMAIL -e MAZDA_PASSWORD -e MAZDA_DEVICE_ID \
-     ghcr.io/yornik/mazda6e-grafana-bridge:v0.1.0
+     ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0
    ```
 
 2. Wait 10 seconds.
