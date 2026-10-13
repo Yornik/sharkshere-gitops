@@ -193,17 +193,23 @@ apps:
                   # CAUTION: keep_firing_for does not read the repair. The
                   # expression stops matching both when the volume is mounted
                   # read-write again and when the 2 hour window expires, so the
-                  # alert goes on firing for up to 24 hours after an operator
-                  # repairs the volume. Read `node_filesystem_readonly` for the
-                  # mount to tell the 2 apart. A volume that turns read-only
-                  # again inside those 24 hours sends no new notification,
-                  # because the alert is already firing.
+                  # alert goes on firing for 24 hours after an operator repairs
+                  # the volume. Alertmanager repeats a firing alert every 12
+                  # hours, so a repaired volume sends about 2 more mails. Read
+                  # `node_filesystem_readonly` for the mount to tell a repair
+                  # from a fault that continues. A volume that turns read-only
+                  # again inside the hold raises no second alert, so the mail
+                  # for it reads the same as the mail for the first fault.
                   #
-                  # CAUTION: After 24 hours the alert clears even when the
-                  # volume is still read-only. Remove the orphaned globalmounts
-                  # from the nodes, then drop the `changes()` guard and the
-                  # keep_firing_for, and alert on `== 1` alone. That state ends
-                  # when the repair ends it, and at no other time.
+                  # CAUTION: The alert clears about 26 hours after the
+                  # transition, which is the 2 hour window and then the 24 hour
+                  # hold, even when the volume is still read-only. Remove the
+                  # orphaned globalmounts from the nodes, then drop the
+                  # `changes()` guard and the keep_firing_for, and alert on
+                  # `== 1` alone. That state ends when the repair ends it, and
+                  # at no other time. Measured 2026-10-13, after the repair: 2
+                  # orphaned globalmounts read 1, and `== 1` alone and a 7 day
+                  # window match the same 2.
                   - alert: VolumeRemountedReadOnly
                     expr: |-
                       node_filesystem_readonly{mountpoint=~".*/csi/.*/globalmount",fstype!~"cifs|nfs|nfs4|iso9660|squashfs"} == 1
