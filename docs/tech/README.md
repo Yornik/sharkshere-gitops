@@ -166,18 +166,29 @@ manifests/      per-app manifests and Kustomize overlays
 | `yornik.eu` | professional site |
 | `fedishark.eu` | landing site |
 | `pub.fedishark.eu` | GoToSocial (Fediverse) |
-| `grafana.fedishark.eu` | Grafana |
-| `argocd.fedishark.eu` | ArgoCD UI + webhook receiver |
-| `asf.fedishark.eu` | ArchiSteamFarm |
+| `argocd.fedishark.eu` | ArgoCD webhook receiver only (`/api/webhook`) |
 | `omni.fedishark.eu` | omni-tools |
 | `jelly.yornik.eu` | Jellyfin |
-| `passwords.yornik.eu` | Vaultwarden |
+| `passwords.yornik.eu` | Vaultwarden (the vault; not `/admin`) |
 | `todo.yornik.eu` | Vikunja |
 | `secrets.yornik.eu` | PrivateBin |
 | `plan.yornik.eu` | OpenProject |
 | `git.yornik.eu` | GitLab CE (web + git over HTTPS + git over SSH on `:2222`) |
 | `registry.git.yornik.eu` | GitLab Container Registry |
 | `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
+
+### Tailnet only
+
+These are reachable from a tailnet device only, through Tailscale Ingresses.
+See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
+
+| Address | Service |
+|---|---|
+| `argocd.hedgehog-wage.ts.net` | ArgoCD UI and CLI |
+| `grafana.hedgehog-wage.ts.net` | Grafana |
+| `asf.hedgehog-wage.ts.net` | ArchiSteamFarm |
+| `qbittorrent.hedgehog-wage.ts.net` | qBittorrent |
+| `vaultwarden-admin.hedgehog-wage.ts.net` | Vaultwarden admin panel |
 
 ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu` and `bokings-driessen.party` — the third is a zone of its own, so it needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 

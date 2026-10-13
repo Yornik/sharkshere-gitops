@@ -1,6 +1,7 @@
 # Tailnet-only admin interfaces
 
-ArgoCD and Grafana are reachable on the tailnet only, over HTTPS. This file
+ArgoCD, Grafana, ArchiSteamFarm, qBittorrent and the Vaultwarden admin
+panel are reachable on the tailnet only, over HTTPS. This file
 says how to reach them, how to activate a new proxy device, what changed, and
 how to undo the change.
 
@@ -8,6 +9,9 @@ how to undo the change.
 |---|---|---|
 | ArgoCD | `https://argocd.hedgehog-wage.ts.net` | `/api/webhook` only |
 | Grafana | `https://grafana.hedgehog-wage.ts.net` | none |
+| ArchiSteamFarm | `https://asf.hedgehog-wage.ts.net` | none |
+| qBittorrent | `https://qbittorrent.hedgehog-wage.ts.net` | none |
+| Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
 
 ## How to reach them
 
@@ -47,7 +51,7 @@ WARNING: The address is unreachable from the moment you remove the old device
 until you sign the new one. The old proxy cannot join the tailnet again. If
 the merge is delayed, the outage is longer.
 
-1. In the Tailscale admin console, find the old `grafana` or `argocd` device.
+1. In the Tailscale admin console, find the old device with that name.
 2. Remove that device.
 3. Merge the change.
 
@@ -63,7 +67,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
    tailscale lock status
    ```
 
-3. Find the `grafana` or `argocd` line under "locked out by tailnet lock".
+3. Find the line for the new device under "locked out by tailnet lock".
 4. Sign that device with its node key:
 
    ```sh
@@ -73,10 +77,10 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|argocd'
+   tailscale status | grep -E 'grafana|argocd|asf|qbittorrent|vaultwarden-admin'
    ```
 
-Expected result: the names are `grafana` and `argocd`, without a suffix.
+Expected result: each name is as in the table above, without a suffix.
 
 If a name has a suffix such as `grafana-1`, the old device still held the
 name when the new one joined.
@@ -96,9 +100,21 @@ The proxy follows the new name and gets a certificate for it.
   forwarded port 80 only, so a browser that tried HTTPS first timed out.
   Grafana's Service keeps `tailscale.com/expose: "false"` in
   `apps/values.yaml`, so the old proxy does not come back.
-- The public DNS record for `grafana.fedishark.eu` is removed.
 - The public IngressRoute for Grafana is removed.
 - The public IngressRoute for ArgoCD matches `/api/webhook` only.
+- ArchiSteamFarm and qBittorrent use `manifests/asf/ingress-tailnet.yaml` and
+  `manifests/qbittorrent/ingress-tailnet.yaml`. Their public IngressRoutes
+  are removed, and so are the external-dns annotations on their Services.
+- The Vaultwarden admin panel uses
+  `manifests/vaultwarden/ingress-admin-tailnet.yaml`. The public route for
+  `passwords.yornik.eu` excludes `/admin`.
+
+The public DNS records for `grafana.`, `asf.` and `qbittorrent.fedishark.eu`
+still exist. ExternalDNS runs with `--policy=upsert-only`: it never deletes a
+record, so removing the annotation stops it managing the record but does not
+remove it. Traefik has no route for these names, so they return 404. Delete
+the records and their `reg-` TXT records by hand in Cloudflare. With the
+annotation gone, ExternalDNS does not create them again.
 
 The record for `argocd.fedishark.eu` stays. GitHub sends the push webhook to
 it and cannot join the tailnet.
@@ -121,6 +137,14 @@ boundary instead. Traffic is encrypted by WireGuard.
 
 The middleware still applies to the public ArgoCD webhook route.
 
+Each application keeps its own login:
+
+| Application | Gate on the tailnet |
+|---|---|
+| ArchiSteamFarm | `IPCPassword` |
+| qBittorrent | The WebUI login. It bans an address after repeated failed logins. The Traefik `basicAuth` layer no longer applies. |
+| Vaultwarden admin | The admin token |
+
 ## How to undo the change
 
 The change has 2 commits. Revert them in this order. A revert of the second
@@ -135,6 +159,12 @@ ArgoCD keeps reconciling while its UI is unreachable. The UI is not needed to
 apply a revert. If the webhook is also broken, ArgoCD picks the change up on
 its next poll.
 
+### Undo the ArchiSteamFarm and qBittorrent change
+
+Revert `feat(security): move ArchiSteamFarm and qBittorrent to the tailnet`.
+The revert restores the public IngressRoutes and the external-dns
+annotations. The public routes do not need the tailnet.
+
 ### Reach a UI without the tailnet
 
 Use this to get in at once, before or instead of a revert.
@@ -144,10 +174,13 @@ Use this to get in at once, before or instead of a revert.
    ```sh
    kubectl --context yornik-sharkshere -n argocd port-forward svc/argocd-server 8080:80
    kubectl --context yornik-sharkshere -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
+   kubectl --context yornik-sharkshere -n asf port-forward svc/asf 1242:1242
+   kubectl --context yornik-sharkshere -n jellyfin port-forward svc/qbittorrent 8081:8080
    ```
 
-2. Open `http://localhost:8080` for ArgoCD or `http://localhost:3000` for
-   Grafana.
+2. Open the local address: `http://localhost:8080` for ArgoCD,
+   `http://localhost:3000` for Grafana, `http://localhost:1242` for
+   ArchiSteamFarm or `http://localhost:8081` for qBittorrent.
 
 ### If a Tailscale Ingress does not publish its address
 
@@ -210,9 +243,11 @@ Run the first 2 checks on a device that uses MagicDNS.
 ```sh
 curl -sSI https://argocd.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://grafana.hedgehog-wage.ts.net/login | head -1
+curl -sSI https://asf.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://qbittorrent.hedgehog-wage.ts.net/ | head -1
 ```
 
-Both commands return `200`. The first request after a new device can take
+Each command returns `200`, or a redirect to a login page. The first request after a new device can take
 some seconds, because the proxy gets its certificate then.
 
 2. Confirm that HTTP redirects to HTTPS.
@@ -234,10 +269,21 @@ The first command returns 404. The second returns 400 or 405, because the
 webhook rejects a request with no GitHub payload. Both results show the route
 is correct.
 
-4. Confirm Grafana no longer resolves in public DNS.
+4. Confirm the closed public hosts serve nothing.
 
 ```sh
-dig +short grafana.fedishark.eu
+for h in grafana asf qbittorrent; do
+  curl -sS -o /dev/null -w "$h %{http_code}\n" https://$h.fedishark.eu/
+done
+```
+
+Each line ends in `404`. The records still resolve until they are deleted by
+hand; see [What changed](#what-changed).
+
+5. After you delete the records, confirm that they are gone.
+
+```sh
+dig +short grafana.fedishark.eu asf.fedishark.eu qbittorrent.fedishark.eu
 ```
 
 The command returns nothing.
@@ -247,9 +293,13 @@ The command returns nothing.
 - `manifests/monitoring/middleware-fail2ban-grafana.yaml` is no longer
   referenced by any IngressRoute. It is kept so that restoring a public
   Grafana route needs one file, not two.
-- The published `security.txt` still lists `grafana.fedishark.eu` as a
-  Canonical URL. That URL no longer resolves. The file is PGP-signed and CI
-  verifies the signature, so the entry has to be removed and the file
+- `middleware-fail2ban-asf.yaml`, the 2 `middleware-redirect-https.yaml`
+  files and qBittorrent's `middleware-auth.yaml` are no longer referenced.
+  They are kept for the same reason.
+- The published `security.txt` still lists `grafana.`, `asf.` and
+  `qbittorrent.fedishark.eu` as Canonical URLs. They stop working once the
+  records are deleted. The file is PGP-signed and CI
+  verifies the signature, so the entries have to be removed and the file
   re-signed by the key holder.
 - `url` in `bootstrap/argocd/argocd-cm-patch.yaml` is still
   `https://argocd.fedishark.eu`. ArgoCD uses it for links and SSO callbacks,

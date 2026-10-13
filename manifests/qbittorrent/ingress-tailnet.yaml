@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qbittorrent-tailnet
+  namespace: jellyfin
+  annotations:
+    # The proxy serves port 443 only. Without the redirect, an http://
+    # address times out instead of reaching the HTTPS one.
+    tailscale.com/http-redirect: "true"
+spec:
+  # The Tailscale operator runs 1 proxy device for this Ingress. The proxy
+  # ends TLS with a certificate for the ts.net name and sends plain HTTP to
+  # the WebUI. There is no public route.
+  #
+  # NOTE: Tailnet traffic does not pass through Traefik, so the basicAuth in
+  # middleware-auth.yaml does not apply. The WebUI login of qBittorrent is
+  # the gate. It bans an address after repeated failed logins.
+  #
+  # NOTE: The gluetun firewall accepts the proxy. Its rule matches the
+  # destination (the pod subnet), not the source, as for Traefik today.
+  # See docs/runbooks/tailnet-only-admin-uis.md.
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: qbittorrent
+      port:
+        number: 8080
+  tls:
+    # The first label is the device name: qbittorrent.hedgehog-wage.ts.net.
+    - hosts:
+        - qbittorrent
