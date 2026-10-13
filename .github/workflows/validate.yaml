@@ -7,6 +7,8 @@ on:
 env:
   # renovate: datasource=github-releases depName=yannh/kubeconform
   KUBECONFORM_VERSION: v0.8.0
+  # renovate: datasource=pypi depName=anthropic
+  ANTHROPIC_VERSION: 1.13.0
   # CRD schemas (IngressRoute, Middleware, CNPG Cluster, Application,
   # PodMonitor, ...). Without this, kubeconform skips every CRD-typed
   # resource — more than half the repo — while reporting green.
@@ -42,8 +44,7 @@ jobs:
       # hidden in a release note. These tests state each refusal, so a change
       # that widens a tool fails here instead of on the cluster.
       - name: Install the Anthropic SDK
-        # renovate: datasource=pypi depName=anthropic
-        run: pip install anthropic==1.13.0
+        run: pip install "anthropic==${ANTHROPIC_VERSION}"
 
       - name: Test the review tools
         run: python3 .github/scripts/test_review.py

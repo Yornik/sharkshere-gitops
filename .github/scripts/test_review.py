@@ -6,7 +6,7 @@ environment and a token that writes to pull requests. These tests state what a
 tool refuses.
 """
 
-import os, pathlib, subprocess, sys, tempfile, unittest
+import os, pathlib, re, subprocess, sys, tempfile, unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import review
@@ -228,6 +228,108 @@ class Helm(unittest.TestCase):
         out = call(review.helm_show_values,
                    repo="https://x.example", chart="a", version="--post-renderer=/bin/sh")
         self.assertIn("Rejected argument", out)
+
+
+class HelmBoundary(unittest.TestCase):
+    def test_a_chart_that_leaves_the_repository_is_refused(self):
+        # helm reads a local path before it uses --repo and logs "local chart
+        # found in current working directory. repository url ignored", so
+        # chart="apps/../../.." read files above the repository.
+        out = call(review.helm_show_values,
+                   repo="https://x.example", chart="apps/../../..", version="1.0.0")
+        self.assertIn("leaves the repository", out)
+
+    def test_it_runs_in_an_empty_directory(self):
+        # The guard is cwd=, so assert on cwd=. Read it inside the call: the
+        # temporary directory is gone once helm_show_values returns.
+        import unittest.mock as m
+        seen = {}
+
+        def spy(*args, **kwargs):
+            cwd = pathlib.Path(kwargs["cwd"])
+            seen["cwd"] = cwd.resolve()
+            seen["contents"] = list(cwd.iterdir())
+            return subprocess.CompletedProcess([], 0, "", "")
+
+        with m.patch("review.subprocess.run", side_effect=spy):
+            call(review.helm_show_values,
+                 repo="https://x.example", chart="alloy", version="1.0.0")
+        self.assertNotEqual(seen["cwd"], ROOT)
+        self.assertEqual(seen["contents"], [], "a local chart could shadow --repo")
+
+
+class RenovatePin(unittest.TestCase):
+    """The pin looked tracked and was not.
+
+    The custom manager in renovate.json5 reads `[A-Z_]+_VERSION: <value>` on
+    the line after the comment. `run: pip install anthropic==1.13.0` matched
+    nothing, so no bump would ever have opened.
+    """
+
+    # Copied from the workflow manager in renovate.json5.
+    MANAGER = re.compile(
+        r"# renovate: datasource=(?P<datasource>[a-z-]+) depName=(?P<depName>\S+)\n"
+        r"\s*[A-Z_]+_VERSION: (?P<currentValue>\S+)"
+    )
+
+    def test_renovate_tracks_the_anthropic_pin_in_both_workflows(self):
+        for name in ("claude-review.yml", "validate.yaml"):
+            body = (ROOT / ".github" / "workflows" / name).read_text()
+            found = {m.group("depName"): m.group("currentValue")
+                     for m in self.MANAGER.finditer(body)}
+            self.assertIn("anthropic", found, f"{name}: the pin is not in a shape Renovate reads")
+
+    def test_both_workflows_pin_the_same_version(self):
+        versions = set()
+        for name in ("claude-review.yml", "validate.yaml"):
+            body = (ROOT / ".github" / "workflows" / name).read_text()
+            versions |= {m.group("currentValue") for m in self.MANAGER.finditer(body)
+                         if m.group("depName") == "anthropic"}
+        self.assertEqual(len(versions), 1, f"the 2 workflows disagree: {versions}")
+
+    def test_no_unpinned_install_remains(self):
+        # A comment may quote the broken form to explain it, so read the
+        # commands and not the comments.
+        for name in ("claude-review.yml", "validate.yaml"):
+            body = (ROOT / ".github" / "workflows" / name).read_text()
+            commands = [line.strip() for line in body.splitlines()
+                        if not line.strip().startswith("#")]
+            for command in commands:
+                self.assertNotRegex(command, r"pip install anthropic==[0-9]",
+                                    f"{name}: an inline pin is invisible to Renovate")
+
+
+class WorkflowShape(unittest.TestCase):
+    """A docs-only push must not cancel a code review.
+
+    The concurrency group was on the workflow, so a new push cancelled the run
+    in flight before the gate decided anything. A push that changed a runbook
+    cancelled the review of the manifest in the push before it, and then
+    skipped. The manifest reached main unreviewed.
+    """
+
+    def setUp(self):
+        try:
+            import yaml
+        except ImportError:
+            self.skipTest("pyyaml is not installed")
+        self.wf = yaml.safe_load((ROOT / ".github/workflows/claude-review.yml").read_text())
+
+    def test_the_workflow_has_no_concurrency_group(self):
+        self.assertIsNone(self.wf.get("concurrency"))
+
+    def test_the_group_is_on_the_review_job(self):
+        self.assertIn("concurrency", self.wf["jobs"]["review"])
+        self.assertNotIn("concurrency", self.wf["jobs"]["gate"])
+
+    def test_the_review_job_waits_for_the_gate(self):
+        review_job = self.wf["jobs"]["review"]
+        self.assertEqual(review_job["needs"], "gate")
+        self.assertIn("needs.gate.outputs.skip", review_job["if"])
+
+    def test_the_check_name_is_unchanged(self):
+        # A rename would drop the check that people look for on a pull request.
+        self.assertEqual(self.wf["jobs"]["review"]["name"], "Claude review")
 
 
 class Prompt(unittest.TestCase):

@@ -20,7 +20,7 @@ The 2 checklists share the section "What CI already proves", the verdicts and th
 
 ## What CI already proves
 
-Do not repeat a check that CI runs. The 7 checks on each pull request already prove these facts:
+Do not repeat a check that CI runs. The 8 checks on each pull request already prove these facts:
 
 - The chart renders at the new version with the exact values from `apps/values.yaml`. The `Render Charts With Values` check proves this.
 - The rendered output passes `kubeconform` with CRD schemas.

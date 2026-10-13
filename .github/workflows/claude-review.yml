@@ -10,16 +10,17 @@ on:
     # added to any pull request starts a run, not only a Renovate one.
     types: [opened, synchronize, reopened, ready_for_review, labeled]
 
-# Renovate rebases a branch whenever main moves. A person pushes to a branch
-# while they work on it. Each push sends a new `synchronize` event. Without this,
-# GitHub reviews the same pull request once per push, and bills each review.
-concurrency:
-  group: claude-review-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+# NOTE: the concurrency group sits on the `review` job, not on the workflow.
+# A workflow-level group cancelled the run in flight before the gate had
+# decided anything. A push that changed a runbook therefore cancelled the
+# review of the manifest in the push before it, and its own gate then saw
+# Markdown and skipped. The manifest reached main unreviewed, and the pull
+# request showed no sign of it. A skipped push now cancels nothing, because
+# the `review` job never starts and never enters the group.
 
 jobs:
-  review:
-    name: Claude review
+  gate:
+    name: Decide whether to review
     # Every pull request except a draft and except a bump that merges itself.
     # `renovate.json5` puts the `automerge` label on exactly the rules that
     # set automerge, so the label is the test, not the update type: a minor
@@ -36,31 +37,20 @@ jobs:
       || contains(github.event.pull_request.labels.*.name, 'major')
       || contains(github.event.pull_request.labels.*.name, 'manual-apply'))
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     permissions:
       contents: read
-      pull-requests: write
+    outputs:
+      skip: ${{ steps.gate.outputs.skip }}
+      checklist: ${{ steps.lens.outputs.checklist }}
+      what: ${{ steps.lens.outputs.what }}
     steps:
       - uses: actions/checkout@v7
         with:
-          # The review diffs the head against the merge base. It needs the
-          # full history. A shallow clone has no merge base.
+          # The gate diffs `before` against the head. It needs the history
+          # that holds `before`.
           fetch-depth: 0
-          # Checkout writes GITHUB_TOKEN into .git/config by default. The
-          # review reads third-party release notes, so an instruction inside
-          # one can reach a token that writes to pull requests. The post step
-          # takes the token from GH_TOKEN, so nothing needs it on disk. The
-          # review tools refuse to read .git, and this keeps the token out of
-          # it as well.
+          # The gate needs no token on disk.
           persist-credentials: false
-
-      # Check A2 needs the new chart's own values.yaml, to find a key that
-      # apps/values.yaml still sets and the chart no longer reads. The
-      # `helm_show_values` tool in review.py runs `helm show values` for it.
-      # The script offers no `helm template` tool: that subcommand takes
-      # --post-renderer, which runs any program on the runner.
-      - name: Setup Helm
-        uses: azure/setup-helm@v5
 
       - name: Choose the checklist
         id: lens
@@ -128,6 +118,44 @@ jobs:
             echo "Skipping: ${SCOPE} changes Markdown only."
           fi
 
+  review:
+    name: Claude review
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
+    # Renovate rebases a branch whenever main moves. A person pushes to a
+    # branch while they work on it. Each push sends a new `synchronize` event.
+    # Without this, GitHub reviews the same pull request once per push, and
+    # bills each review.
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The review diffs the head against the merge base. It needs the
+          # full history. A shallow clone has no merge base.
+          fetch-depth: 0
+          # Checkout writes GITHUB_TOKEN into .git/config by default. The
+          # review reads third-party release notes, so an instruction inside
+          # one can reach a token that writes to pull requests. The post step
+          # takes the token from GH_TOKEN, so nothing needs it on disk. The
+          # review tools refuse to read .git, and this keeps the token out of
+          # it as well.
+          persist-credentials: false
+
+      # Check A2 needs the new chart's own values.yaml, to find a key that
+      # apps/values.yaml still sets and the chart no longer reads. The
+      # `helm_show_values` tool in review.py runs `helm show values` for it.
+      # The script offers no `helm template` tool: that subcommand takes
+      # --post-renderer, which runs any program on the runner.
+      - name: Setup Helm
+        uses: azure/setup-helm@v5
+
       # A review runs on the Messages API, through .github/scripts/review.py.
       # It does not run Claude Code.
       #
@@ -136,10 +164,16 @@ jobs:
       # Claude Code packaged as a library, so neither draws on that credit. On
       # 2026-10-13 the purchased balance ran out and every review failed at
       # $0 cost, on 3 unrelated pull requests, with the credit untouched.
+      # NOTE: the version is an env var because that is the only shape the
+      # custom manager in renovate.json5 matches. It reads
+      # `[A-Z_]+_VERSION: <value>` on the line after the comment. A
+      # `pip install anthropic==1.13.0` line matches nothing, so the pin
+      # looked tracked and no bump would ever have opened.
       - name: Install the Anthropic SDK
-        if: steps.gate.outputs.skip != 'true'
-        # renovate: datasource=pypi depName=anthropic
-        run: pip install anthropic==1.13.0
+        env:
+          # renovate: datasource=pypi depName=anthropic
+          ANTHROPIC_VERSION: 1.13.0
+        run: pip install "anthropic==${ANTHROPIC_VERSION}"
 
       # The tool list in review.py is the whole boundary. The review reads
       # third-party release notes, so an instruction inside one can reach any
@@ -165,11 +199,10 @@ jobs:
       # .github/scripts/test_review.py states each refusal. The `Review tools`
       # check in validate.yaml runs it on every pull request.
       - name: Review the pull request
-        if: steps.gate.outputs.skip != 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CHECKLIST: ${{ steps.lens.outputs.checklist }}
-          WHAT: ${{ steps.lens.outputs.what }}
+          CHECKLIST: ${{ needs.gate.outputs.checklist }}
+          WHAT: ${{ needs.gate.outputs.what }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -178,13 +211,12 @@ jobs:
       - name: Post the review
         # Not always(): the concurrency group cancels the run in flight on each
         # new push. always() then reports "No review was written" for a run that
-        # GitHub stopped on purpose. The gate skips a push that changes prose
-        # only, and then there is no review to post.
-        if: ${{ !cancelled() && steps.gate.outputs.skip != 'true' }}
+        # GitHub stopped on purpose. A skipped push does not reach this job.
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
-          CHECKLIST: ${{ steps.lens.outputs.checklist }}
+          CHECKLIST: ${{ needs.gate.outputs.checklist }}
         run: |
           set -euo pipefail
 

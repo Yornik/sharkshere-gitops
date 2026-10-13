@@ -17,6 +17,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import anthropic
@@ -349,14 +350,22 @@ def helm_show_values(repo: str, chart: str, version: str) -> str:
     for value in (chart, version):
         if not SAFE_ARG.match(value):
             return f"Rejected argument {value!r}: it is empty or it is a flag."
+    if ".." in Path(chart).parts:
+        return f"Rejected chart {chart!r}: it leaves the repository."
 
-    result = subprocess.run(
-        ["helm", "show", "values", chart, "--repo", repo, "--version", version],
-        capture_output=True, text=True, timeout=180, check=False,
-    )
-    if result.returncode != 0:
-        return f"helm show values failed: {result.stderr.strip()[:500]}"
-    return result.stdout[:100_000] or "The chart ships no values.yaml."
+    # helm reads a local path before it uses --repo, and it reports
+    # "local chart found in current working directory. repository url
+    # ignored". `chart="apps/../../.."` therefore read files above the
+    # repository. An empty working directory holds no local chart, so --repo
+    # is the only source.
+    with tempfile.TemporaryDirectory() as empty:
+        result = subprocess.run(
+            ["helm", "show", "values", chart, "--repo", repo, "--version", version],
+            cwd=empty, capture_output=True, text=True, timeout=180, check=False,
+        )
+        if result.returncode != 0:
+            return f"helm show values failed: {result.stderr.strip()[:500]}"
+        return result.stdout[:100_000] or "The chart ships no values.yaml."
 
 
 LOCAL_TOOLS = [read_file, list_files, search_files, git_diff, git_log, helm_show_values]
