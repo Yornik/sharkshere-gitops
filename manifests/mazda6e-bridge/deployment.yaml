@@ -42,12 +42,10 @@ spec:
               value: "120"
             - name: LISTEN_PORT
               value: "9120"
-            # On for the "Last known position" panel on the dashboard. /metrics
-            # has no authentication, so the Service stays ClusterIP. Do not add
-            # an IngressRoute for this port. Prometheus keeps each position for
-            # its 60 d retention, so the data is a 60-day trip history.
+            # Off. The Mazda cloud sent no position for this car when tested
+            # on 2026-10-13, and /metrics has no authentication.
             - name: EXPORT_LOCATION
-              value: "true"
+              value: "false"
           ports:
             - name: http
               containerPort: 9120

@@ -1,6 +1,8 @@
 ---
 # Source: github.com/Yornik/mazda6e-grafana-bridge, dashboards/mazda6e.json.
 # Change the dashboard there first, then copy it here.
+# This copy has no Location section, because EXPORT_LOCATION is off.
+# Remove that section again after each copy.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2132,129 +2134,6 @@ data:
         },
         {
           "type": "row",
-          "title": "Location",
-          "collapsed": false,
-          "id": 31,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 71
-          },
-          "panels": []
-        },
-        {
-          "type": "geomap",
-          "title": "Last known position",
-          "id": 32,
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "description": "Empty unless the exporter runs with EXPORT_LOCATION=true and the car reports a position.",
-          "gridPos": {
-            "h": 10,
-            "w": 24,
-            "x": 0,
-            "y": 72
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "fixed",
-                "fixedColor": "blue"
-              }
-            },
-            "overrides": []
-          },
-          "options": {
-            "view": {
-              "id": "fit",
-              "lat": 52.1,
-              "lon": 5.1,
-              "zoom": 12
-            },
-            "controls": {
-              "showZoom": true,
-              "mouseWheelZoom": true
-            },
-            "basemap": {
-              "type": "xyz",
-              "name": "OpenStreetMap",
-              "config": {
-                "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                "attribution": "© OpenStreetMap contributors"
-              }
-            },
-            "layers": [
-              {
-                "type": "markers",
-                "name": "Car",
-                "location": {
-                  "mode": "auto"
-                },
-                "tooltip": true,
-                "config": {
-                  "showLegend": false,
-                  "style": {
-                    "size": {
-                      "fixed": 12
-                    },
-                    "color": {
-                      "fixed": "blue"
-                    },
-                    "opacity": 0.9,
-                    "symbol": {
-                      "mode": "fixed",
-                      "fixed": "img/icons/marker/circle.svg"
-                    },
-                    "symbolAlign": {
-                      "horizontal": "center",
-                      "vertical": "center"
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "mazda6e_location_latitude_degrees{vin=~\"$vin\"}",
-              "refId": "A",
-              "legendFormat": "lat",
-              "range": false,
-              "instant": true
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "mazda6e_location_longitude_degrees{vin=~\"$vin\"}",
-              "refId": "B",
-              "legendFormat": "lon",
-              "range": false,
-              "instant": true
-            }
-          ],
-          "transformations": [
-            {
-              "id": "joinByField",
-              "options": {
-                "byField": "Time",
-                "mode": "outer"
-              }
-            }
-          ]
-        },
-        {
-          "type": "row",
           "title": "Exporter",
           "collapsed": false,
           "id": 33,
@@ -2262,7 +2141,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 82
+            "y": 71
           },
           "panels": []
         },
@@ -2279,7 +2158,7 @@ data:
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 83
+            "y": 72
           },
           "fieldConfig": {
             "defaults": {
@@ -2359,7 +2238,7 @@ data:
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 83
+            "y": 72
           },
           "fieldConfig": {
             "defaults": {
@@ -2432,7 +2311,7 @@ data:
             "h": 4,
             "w": 12,
             "x": 12,
-            "y": 83
+            "y": 72
           },
           "fieldConfig": {
             "defaults": {
