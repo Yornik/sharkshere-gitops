@@ -8,11 +8,15 @@ A dependency bump and a change written by a person fail in different ways. Each 
 
 | Pull request | Checklist |
 |---|---|
-| Renovate, labelled `helm`, `major` or `manual-apply` | A: a dependency bump |
-| Renovate, labelled only `renovate` and `dependencies` | None. The pull request merges itself, so a review has no reader. |
+| Renovate, labelled `automerge` and nothing else of note | None. The pull request merges itself, so a review has no reader. |
+| Any other Renovate bump, including one labelled `automerge` with `helm`, `major` or `manual-apply` | A: a dependency bump |
 | Any other author | B: a change to this repository |
 
-`renovate.json5` sets the labels, and the label decides the checklist. The 2 checklists share the section "What CI already proves", the verdicts and the limits.
+`renovate.json5` puts the `automerge` label on the 2 rules that set automerge, and nowhere else. A bump without that label waits for a person, so it gets a review. Examples are a minor bump of the `tomMoulard/fail2ban` Traefik plugin, a new commit on the CNPG dashboard, and a minor bump of an action in a workflow. None of them automerges and none carries a `helm` or `major` label.
+
+NOTE: A grouped pull request takes the labels of each bump in it. One labelled `automerge` together with `manual-apply` holds a bump that a person applies on the cluster, so it gets a review.
+
+The 2 checklists share the section "What CI already proves", the verdicts and the limits.
 
 ## What CI already proves
 

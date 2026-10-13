@@ -13,12 +13,23 @@
     'dependencies',
   ],
   packageRules: [
+    // The `automerge` label is what the Claude review job reads to decide
+    // whether a bump needs a person. Only these 2 rules set automerge, so
+    // only these 2 carry the label. Everything else -- a minor bump from
+    // github-releases (tomMoulard/fail2ban) or git-refs (the CNPG dashboard),
+    // or from the github-actions manager -- waits for a person, and without
+    // the label the job reviews it. Keep the label and `automerge` together.
     {
       matchUpdateTypes: [
         'patch',
       ],
       groupName: 'patch updates',
       automerge: true,
+      labels: [
+        'renovate',
+        'dependencies',
+        'automerge',
+      ],
     },
     {
       matchDatasources: [
@@ -28,6 +39,11 @@
         'minor',
       ],
       automerge: true,
+      labels: [
+        'renovate',
+        'dependencies',
+        'automerge',
+      ],
     },
     {
       matchUpdateTypes: [

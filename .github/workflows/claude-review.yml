@@ -6,7 +6,8 @@ on:
     # `labeled` is here because Renovate creates the pull request first and
     # adds the labels in a second call. The `opened` payload carries no label,
     # so the job below skips every labelled bump it exists to review, until a
-    # later rebase. The concurrency group cancels the duplicate run.
+    # later rebase. The concurrency group cancels the duplicate run. A label
+    # added to any pull request starts a run, not only to a Renovate one.
     types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # Renovate rebases a branch whenever main moves, and a person pushes to a branch
@@ -19,14 +20,18 @@ concurrency:
 jobs:
   review:
     name: Claude review
-    # Every pull request except a draft and except the Renovate bumps that
-    # merge themselves. The `patch updates` group and docker minor bumps
-    # automerge, so a review of those has no reader. Everything else gets a
-    # review: a dependency bump gets checklist A, any other author gets
-    # checklist B. See REVIEW.md.
+    # Every pull request except a draft and except a bump that merges itself.
+    # `renovate.json5` puts the `automerge` label on exactly the rules that
+    # set automerge, so the label is the test, not the update type: a minor
+    # bump from github-releases or git-refs carries no `automerge` label and
+    # waits for a person, so it gets a review. A grouped pull request unions
+    # the labels of its members, so one that is labelled `automerge` and also
+    # `helm`, `major` or `manual-apply` holds a bump that a person applies,
+    # and it gets a review too. See REVIEW.md.
     if: >-
       github.event.pull_request.draft == false
       && (github.event.pull_request.user.login != 'renovate[bot]'
+      || !contains(github.event.pull_request.labels.*.name, 'automerge')
       || contains(github.event.pull_request.labels.*.name, 'helm')
       || contains(github.event.pull_request.labels.*.name, 'major')
       || contains(github.event.pull_request.labels.*.name, 'manual-apply'))
@@ -49,7 +54,9 @@ jobs:
 
       # `helm show values` is how checklist A gets the new chart's own
       # values.yaml, to find a key that apps/values.yaml still sets but the
-      # chart no longer reads.
+      # chart no longer reads. `helm template` is deliberately not allowed:
+      # it takes --post-renderer, which runs any executable on the runner,
+      # and the review reads third-party release notes.
       - name: Setup Helm
         uses: azure/setup-helm@v5
 
@@ -107,7 +114,7 @@ jobs:
           claude_args: |
             --model claude-opus-5-5
             --max-turns 40
-            --allowedTools "Read,Glob,Grep,WebFetch,Write,Bash(git diff:*),Bash(git log:*),Bash(helm show:*),Bash(helm template:*)"
+            --allowedTools "Read,Glob,Grep,WebFetch,Write,Bash(git diff:*),Bash(git log:*),Bash(helm show:*)"
 
       - name: Post the review
         # Not always(): the concurrency group cancels the run in flight on each
@@ -138,6 +145,9 @@ jobs:
           } > comment.md
 
           # --edit-last keeps one comment per pull request instead of one per
-          # push. The fallback covers a runner with an older gh.
+          # push. It edits the last comment by github-actions[bot], whichever
+          # workflow wrote it, and this is the only workflow here that
+          # comments. A second one would have its comment overwritten.
+          # The fallback covers a runner with an older gh.
           gh pr comment "$PR" --body-file comment.md --edit-last --create-if-none \
             || gh pr comment "$PR" --body-file comment.md
