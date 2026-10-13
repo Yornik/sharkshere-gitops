@@ -27,6 +27,27 @@ jobs:
           yamllint -d '{extends: relaxed, rules: {line-length: {max: 200}}}' \
             manifests/ bootstrap/
 
+  review-tools:
+    name: Review tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # 1 test runs a real `git diff HEAD~1...HEAD`, to prove the tool
+          # returns a diff and not an error string. The default checkout
+          # fetches 1 commit, and HEAD~1 does not resolve in it.
+          fetch-depth: 2
+
+      # The tool list in review.py is the boundary that stops an instruction
+      # hidden in a release note. These tests state each refusal, so a change
+      # that widens a tool fails here instead of on the cluster.
+      - name: Install the Anthropic SDK
+        # renovate: datasource=pypi depName=anthropic
+        run: pip install anthropic==1.13.0
+
+      - name: Test the review tools
+        run: python3 .github/scripts/test_review.py
+
   security-txt:
     name: Validate security.txt
     runs-on: ubuntu-latest
