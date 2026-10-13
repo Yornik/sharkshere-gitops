@@ -222,11 +222,13 @@ class Helm(unittest.TestCase):
 
     def test_a_flag_shaped_chart_or_version_is_refused(self):
         # `helm` takes --post-renderer, which runs any program on the runner.
-        out = call(review.helm_show_values,
-                   repo="https://x.example", chart="--post-renderer=/bin/sh", version="1.0.0")
+        # The repository is one the cluster uses, so the allowlist passes and
+        # the argument test is what answers.
+        out = call(review.helm_show_values, repo=ALLOWED_REPO,
+                   chart="--post-renderer=/bin/sh", version="1.0.0")
         self.assertIn("Rejected argument", out)
-        out = call(review.helm_show_values,
-                   repo="https://x.example", chart="a", version="--post-renderer=/bin/sh")
+        out = call(review.helm_show_values, repo=ALLOWED_REPO,
+                   chart="a", version="--post-renderer=/bin/sh")
         self.assertIn("Rejected argument", out)
 
 
@@ -235,8 +237,8 @@ class HelmBoundary(unittest.TestCase):
         # helm reads a local path before it uses --repo and logs "local chart
         # found in current working directory. repository url ignored", so
         # chart="apps/../../.." read files above the repository.
-        out = call(review.helm_show_values,
-                   repo="https://x.example", chart="apps/../../..", version="1.0.0")
+        out = call(review.helm_show_values, repo=ALLOWED_REPO,
+                   chart="apps/../../..", version="1.0.0")
         self.assertIn("leaves the repository", out)
 
     def test_it_runs_in_an_empty_directory(self):
@@ -253,9 +255,59 @@ class HelmBoundary(unittest.TestCase):
 
         with m.patch("review.subprocess.run", side_effect=spy):
             call(review.helm_show_values,
-                 repo="https://x.example", chart="alloy", version="1.0.0")
+                 repo=ALLOWED_REPO, chart="alloy", version="1.0.0")
         self.assertNotEqual(seen["cwd"], ROOT)
         self.assertEqual(seen["contents"], [], "a local chart could shadow --repo")
+
+
+class ChartRepositoryAllowlist(unittest.TestCase):
+    """`helm show values --repo <url>` fetches from the runner.
+
+    2 comments claimed that nothing fetches on the runner. The model picks
+    that URL, so an instruction hidden in a release note could name any host
+    and put data in the path.
+    """
+
+    def test_a_host_outside_sourcerepos_is_refused(self):
+        for repo in ("https://evil.example/exfil?key=abc",
+                     "https://grafana.github.io.evil.example",
+                     "https://raw.githubusercontent.com/attacker/x"):
+            out = call(review.helm_show_values, repo=repo, chart="alloy", version="1.0.0")
+            self.assertIn("not in sourceRepos", out, repo)
+
+    def test_a_repository_the_cluster_uses_is_allowed(self):
+        # Refused before the subprocess runs, so patch it out and read the
+        # argument list instead of fetching a chart.
+        import unittest.mock as m
+        with m.patch("review.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], 0, "values: {}", "")
+            out = call(review.helm_show_values,
+                       repo="https://grafana.github.io/helm-charts",
+                       chart="alloy", version="1.4.0")
+        self.assertNotIn("not in sourceRepos", out)
+        self.assertIn("--repo", run.call_args[0][0])
+
+    def test_a_trailing_slash_does_not_change_the_answer(self):
+        import unittest.mock as m
+        with m.patch("review.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], 0, "values: {}", "")
+            for repo in ("https://traefik.github.io/charts", "https://traefik.github.io/charts/"):
+                self.assertNotIn("not in sourceRepos",
+                                 call(review.helm_show_values, repo=repo,
+                                      chart="traefik", version="1.0.0"), repo)
+
+    def test_the_allowlist_covers_every_chart_the_repository_uses(self):
+        # This is the claim that the list cannot go stale and drop a check.
+        # A2 reads the values of a chart in apps/values.yaml, so each repoURL
+        # there has to be in the allowlist.
+        used = set(re.findall(r"repoURL:\s*(\S+)", (ROOT / "apps/values.yaml").read_text()))
+        allowed = review.chart_repositories()
+        missing = sorted(u.rstrip("/") for u in used if u.rstrip("/") not in allowed)
+        self.assertEqual(missing, [], f"A2 cannot read the values of {missing}")
+
+    def test_the_allowlist_is_not_empty(self):
+        # A parse that silently returns nothing would refuse every chart.
+        self.assertGreater(len(review.chart_repositories()), 5)
 
 
 class RenovatePin(unittest.TestCase):
@@ -393,6 +445,10 @@ class FakeClient:
 
 
 SYSTEM = [{"type": "text", "text": "system"}]
+
+# A chart repository the cluster uses, so helm_show_values gets past the
+# allowlist and the test reaches the check it is about.
+ALLOWED_REPO = "https://grafana.github.io/helm-charts"
 TOOL_RESULT = {"role": "user", "content": [{"type": "tool_result",
                                             "tool_use_id": "x", "content": "ok"}]}
 

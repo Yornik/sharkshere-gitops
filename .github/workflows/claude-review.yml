@@ -195,9 +195,15 @@ jobs:
       #    argument alone. A review of this job caught the opposite: a glob of
       #    `../../../proc/self/environ` walked out of the tree and returned
       #    the key, because only the `path` argument was checked.
-      # 3. A fetch runs on Anthropic's servers, not here. The old job fetched
-      #    from the runner, which holds the API key. `web_fetch` reads a URL
-      #    that is already in the conversation.
+      # 3. A release note is fetched on Anthropic's servers, not here. The
+      #    old job fetched it from the runner, which holds the API key.
+      #    `web_fetch` reads a URL that is already in the conversation.
+      #
+      #    `helm_show_values` is the 1 tool that still fetches from the
+      #    runner, because `helm show values --repo <url>` runs here. The
+      #    model picks that URL, so it is limited to the `sourceRepos` list
+      #    in bootstrap/argocd-project.yaml: the chart repositories the
+      #    cluster already uses, and no other host.
       #
       # .github/scripts/test_review.py states each refusal. The `Review tools`
       # check in validate.yaml runs it on every pull request.

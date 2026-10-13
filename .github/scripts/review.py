@@ -74,6 +74,39 @@ SKIP_DIRS = {".git", "node_modules", ".venv", "__pycache__"}
 # with a dash becomes a flag, and `helm` takes flags that run a program.
 SAFE_ARG = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._/+-]*\Z")
 
+# `helm show values --repo <url>` fetches from the runner. The model picks the
+# URL, so an instruction hidden in a release note could pick any host and put
+# data in the path. The list of chart repositories that the cluster uses is
+# already in the repository, so it is the allowlist.
+#
+# This list cannot go stale without a sign. ArgoCD refuses a repository that
+# `sourceRepos` does not hold, and reports `repository not permitted`, so a
+# new chart repository has to arrive here before its Application can sync.
+# Check B5 covers that.
+PROJECT_FILE = REPO_ROOT / "bootstrap" / "argocd-project.yaml"
+
+
+def chart_repositories() -> set[str]:
+    """Return the `sourceRepos` URLs, with no trailing slash.
+
+    Read with a line scan rather than a YAML parser, so the review needs no
+    dependency beyond the Anthropic SDK.
+    """
+    repositories: set[str] = set()
+    inside = False
+    for line in PROJECT_FILE.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("sourceRepos:"):
+            inside = True
+            continue
+        if inside:
+            if stripped.startswith("- "):
+                repositories.add(stripped[2:].strip().rstrip("/"))
+            elif stripped and not stripped.startswith("#"):
+                break
+    return repositories
+
+
 # A ref also allows `~` and `^`, so HEAD~1 and HEAD^ work. No value reaches a
 # shell: every call passes an argument list. The first character must be
 # alphanumeric, so a value cannot become a flag.
@@ -347,6 +380,16 @@ def helm_show_values(repo: str, chart: str, version: str) -> str:
     """
     if not repo.startswith("https://"):
         return "Rejected repo: give an https URL."
+
+    allowed = chart_repositories()
+    if repo.rstrip("/") not in allowed:
+        return (
+            f"Rejected repo {repo!r}: it is not in sourceRepos of "
+            "bootstrap/argocd-project.yaml. This tool reaches a chart "
+            "repository that the cluster uses, and no other host.\n"
+            + "\n".join(sorted(allowed))
+        )
+
     for value in (chart, version):
         if not SAFE_ARG.match(value):
             return f"Rejected argument {value!r}: it is empty or it is a flag."
@@ -371,8 +414,11 @@ def helm_show_values(repo: str, chart: str, version: str) -> str:
 LOCAL_TOOLS = [read_file, list_files, search_files, git_diff, git_log, helm_show_values]
 
 # Web search and web fetch run on Anthropic's servers, not on the runner. The
-# old job fetched from the runner, which held the API key, so a fetch was a
-# path to a secret. Nothing here fetches on the runner.
+# old job fetched release notes from the runner, which holds the API key.
+#
+# NOTE: `helm_show_values` is the 1 tool that still fetches from the runner.
+# It reaches a chart repository only, from the list in
+# bootstrap/argocd-project.yaml. See PROJECT_FILE below.
 #
 # max_uses bounds the cost of a review. web_fetch reads a URL that is already
 # in the conversation, so the search finds the release notes and the fetch
