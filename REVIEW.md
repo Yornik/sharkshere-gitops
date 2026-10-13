@@ -1,6 +1,6 @@
 # Review criteria for a pull request
 
-This document says how to review a pull request in this repository. A person uses it as a checklist. The `Claude review` CI job gives it to Claude as the review prompt. See [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
+This document says how to review a pull request in this repository. A person uses it as a checklist. The `Claude review` CI job sends it to the Claude API as the review prompt. See [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml) for the job and [`.github/scripts/review.py`](.github/scripts/review.py) for the prompt and the tools.
 
 A dependency bump and a change written by a person fail in different ways. Each gets its own checklist.
 
@@ -20,7 +20,7 @@ The 2 checklists share the section "What CI already proves", the verdicts and th
 
 ## What CI already proves
 
-Do not repeat a check that CI runs. The 7 checks on each pull request already prove these facts:
+Do not repeat a check that CI runs. The 8 checks on each pull request already prove these facts:
 
 - The chart renders at the new version with the exact values from `apps/values.yaml`. The `Render Charts With Values` check proves this.
 - The rendered output passes `kubeconform` with CRD schemas.
