@@ -69,7 +69,7 @@ The API server rejects a change to these fields. ArgoCD then reports `SyncError`
 | Service | `spec.clusterIP`. |
 
 1. Report each immutable field that the new chart version changes.
-2. State the sync option that the Application needs. A changed Job needs `Replace=true`.
+2. State the sync option that the Application needs. A changed Job needs `Replace=true` and `Force=true`. `Replace=true` makes ArgoCD delete and create the Job. `Force=true` allows the replacement of the immutable field.
 
 See [`docs/incidents/2026-07-10-openproject-seeder-job-immutable.md`](docs/incidents/2026-07-10-openproject-seeder-job-immutable.md) and [`docs/incidents/2026-09-09-prometheus-release-label-selector.md`](docs/incidents/2026-09-09-prometheus-release-label-selector.md).
 
@@ -193,8 +193,8 @@ End the review with one of these 3 verdicts. Give the reason in 1 sentence.
 
 | Verdict | Use it when |
 |---|---|
-| `GOOD` | Every check passes. The bump needs no action beyond a merge. |
-| `NEEDS ACTION` | The bump is correct but needs a change in this repository, or a step on the cluster after the merge. State the change or the step. |
+| `GOOD` | Every check passes. The change needs no action beyond a merge. |
+| `NEEDS ACTION` | The change is correct but needs an edit in this repository, or a step on the cluster after the merge. State the edit or the step. |
 | `HOLD` | A check fails, or the evidence does not settle a check. State what is missing. |
 
 ## Limits

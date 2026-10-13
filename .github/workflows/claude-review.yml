@@ -7,7 +7,7 @@ on:
     # adds the labels in a second call. The `opened` payload carries no label,
     # so the job below skips every labelled bump it exists to review, until a
     # later rebase. The concurrency group cancels the duplicate run. A label
-    # added to any pull request starts a run, not only to a Renovate one.
+    # added to any pull request starts a run, not only a Renovate one.
     types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # Renovate rebases a branch whenever main moves. A person pushes to a branch
@@ -90,7 +90,7 @@ jobs:
             ${{ github.repository }}. It is ${{ steps.lens.outputs.what }}.
 
             Read REVIEW.md and follow checklist ${{ steps.lens.outputs.checklist }}.
-            It is the checklist and it defines the three verdicts. Read AGENTS.md
+            It is the checklist and it defines the 3 verdicts. Read AGENTS.md
             for the rules of this repository. Do not apply the other checklist.
 
             The diff is `git diff ${{ github.event.pull_request.base.sha }}...HEAD`.
