@@ -112,20 +112,35 @@ jobs:
             for it, not a summary of the diff.
 
             Write no other file. Do not commit. Do not push. Do not comment.
-          # Edit(/claude-review.md) in place of a bare Write: the review may
+          # The review reads third-party release notes, so treat the tool
+          # list as the boundary against an instruction hidden in them.
+          #
+          # Edit(/claude-review.md) in place of a bare Write: the review can
           # write that 1 file and nothing else. An unrestricted Write plus the
           # allowed `git diff` is a way to run code on the runner. A prompt
           # injected through the release notes writes `[diff] external = sh
           # ./x.sh` into .git/config and writes the script, and `git diff` then
           # runs it through a shell. The runner holds ANTHROPIC_API_KEY and a
           # token that writes to pull requests.
+          #
           # NOTE: the rule names Edit, not Write. Claude Code reads a path rule
-          # for Edit and Read only. It accepts `Write(path)` and never consults
-          # it, so that form looks correct and allows everything.
+          # for Edit and Read only. It accepts `Write(path)` and does not
+          # consult it, so that form looks correct and allows every path.
+          #
+          # Read(//proc/**) is denied because /proc/self/environ holds
+          # ANTHROPIC_API_KEY, and a bare Read rule reads any path.
+          #
+          # CAUTION: WebFetch takes no domain list. Checklist A reads the
+          # release notes for each chart, and each chart repository has its own
+          # host, so a list goes stale and drops a check without a sign. A
+          # fetch out of the runner is therefore still open to an instruction
+          # that first reads a secret from a file the deny rules miss. Rotate
+          # ANTHROPIC_API_KEY if a review ever reports an odd fetch.
           claude_args: |
             --model claude-opus-5-5
             --max-turns 40
             --allowedTools "Read,Glob,Grep,WebFetch,Edit(/claude-review.md),Bash(git diff:*),Bash(git log:*),Bash(helm show:*)"
+            --disallowedTools "Read(//proc/**)"
 
       - name: Post the review
         # Not always(): the concurrency group cancels the run in flight on each
