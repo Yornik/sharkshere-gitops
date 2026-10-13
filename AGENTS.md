@@ -24,7 +24,7 @@ ArgoCD reads this repository and makes the cluster agree with it. A change that 
 6. If a correction needs an action on the cluster that git cannot express, record the action in `docs/incidents/`.
 7. Follow [`docs/styleguide.md`](docs/styleguide.md) for every document and every comment.
 
-WARNING: `manifests/` and `apps/values.yaml` hold the desired state of 14 public HTTPS domains. A wrong selector or a wrong namespace takes a domain offline.
+WARNING: `manifests/` and `apps/values.yaml` hold the desired state of 13 public HTTPS domains. A wrong selector or a wrong namespace takes a domain offline.
 
 ## How to validate a change
 
