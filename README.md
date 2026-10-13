@@ -21,6 +21,8 @@ This repository is one of three:
 | Document | Content |
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
+| [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
+| [`REVIEW.md`](REVIEW.md) | 2 checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 | [`docs/runbooks/`](docs/runbooks/) | Procedures for one application each: how to activate, check, restore or repair it. |
@@ -37,7 +39,7 @@ docs/           Technical overview, style guide, runbooks and incident write-ups
 ## How a change reaches the cluster
 
 1. Open a pull request against `main`.
-2. CI runs seven checks. See [CI checks](#ci-checks).
+2. CI runs 7 checks. See [CI checks](#ci-checks).
 3. Merge the pull request.
 4. GitHub sends a webhook to ArgoCD.
 5. ArgoCD syncs the root Application within seconds.
@@ -94,7 +96,7 @@ After the last command, ArgoCD creates all other Applications from `apps/values.
 
 ## CI checks
 
-CI runs on each pull request. All seven checks must pass before a merge.
+CI runs on each pull request. All 7 checks must pass before a merge.
 
 | Check | What it does |
 |---|---|
@@ -106,7 +108,17 @@ CI runs on each pull request. All seven checks must pass before a merge.
 | Validate Kubernetes Schemas | Runs `kubeconform` with CRD schemas on the plain manifests and the bootstrap overlay. |
 | Validate Rendered Helm Output | Runs `kubeconform` on the rendered Helm output. |
 
-A full run takes about 20 seconds.
+The 7 checks run in parallel and take about 20 seconds.
+
+One more check runs on each pull request. It does not gate the merge.
+
+| Check | What it does |
+|---|---|
+| Claude review | Reviews the pull request against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
+
+The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft. It skips a bump that carries the `automerge` label from `renovate.json5`, unless that bump also carries `helm`, `major` or `manual-apply`. See the table in [`REVIEW.md`](REVIEW.md) and the job in [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
+
+NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the change is bad.
 
 ## Known limits
 
