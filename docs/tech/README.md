@@ -206,11 +206,13 @@ ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu` and `bokings-
 
 ExternalDNS runs with `--policy=upsert-only`. It creates and updates records. It does not delete a record. To remove a hostname:
 
-1. Remove the hostname annotation and merge the change.
-2. After ArgoCD syncs, delete the record in Cloudflare.
-3. Delete each owner TXT record for that hostname. The prefix is `reg-%{record_type}-`, so there is 1 for each record type, for example `reg-cname-<host>` or `reg-a-<host>`.
+CAUTION: Do not delete the record in Cloudflare before ArgoCD removes the annotation. ExternalDNS creates the record again on its next run.
 
-If you delete the record before the annotation is gone, ExternalDNS creates it again on its next run.
+1. Remove the hostname annotation.
+2. Merge the change.
+3. Wait for ArgoCD to sync.
+4. Delete the record in Cloudflare.
+5. Delete each owner TXT record for that hostname. The prefix is `reg-%{record_type}-`, so there is 1 for each record type, for example `reg-cname-<host>` or `reg-a-<host>`.
 
 ## Bootstrap
 
