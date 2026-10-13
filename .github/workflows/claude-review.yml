@@ -3,7 +3,11 @@ name: Claude review
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    # `labeled` is here because Renovate creates the pull request first and
+    # adds the labels in a second call. The `opened` payload carries no label,
+    # so the job below skips every labelled bump it exists to review, until a
+    # later rebase. The concurrency group cancels the duplicate run.
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # Renovate rebases a branch whenever main moves, and a person pushes to a branch
 # while they work on it. Each push is a new `synchronize` event, so without this
@@ -31,13 +35,17 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      id-token: write
     steps:
       - uses: actions/checkout@v7
         with:
           # The review diffs the head against the merge base, so the full
           # history is needed. A shallow clone has no merge base.
           fetch-depth: 0
+          # Checkout writes GITHUB_TOKEN into .git/config by default. The
+          # review reads third-party release notes, so an instruction inside
+          # one can reach a token that writes to pull requests. The post step
+          # takes the token from GH_TOKEN, so nothing needs it on disk.
+          persist-credentials: false
 
       # `helm show values` is how checklist A gets the new chart's own
       # values.yaml, to find a key that apps/values.yaml still sets but the
@@ -81,7 +89,8 @@ jobs:
             The diff is `git diff ${{ github.event.pull_request.base.sha }}...HEAD`.
 
             apps/values.yaml is long. Read only the Application that the diff
-            touches. Use grep and sed to find it, not a full read.
+            touches. Find it with Grep, then Read that part with an offset.
+            Do not read the whole file.
 
             Judge the diff. Do not report a fault that the diff does not
             introduce, unless the diff makes it worse.
@@ -101,7 +110,10 @@ jobs:
             --allowedTools "Read,Glob,Grep,WebFetch,Write,Bash(git diff:*),Bash(git log:*),Bash(helm show:*),Bash(helm template:*)"
 
       - name: Post the review
-        if: always()
+        # Not always(): the concurrency group cancels the run in flight on each
+        # new push, and always() then reports "No review was written" for a run
+        # that was stopped on purpose.
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}

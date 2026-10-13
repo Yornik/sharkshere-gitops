@@ -22,7 +22,7 @@ This repository is one of three:
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
 | [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
-| [`REVIEW.md`](REVIEW.md) | Two checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |
+| [`REVIEW.md`](REVIEW.md) | 2 checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 
@@ -38,7 +38,7 @@ docs/           Technical overview, style guide and incident write-ups.
 ## How a change reaches the cluster
 
 1. Open a pull request against `main`.
-2. CI runs seven checks. See [CI checks](#ci-checks).
+2. CI runs 7 checks. See [CI checks](#ci-checks).
 3. Merge the pull request.
 4. GitHub sends a webhook to ArgoCD.
 5. ArgoCD syncs the root Application within seconds.
@@ -95,7 +95,7 @@ After the last command, ArgoCD creates all other Applications from `apps/values.
 
 ## CI checks
 
-CI runs on each pull request. All seven checks must pass before a merge.
+CI runs on each pull request. All 7 checks must pass before a merge.
 
 | Check | What it does |
 |---|---|
@@ -107,7 +107,7 @@ CI runs on each pull request. All seven checks must pass before a merge.
 | Validate Kubernetes Schemas | Runs `kubeconform` with CRD schemas on the plain manifests and the bootstrap overlay. |
 | Validate Rendered Helm Output | Runs `kubeconform` on the rendered Helm output. |
 
-The seven checks run in parallel and take about 20 seconds.
+The 7 checks run in parallel and take about 20 seconds.
 
 One more check runs on each pull request. It does not gate the merge.
 
