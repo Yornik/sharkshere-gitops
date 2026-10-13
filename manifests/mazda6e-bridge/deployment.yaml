@@ -40,10 +40,12 @@ spec:
               value: "300"
             - name: LISTEN_PORT
               value: "9120"
-            # Off on purpose. The position of the car is not needed on the
-            # dashboard, and /metrics has no authentication.
+            # On for the "Last known position" panel on the dashboard. /metrics
+            # has no authentication, so the Service stays ClusterIP. Do not add
+            # an IngressRoute for this port. Prometheus keeps each position for
+            # its 60 d retention, so the data is a 60-day trip history.
             - name: EXPORT_LOCATION
-              value: "false"
+              value: "true"
           ports:
             - name: http
               containerPort: 9120

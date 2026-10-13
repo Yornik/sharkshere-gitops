@@ -10,6 +10,7 @@ The `mazda6e-bridge` Application polls the Mazda 6e cloud API and exports the st
 | Source | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) |
 | Secret | `mazda6e-api`, from `manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml` |
 | Metrics | `:9120/metrics`, scraped every 60 s. The bridge polls Mazda every 300 s. |
+| Location | Exported (`EXPORT_LOCATION=true`). Prometheus keeps each position for 60 d. |
 
 The bridge only reads. It cannot lock, unlock or control the car. CI in the source repository rejects any code that calls a write endpoint.
 
@@ -72,7 +73,7 @@ This step proves that the login and the data work before the cluster depends on 
 
    ```sh
    docker run --rm -d --name mazda6e-test -p 9120:9120 \
-     -e MAZDA_EMAIL -e MAZDA_PASSWORD -e MAZDA_DEVICE_ID \
+     -e MAZDA_EMAIL -e MAZDA_PASSWORD -e MAZDA_DEVICE_ID -e EXPORT_LOCATION=true \
      ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0
    ```
 
@@ -86,7 +87,7 @@ This step proves that the login and the data work before the cluster depends on 
 4. Read the metrics:
 
    ```sh
-   curl -s localhost:9120/metrics | grep -E '^mazda6e_(scrape_success|battery_soc_percent|range_km)'
+   curl -s localhost:9120/metrics | grep -E '^mazda6e_(scrape_success|battery_soc_percent|range_km|location_)'
    ```
 
 5. Stop the test container:
@@ -95,7 +96,7 @@ This step proves that the login and the data work before the cluster depends on 
    docker stop mazda6e-test
    ```
 
-Expected result: the log shows `polled 1 of 1 vehicle(s)`. The metrics show `mazda6e_scrape_success 1.0` and the battery charge of the car.
+Expected result: the log shows `polled 1 of 1 vehicle(s)`. The metrics show `mazda6e_scrape_success 1.0` and the battery charge of the car. If the car reports a position, the metrics also show its latitude and longitude.
 
 If the result is different, see [Problems](#problems).
 
