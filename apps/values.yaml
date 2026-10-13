@@ -183,12 +183,12 @@ apps:
                   # keep_firing_for holds the alert after the expression stops
                   # matching. Without it the alert clears itself while the
                   # volume is still read-only, because the transition leaves
-                  # the 2 hour window. That happened on 2026-10-13: the mount
-                  # for soiree-pg-2 turned read-only at 23:44 UTC, the alert
-                  # fired at 23:49 and cleared at 01:39, and the fault ran on
-                  # until KubePodCrashLooping raised it at 14:04, 14 hours
-                  # after the start. 24 hours covers a fault that starts at
-                  # night.
+                  # the 2 hour window. The mount for soiree-pg-2 turned
+                  # read-only at 23:44 UTC on 2026-10-12. The alert fired at
+                  # 23:50 and cleared at 01:44, which is 23:44 plus the 2 hour
+                  # window. The fault ran on until KubePodCrashLooping raised
+                  # it at 14:04, 14 hours after the start. 24 hours covers a
+                  # fault that starts at night.
                   #
                   # CAUTION: keep_firing_for does not read the repair. The
                   # expression stops matching both when the volume is mounted
