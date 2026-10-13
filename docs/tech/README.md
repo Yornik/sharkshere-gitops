@@ -2,9 +2,11 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling ~40 ArgoCD Applications that serve 14+ public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 45 ArgoCD Applications that serve 13 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
+
+The admin interfaces do not take that path. The ArgoCD UI, Grafana, ArchiSteamFarm, qBittorrent and the Vaultwarden admin panel are reachable from a tailnet device only, through Tailscale Ingress proxies that terminate TLS with a `ts.net` certificate. See [Tailnet only](#tailnet-only).
 
 This repo is one of three:
 
@@ -20,8 +22,8 @@ This repo is one of three:
 |---|---|
 | Nodes | 4× Intel N150 (3 control-plane + 1 worker, all schedulable), Talos Linux |
 | Memory | 128 GiB cluster total |
-| Workloads | ~40 ArgoCD Applications, ~14 public HTTPS domains |
-| Postgres | 3 dedicated CloudNativePG Clusters (shared / OpenProject / GitLab), 3-instance HA each |
+| Workloads | 45 ArgoCD Applications, 13 public HTTPS domains, 5 tailnet-only admin interfaces |
+| Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
 | Storage backend | TrueNAS SCALE (7-disk raidz1 HDD pool + 2-disk SSD mirror) over NFS + iSCSI + SMB |
@@ -34,6 +36,7 @@ This repo is one of three:
 ```mermaid
 flowchart LR
   Internet([Internet])
+  Admin([Admin device<br/>on the tailnet])
   subgraph Hetzner["Hetzner Cloud (edge)"]
     HAProxy["HAProxy (L4 TCP)<br/>:80 :443 :2222<br/>PROXY v2"]
   end
@@ -44,6 +47,7 @@ flowchart LR
     Traefik["Traefik<br/>TLS termination<br/>(LE HTTP-01)"]
     Apps[Workloads]
     GitlabShell["gitlab-shell<br/>(SSH)"]
+    TSProxy["Tailscale Ingress proxies<br/>TLS (ts.net certificate)"]
   end
   subgraph NAS["TrueNAS SCALE"]
     HDD["SMB + NFS / Big_Pool<br/>(media via SMB; NFS bulk idle)"]
@@ -59,6 +63,9 @@ flowchart LR
   HAProxy -->|"PROXY v2"| Mesh
   Mesh -->|443| Traefik
   Mesh -->|22| GitlabShell
+  Admin -->|"HTTPS over WireGuard"| Mesh
+  Mesh -->|admin UIs| TSProxy
+  TSProxy --> Apps
   Traefik --> Apps
   Apps --> HDD
   Apps --> SSD_NFS
@@ -69,11 +76,13 @@ flowchart LR
 
 ## Engineering highlights
 
-- **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject and GitLab CE each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All three ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin.
+- **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject, GitLab CE and soiree each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All four ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin.
 - **iSCSI over NFS for Postgres.** Block storage on `ssd_pool` with `sync=standard` gives real per-commit `fsync` durability — pgbench notes in `manifests/shared-pg/` document the comparison that drove the decision.
 - **Valkey, not Bitnami Redis.** GitLab chart 10.0 dropped its bundled Redis subchart, and the Bitnami chart went paid in Sept 2025. The cache + queue tier runs the official Valkey chart from `valkey.io` (Linux Foundation Redis fork) with iSCSI persistence.
 - **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains. Hosted repo data (gitaly on an iSCSI zvol, invisible to NAS file-level backup) is covered by the toolbox backup CronJob — 03:30 daily, `--skip db`, uploading tarballs to `yornik-gitlab-backups`; the database is already protected by CNPG barman base backups + continuous WAL archive.
 - **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
+- **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, ArchiSteamFarm, qBittorrent and the Vaultwarden admin panel to tailnet devices, with Tailnet Lock signing each new proxy device. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
+- **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu`, and a reject-all SPF and DMARC policy for the 2 zones that send no mail.
 - **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
 - **SOPS + KSOPS** for in-cluster secret decryption. `.enc.yaml` files are decrypted by the repo-server init container with an age key mounted as a Secret; no plaintext secrets at rest or in git.
 - **PR-gated everything**: seven CI jobs before merge — yamllint, signed `security.txt` validation, a KSOPS version/hash guard, helm template, per-chart values rendering, and kubeconform with CRD schemas on both raw and rendered output (see [CI](#ci)).
@@ -100,27 +109,29 @@ manifests/      per-app manifests and Kustomize overlays
 | App | Namespace | Purpose |
 |-----|-----------|---------|
 | `local-path-provisioner` | `local-path-storage` | node-local default storage class |
-| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu` + `bokings-driessen.party` |
-| `monitoring` | `monitoring` | monitoring namespace, ingress, secrets |
+| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu` + `bokings-driessen.party`, plus CronJobs for CAA, DANE TLSA and mail records |
+| `monitoring` | `monitoring` | monitoring namespace, Grafana tailnet Ingress, secrets |
 | `tibber-exporter` | `monitoring` | energy metrics exporter |
 | `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
 | `mazda6e-bridge` | `monitoring` | read-only Mazda 6e car metrics exporter (Mazda cloud API) — see [runbook](../runbooks/mazda6e-bridge.md) |
 | `gotosocial` | `gotosocial` | fediverse service (`pub.fedishark.eu`) |
 | `jellyfin` | `jellyfin` | media service (`jelly.yornik.eu`) |
 | `omni-tools` | `omni-tools` | utility services |
-| `qbittorrent` | `jellyfin` | torrent workload |
+| `qbittorrent` | `jellyfin` | torrent workload behind a gluetun (Mullvad WireGuard) sidecar; WebUI on the tailnet only |
 | `democratic-csi` | `democratic-csi` | CSI config bootstrap |
 | `muse` | `muse` | app workload |
-| `argocd-config` | `argocd` | ArgoCD IngressRoute + fail2ban middleware |
+| `argocd-config` | `argocd` | public IngressRoute for `/api/webhook` only, tailnet Ingress for the UI and CLI, fail2ban middleware |
 | `soiree` | `soiree` | shared event budget/task planner + its CNPG cluster (`bokings-driessen.party`) |
-| `vaultwarden` | `vaultwarden` | password manager (`passwords.yornik.eu`) |
+| `vaultwarden` | `vaultwarden` | password manager (`passwords.yornik.eu`); admin panel on the tailnet only |
 | `vikunja` | `vikunja` | task management (`todo.yornik.eu`) |
-| `asf` | `asf` | app workload |
+| `asf` | `asf` | ArchiSteamFarm; IPC interface on the tailnet only |
 | `fedishark` | `fedishark` | public landing site |
 | `yornik` | `yornik` | professional site (`yornik.eu`) |
 | `privatebin` | `privatebin` | secure paste service (`secrets.yornik.eu`) |
 | `traefik-config` | `traefik` | shared edge middleware and `security.txt` |
 | `tailscale` | `tailscale` | cluster-side tailscale resources |
+| `backup-prune` | `backup-prune` | thins old backups in object storage by age (GitLab tarballs, Omni etcd snapshots) |
+| `truenas-monitoring` | `monitoring` | TrueNAS metrics (Graphite exporter) and a syslog receiver |
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 | `gitlab-pg` | `gitlab` | GitLab CE supporting resources — CNPG `gitlab-pg` Cluster (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS), IngressRoutes for `git.yornik.eu` + `registry.git.yornik.eu`, Tailscale-exposed `gitlab-shell` Service for SSH on `:2222`, and the SOPS Secrets the chart consumes (S3 buckets, registry storage, SMTP, initial root password) |
@@ -130,6 +141,7 @@ manifests/      per-app manifests and Kustomize overlays
 | App | Namespace | Chart |
 |-----|-----------|-------|
 | `smb-csi-driver` | `kube-system` | `csi-driver-smb` |
+| `metrics-server` | `kube-system` | `metrics-server` |
 | `kube-prometheus-stack` | `monitoring` | `kube-prometheus-stack` |
 | `loki` | `monitoring` | `loki` |
 | `alloy` | `monitoring` | `alloy` |
@@ -192,6 +204,8 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 
 ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu` and `bokings-driessen.party` — the third is a zone of its own, so it needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
+ExternalDNS runs with `--policy=upsert-only`: it creates and updates records but never deletes one. Removing a hostname annotation stops ExternalDNS managing the record; it does not remove it. Delete the record and its `reg-` TXT record by hand in Cloudflare, and remove the annotation first, or ExternalDNS recreates the record on its next run.
+
 ## Bootstrap
 
 Prerequisite: `kubectl` context with cluster access.
@@ -223,9 +237,14 @@ PR checks (run on every PR to `main`, seven parallel jobs in `.github/workflows/
 
 Average run: ~20 seconds.
 
+2 more workflows exist. Neither gates a merge:
+
+- `claude-review.yml` runs on each pull request and posts an advisory review, using the checklists in `REVIEW.md`.
+- `cleanup-merged-branches.yml` is run by hand. It deletes remote branches that no open pull request uses.
+
 ## Dependency updates
 
-Renovate is enabled. Patch + docker minor updates are auto-merged. Helm chart bumps open a PR with the `major` label when crossing a major; chart-cm changes require human review.
+Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A KSOPS bump also needs the manual bootstrap apply and an updated `KSOPS_SHA256`. See `renovate.json5`.
 
 ## Homelab constraints
 
@@ -233,7 +252,7 @@ Known single points of failure:
 
 - Single residential power feed
 - Single residential internet uplink
-- Shared NAS-backed storage dependency for part of the stateful workload set
+- Shared NAS-backed storage dependency for part of the stateful workload set. This one has caused outages: a TrueNAS update on 2026-10-12 turned Postgres volumes read-only and took OpenProject down for about 5 hours, and 2 more volumes went read-only the next day. See [`../incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md).
 
 A UPS on the cluster, NAS, and home router doesn't actually solve the power-outage failure mode — when neighborhood power drops, the ISP's street-cabinet equipment (DSLAM / GPON / DOCSIS amplifier) typically loses power within minutes too. Local battery backup keeps the cluster *running* but with no upstream connectivity, which serves nobody. Real mitigation needs a second independent uplink (LTE/5G failover with its own battery), and at that point dual power becomes the smaller problem.
 
