@@ -39,7 +39,7 @@ docs/           Technical overview, style guide, runbooks and incident write-ups
 ## How a change reaches the cluster
 
 1. Open a pull request against `main`.
-2. CI runs 7 checks. See [CI checks](#ci-checks).
+2. CI runs 8 checks. See [CI checks](#ci-checks).
 3. Merge the pull request.
 4. GitHub sends a webhook to ArgoCD.
 5. ArgoCD syncs the root Application within seconds.
@@ -96,7 +96,7 @@ After the last command, ArgoCD creates all other Applications from `apps/values.
 
 ## CI checks
 
-CI runs on each pull request. All 7 checks must pass before a merge.
+CI runs on each pull request. All 8 checks must pass before a merge.
 
 | Check | What it does |
 |---|---|
@@ -107,16 +107,18 @@ CI runs on each pull request. All 7 checks must pass before a merge.
 | Render Charts With Values | Renders each upstream chart with the exact values from `apps/values.yaml`. |
 | Validate Kubernetes Schemas | Runs `kubeconform` with CRD schemas on the plain manifests and the bootstrap overlay. |
 | Validate Rendered Helm Output | Runs `kubeconform` on the rendered Helm output. |
+| Review tools | Runs the tests for the tool boundary in [`.github/scripts/review.py`](.github/scripts/review.py). |
 
-The 7 checks run in parallel and take about 20 seconds.
+The 8 checks run in parallel and take about 20 seconds.
 
-One more check runs on each pull request. It does not gate the merge.
+2 more checks run on each pull request. Neither gates the merge.
 
 | Check | What it does |
 |---|---|
+| Decide whether to review | Reads the push and decides if the review runs. |
 | Claude review | Reviews the pull request against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
 
-The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft. It skips a bump that carries the `automerge` label from `renovate.json5`, unless that bump also carries `helm`, `major` or `manual-apply`. See the table in [`REVIEW.md`](REVIEW.md) and the job in [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
+The Claude review runs on the Claude API, through [`.github/scripts/review.py`](.github/scripts/review.py). It needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft. It skips a bump that carries the `automerge` label from `renovate.json5`, unless that bump also carries `helm`, `major` or `manual-apply`. It also skips a push that changes Markdown only, unless that Markdown sets the rules of the review. See the table in [`REVIEW.md`](REVIEW.md) and the job in [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
 
 NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the change is bad.
 
