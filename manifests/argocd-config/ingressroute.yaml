@@ -11,7 +11,7 @@ spec:
     # Only the webhook stays public. GitHub sends a push event here and
     # cannot join the tailnet, so this one path must keep a public route.
     # The UI and the gRPC endpoint the argocd CLI uses are on the tailnet.
-    # See manifests/argocd-config/service-tailnet.yaml.
+    # See manifests/argocd-config/ingress-tailnet.yaml.
     #
     # WARNING: Do not widen this match. The path is the boundary. A match on
     # the host alone puts the whole API and the UI back on the internet.

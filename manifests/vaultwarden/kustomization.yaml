@@ -6,6 +6,7 @@ resources:
   - service.yaml
   - ingressroute.yaml
   - ingressroute-web.yaml
+  - ingress-admin-tailnet.yaml
   - middleware-hsts.yaml
   - middleware-redirect-https.yaml
   - middleware-fail2ban-vaultwarden.yaml

@@ -80,4 +80,36 @@ data:
     upsert_caa issuewild ";"
     upsert_caa iodef "mailto:${CAA_REPORT_EMAIL}"
 
+    # Check the CAA set that resolvers serve, not only the records this
+    # script writes. The upserts above never remove a record, so they report
+    # success while other records widen the policy.
+    #
+    # 2026-10-13: yornik.eu and fedishark.eu served 9 extra CAA records. They
+    # let 5 CAs issue, and they let them issue wildcards, which overrides the
+    # issuewild ";" above. Wildcard certificates for both zones were issued.
+    # This matches Cloudflare Universal SSL, which adds CAA records for its
+    # CAs to a zone that has any CAA record. Turn Universal SSL off for the
+    # zone: every record here is DNS-only, so the edge certificate is unused.
+    #
+    # The lookup uses dns.google, so the check does not depend on the DNS
+    # provider whose records it checks. Only extra records fail the check.
+    # A record that is missing because a cache has not caught up yet does not.
+    live="$(
+      curl -fsS --retry 3 "https://dns.google/resolve?name=${CAA_RECORD_NAME}&type=CAA" \
+      | jq -r '.Answer[]? | select(.type == 257) | .data'
+    )"
+    unexpected="$(
+      printf '%s\n' "${live}" \
+      | grep -E '^[0-9]+ (issue|issuewild) ' \
+      | grep -vxF -e '0 issue "letsencrypt.org"' -e '0 issuewild ";"' \
+      || true
+    )"
+    if [ -n "${unexpected}" ]; then
+      echo "CAA drift on ${CAA_RECORD_NAME}. Resolvers serve records this script does not set:"
+      printf '%s\n' "${unexpected}" | sed 's/^/  /'
+      echo "Turn off Cloudflare Universal SSL for ${CF_ZONE_NAME}, then run this job again."
+      exit 1
+    fi
+    echo "CAA on ${CAA_RECORD_NAME} matches the policy"
+
     echo "CAA update succeeded for ${CAA_RECORD_NAME}"
