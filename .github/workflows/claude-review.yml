@@ -218,6 +218,14 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CHECKLIST: ${{ needs.gate.outputs.checklist }}
           WHAT: ${{ needs.gate.outputs.what }}
+          # Checks A7 and B9 confirm that the body holds the apply command for
+          # a change under bootstrap/. Renovate writes it there through
+          # prBodyNotes, so it is in no diff and no tool can reach it.
+          #
+          # WARNING: keep this in `env:`. The body is third-party text, and an
+          # expression inside `run:` becomes shell before bash reads the line.
+          # review.py fences it as data for the model.
+          PR_BODY: ${{ github.event.pull_request.body }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
