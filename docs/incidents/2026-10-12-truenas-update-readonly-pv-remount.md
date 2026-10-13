@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-12, recurrence 2026-10-13
 **Component:** `truenas-ssd-iscsi` volumes; the `gitlab-pg` and `openproject-pg` CNPG clusters
-**Severity:** OpenProject down about 5 hours; GitLab accepted connections but served no query for the same time
+**Severity:** OpenProject down about 5 hours; GitLab accepted connections but served no query for the same time. The recurrence on 2026-10-13 took 2 `soiree-pg` replicas and caused no outage.
 
 ## Effect
 
@@ -113,13 +113,15 @@ The alert did its job and then undid it:
 | 23:44 | The mount turns read-only. `VolumeRemountedReadOnly` goes to pending. |
 | 23:49 | The alert fires. |
 | 01:39 | The alert clears. The volume is still read-only. |
-| 14:04 | `KubePodCrashLooping` raises the fault, 14 hours later. |
+| 14:04 | `KubePodCrashLooping` raises the fault, 14 hours after 23:44. |
 
 `changes(node_filesystem_readonly[2h])` stops matching 2 hours after the transition, so the rule cleared itself while the fault remained. An alert that clears while the fault remains is worse than no alert, because the record says the cluster recovered.
 
 The rule now has `keep_firing_for: 24h`. It holds the alert for 24 hours after the expression stops matching, which covers a fault that starts at night.
 
-CAUTION: After 24 hours the alert clears, even when the volume is still read-only. The guard is only needed because the orphaned globalmounts read 1 for ever. Remove them from the nodes, then alert on `node_filesystem_readonly == 1` alone. That state does not expire.
+CAUTION: `keep_firing_for` does not read the repair. The expression stops matching both when the volume is mounted read-write again and when the 2 hour window expires, so the alert goes on firing for up to 24 hours after an operator repairs the volume. Read `node_filesystem_readonly` for the mount to tell the 2 apart. A volume that turns read-only again inside those 24 hours sends no new notification, because the alert is already firing.
+
+CAUTION: After 24 hours the alert clears, even when the volume is still read-only. Both limits come from the same guard, and the guard is only needed because the orphaned globalmounts read 1 for ever. Remove them from the nodes, then alert on `node_filesystem_readonly == 1` alone. That state ends when the repair ends it, and at no other time.
 
 ## Evidence
 

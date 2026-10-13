@@ -183,17 +183,27 @@ apps:
                   # keep_firing_for holds the alert after the expression stops
                   # matching. Without it the alert clears itself while the
                   # volume is still read-only, because the transition leaves
-                  # the 2 hour window. That happened on 2026-10-13: the alert
-                  # fired at 23:44 UTC for soiree-pg-2, cleared at 01:39, and
-                  # the instance crash-looped for 14 more hours until
-                  # KubePodCrashLooping raised it. 24 hours covers a fault that
-                  # starts at night.
+                  # the 2 hour window. That happened on 2026-10-13: the mount
+                  # for soiree-pg-2 turned read-only at 23:44 UTC, the alert
+                  # fired at 23:49 and cleared at 01:39, and the fault ran on
+                  # until KubePodCrashLooping raised it at 14:04, 14 hours
+                  # after the start. 24 hours covers a fault that starts at
+                  # night.
+                  #
+                  # CAUTION: keep_firing_for does not read the repair. The
+                  # expression stops matching both when the volume is mounted
+                  # read-write again and when the 2 hour window expires, so the
+                  # alert goes on firing for up to 24 hours after an operator
+                  # repairs the volume. Read `node_filesystem_readonly` for the
+                  # mount to tell the 2 apart. A volume that turns read-only
+                  # again inside those 24 hours sends no new notification,
+                  # because the alert is already firing.
                   #
                   # CAUTION: After 24 hours the alert clears even when the
                   # volume is still read-only. Remove the orphaned globalmounts
                   # from the nodes, then drop the `changes()` guard and the
-                  # keep_firing_for, and alert on `== 1` alone. That state does
-                  # not expire.
+                  # keep_firing_for, and alert on `== 1` alone. That state ends
+                  # when the repair ends it, and at no other time.
                   - alert: VolumeRemountedReadOnly
                     expr: |-
                       node_filesystem_readonly{mountpoint=~".*/csi/.*/globalmount",fstype!~"cifs|nfs|nfs4|iso9660|squashfs"} == 1
@@ -212,6 +222,8 @@ apps:
                         and delete them, so that kubelet unmounts and mounts it again.
                         A Postgres instance can stay Ready with every query failing, so do
                         not trust the readiness probe here.
+                        This alert goes on firing for up to 24 hours after a repair. Read
+                        node_filesystem_readonly for this mount to confirm the repair.
 
         # Alertmanager
         alertmanager:
