@@ -551,6 +551,12 @@ apps:
     namespace: monitoring
     path: manifests/dirigera-exporter
 
+  # Read-only Mazda 6e exporter. Needs the SOPS Secret before the first sync.
+  # See docs/runbooks/mazda6e-bridge.md.
+  mazda6e-bridge:
+    namespace: monitoring
+    path: manifests/mazda6e-bridge
+
   gotosocial:
     namespace: gotosocial
     path: manifests/gotosocial
