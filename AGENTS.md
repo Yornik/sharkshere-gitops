@@ -61,7 +61,13 @@ renovate.json5              Which bumps automerge, which need a person.
 .github/workflows/          CI.
 ```
 
-CAUTION: A change under `bootstrap/` does not reach the cluster on merge. It needs a `kubectl apply -k bootstrap/argocd/` by a person. A stale checkout on that apply rolls the cluster backwards. See [`docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md`](docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md).
+CAUTION: A change under `bootstrap/` does not reach the cluster on merge. A person applies it. Pull first, then run this from a current checkout:
+
+```bash
+kubectl --context yornik-sharkshere apply --server-side --force-conflicts -k bootstrap/argocd/
+```
+
+`--server-side` is required because the `applicationsets.argoproj.io` CRD is larger than the annotation limit that a client-side apply uses. A stale checkout on that apply rolls the cluster backwards. See [`docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md`](docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md).
 
 ## How to review a pull request
 

@@ -115,7 +115,7 @@ One more check runs on each pull request. It does not gate the merge.
 |---|---|
 | Claude review | Reviews the pull request against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
 
-The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft. It skips a bump that carries the `automerge` label from `renovate.json5`, unless that bump also carries `helm`, `major` or `manual-apply`. See the table in [`REVIEW.md`](REVIEW.md). See [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
+The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft. It skips a bump that carries the `automerge` label from `renovate.json5`, unless that bump also carries `helm`, `major` or `manual-apply`. See the table in [`REVIEW.md`](REVIEW.md) and the job in [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
 
 NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the change is bad.
 
