@@ -1,4 +1,5 @@
-import datetime as dt, unittest
+import contextlib, datetime as dt, unittest, urllib.error
+from unittest import mock
 import prune
 UTC = dt.timezone.utc
 NOW = dt.datetime(2030, 6, 30, 12, 0, tzinfo=UTC)
@@ -65,5 +66,60 @@ class Signing(unittest.TestCase):
                             "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", "/test.txt",
                             now=dt.datetime(2013, 5, 24, tzinfo=UTC), ttl=86400)
         self.assertTrue(url.endswith("aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404"), url)
+
+class Deleting(unittest.TestCase):
+    """delete_object repeats a transient failure and gives up on a real one."""
+
+    CFG = dict(endpoint="https://fsn1.example.com", region="fsn1", bucket="b", access="A", secret="S")
+
+    @staticmethod
+    def _ok(status=204):
+        res = mock.Mock(status=status)
+        cm = mock.MagicMock()
+        cm.__enter__.return_value = res
+        return cm
+
+    @staticmethod
+    def _http(code):
+        return urllib.error.HTTPError("https://fsn1.example.com/b/k", code, "boom", {}, None)
+
+    @contextlib.contextmanager
+    def _urlopen(self, side_effect):
+        with mock.patch.object(prune.urllib.request, "urlopen", side_effect=side_effect) as m, \
+             mock.patch.object(prune.time, "sleep") as slept:
+            yield m, slept
+
+    def test_a_504_is_retried_and_then_succeeds(self):
+        # the failure seen on 2026-10-11: one 504, then the delete goes through
+        with self._urlopen([self._http(504), self._ok()]) as (m, slept):
+            self.assertEqual(prune.delete_object(self.CFG, "k"), 204)
+        self.assertEqual(m.call_count, 2)
+        slept.assert_called_once_with(1)
+
+    def test_it_backs_off_between_attempts(self):
+        with self._urlopen([self._http(503), self._http(500), self._ok()]) as (m, slept):
+            prune.delete_object(self.CFG, "k")
+        self.assertEqual([c.args[0] for c in slept.call_args_list], [1, 2])
+
+    def test_a_403_is_not_retried(self):
+        with self._urlopen([self._http(403), self._ok()]) as (m, slept):
+            with self.assertRaises(urllib.error.HTTPError) as caught:
+                prune.delete_object(self.CFG, "k")
+        self.assertEqual(caught.exception.code, 403)
+        self.assertEqual(m.call_count, 1, "a permission error must not be repeated")
+        slept.assert_not_called()
+
+    def test_it_gives_up_after_the_last_attempt(self):
+        with self._urlopen([self._http(504)] * 4) as (m, slept):
+            with self.assertRaises(urllib.error.HTTPError):
+                prune.delete_object(self.CFG, "k", attempts=4)
+        self.assertEqual(m.call_count, 4)
+        self.assertEqual(slept.call_count, 3, "no sleep after the final attempt")
+
+    def test_a_timeout_is_retried(self):
+        with self._urlopen([urllib.error.URLError("timed out"), self._ok()]) as (m, slept):
+            prune.delete_object(self.CFG, "k")
+        self.assertEqual(m.call_count, 2)
+
 
 unittest.main(verbosity=1)

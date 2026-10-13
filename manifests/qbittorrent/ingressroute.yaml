@@ -10,16 +10,21 @@ spec:
     - match: Host(`qbittorrent.fedishark.eu`)
       kind: Rule
       middlewares:
-        - name: qbittorrent-auth
-          namespace: jellyfin
-        - name: rate-limit
+        # Traefik runs this list in order. basicAuth ends the chain on a
+        # rejection, so every middleware after it is skipped for a failed
+        # login. qbittorrent-auth stays last: a 401 must still pass through
+        # fail2ban and rate-limit, and must still get the response headers.
+        # See docs/incidents/2026-09-29-qbittorrent-middleware-order.md
+        - name: security-headers
           namespace: traefik
         - name: fail2ban
           namespace: traefik
-        - name: security-headers
+        - name: rate-limit
           namespace: traefik
         - name: no-compression
           namespace: traefik
+        - name: qbittorrent-auth
+          namespace: jellyfin
       services:
         - name: qbittorrent
           port: 8080

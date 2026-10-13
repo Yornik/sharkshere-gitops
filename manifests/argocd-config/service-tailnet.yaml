@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server-tailnet
+  namespace: argocd
+  annotations:
+    # The Tailscale operator publishes this Service on the tailnet at
+    # argocd.hedgehog-wage.ts.net. The UI and the argocd CLI reach ArgoCD
+    # there. The public IngressRoute now serves only /api/webhook, because
+    # GitHub cannot join the tailnet.
+    #
+    # We own this Service. The upstream argocd-server Service stays for
+    # in-cluster traffic, so a bootstrap re-apply does not reconcile the
+    # annotation away.
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: argocd
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: argocd-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
