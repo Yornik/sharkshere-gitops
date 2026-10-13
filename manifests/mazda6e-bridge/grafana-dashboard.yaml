@@ -1,12 +1,14 @@
 ---
 # Source: github.com/Yornik/mazda6e-grafana-bridge, dashboards/mazda6e.json.
 # Change the dashboard there first, then copy it here.
-# This copy differs from the source in 2 places. Make both changes again
+# This copy differs from the source in 3 places. Make all 3 changes again
 # after each copy:
 # - It has no Location section, because EXPORT_LOCATION is off.
 # - The datasource variable selects "Prometheus". With no selection,
 #   Grafana picks the first Prometheus-type data source by name, which
 #   is grafana-amazonprometheus-datasource, and every panel shows No data.
+# - The tire panels show bar, not kPa: the query divides by 100 and the
+#   thresholds are 2.2, 2.4 and 3.0 bar.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1635,10 +1637,10 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "pressurekpa",
-              "min": 150,
-              "max": 350,
-              "decimals": 0,
+              "unit": "pressurebar",
+              "min": 1.5,
+              "max": 3.5,
+              "decimals": 2,
               "color": {
                 "mode": "thresholds"
               },
@@ -1651,15 +1653,15 @@ data:
                   },
                   {
                     "color": "orange",
-                    "value": 220
+                    "value": 2.2
                   },
                   {
                     "color": "green",
-                    "value": 240
+                    "value": 2.4
                   },
                   {
                     "color": "orange",
-                    "value": 300
+                    "value": 3
                   }
                 ]
               },
@@ -1688,7 +1690,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "mazda6e_tire_pressure_kpa{vin=~\"$vin\"}",
+              "expr": "mazda6e_tire_pressure_kpa{vin=~\"$vin\"} / 100",
               "refId": "A",
               "legendFormat": "{{tire}}",
               "range": false,
@@ -1716,7 +1718,7 @@ data:
               "color": {
                 "mode": "palette-classic"
               },
-              "unit": "pressurekpa",
+              "unit": "pressurebar",
               "custom": {
                 "drawStyle": "line",
                 "lineWidth": 2,
@@ -1743,15 +1745,15 @@ data:
                   },
                   {
                     "color": "orange",
-                    "value": 220
+                    "value": 2.2
                   },
                   {
                     "color": "green",
-                    "value": 240
+                    "value": 2.4
                   },
                   {
                     "color": "orange",
-                    "value": 300
+                    "value": 3
                   }
                 ]
               }
@@ -1776,7 +1778,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "mazda6e_tire_pressure_kpa{vin=~\"$vin\"}",
+              "expr": "mazda6e_tire_pressure_kpa{vin=~\"$vin\"} / 100",
               "refId": "A",
               "legendFormat": "{{tire}}",
               "range": true
