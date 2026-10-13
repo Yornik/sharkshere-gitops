@@ -474,6 +474,11 @@ and the evidence for it, not a summary of the diff.
 BODY_OPEN = "<pull-request-body>"
 BODY_CLOSE = "</pull-request-body>"
 
+# Any shape of the tag, so a body cannot close the block with a case or a
+# space the exact string misses. An exact match let 4 of 5 variants through,
+# among them `</PULL-REQUEST-BODY>` and `</pull-request-body >`.
+BODY_TAG = re.compile(r"<\s*/?\s*pull-request-body[^>]*>", re.IGNORECASE)
+
 # A body is larger than any apply command long before this. The cap bounds
 # what a pull request can add to the bill.
 MAX_BODY_CHARS = 20_000
@@ -484,14 +489,15 @@ def fence_body(body: str) -> str:
 
     The body is third-party text. Renovate copies release notes into it, and
     any author writes what they like. A body that held the closing tag could
-    end the block and have the rest read as an instruction, so the tags are
-    neutralised in the text first.
+    end the block and have the rest read as an instruction, so every shape of
+    the tag is removed from the text first. BODY_TAG matches any case and
+    allows a space, because an exact match missed 4 variants out of 5.
     """
     body = (body or "").strip()
     if not body:
         return "The pull request has no body."
 
-    safe = body.replace(BODY_CLOSE, "(tag removed)").replace(BODY_OPEN, "(tag removed)")
+    safe = BODY_TAG.sub("(tag removed)", body)
     if len(safe) > MAX_BODY_CHARS:
         safe = safe[:MAX_BODY_CHARS] + "\n... body truncated."
     return f"{BODY_OPEN}\n{safe}\n{BODY_CLOSE}"

@@ -66,8 +66,8 @@ jobs:
             echo "what=a change to this repository" >> "$GITHUB_OUTPUT"
           fi
 
-      # A review costs about $0.30, so a push that changes only prose is not
-      # worth one. `paths-ignore` on a pull_request event does not do this: it
+      # A review cost about $0.30 on 2026-10-13, so a push that changes only
+      # prose is not worth one. `paths-ignore` on a pull_request event does not do this: it
       # reads every file in the pull request, not the files in the push, so a
       # pull request that touched 1 manifest keeps paying for each later
       # documentation push. This step reads the push instead.
