@@ -11,6 +11,7 @@ resources:
   - configmap-dane-updater-script.yaml
   - configmap-mail-updater-script.yaml
   - configmap-no-mail-script.yaml
+  - cronjob-caa-updater-bokings.yaml
   - cronjob-caa-updater-fedishark.yaml
   - cronjob-caa-updater-yornik.yaml
   - cronjob-dane-updater.yaml
