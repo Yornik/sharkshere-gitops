@@ -361,10 +361,13 @@ class WorkflowShape(unittest.TestCase):
     """
 
     def setUp(self):
+        # Fail, do not skip. A skip left these 4 tests silently out while the
+        # `Review tools` check stayed green, which is the false green that
+        # commit 7f9db21 is about. validate.yaml installs pyyaml for this.
         try:
             import yaml
-        except ImportError:
-            self.skipTest("pyyaml is not installed")
+        except ImportError as err:  # pragma: no cover - the job installs it
+            self.fail(f"pyyaml is required to test the workflow shape: {err}")
         self.wf = yaml.safe_load((ROOT / ".github/workflows/claude-review.yml").read_text())
 
     def test_the_workflow_has_no_concurrency_group(self):
@@ -382,6 +385,72 @@ class WorkflowShape(unittest.TestCase):
     def test_the_check_name_is_unchanged(self):
         # A rename would drop the check that people look for on a pull request.
         self.assertEqual(self.wf["jobs"]["review"]["name"], "Claude review")
+
+    def test_the_gate_turns_rename_detection_off(self):
+        # With rename detection, a push that moves a manifest to a .md path
+        # looks like Markdown, the review skips, and ArgoCD still prunes the
+        # resource. See RenameDetection for the git behaviour.
+        gate = next(step for step in self.wf["jobs"]["gate"]["steps"]
+                    if step.get("id") == "gate")
+        self.assertIn("--no-renames", gate["run"])
+
+    def test_the_test_job_installs_pyyaml(self):
+        # setUp fails without it, so the job has to install it.
+        body = (ROOT / ".github/workflows/validate.yaml").read_text()
+        self.assertIn("PYYAML_VERSION", body)
+        self.assertIn("pyyaml==", body)
+
+
+class RenameDetection(unittest.TestCase):
+    """The gate reads `git diff --name-only`, so git's default matters.
+
+    This holds the assumption behind --no-renames. It fails if git ever lists
+    both paths by default, which would make the flag unnecessary.
+    """
+
+    def _repo_with_a_rename(self, directory):
+        def git(*args):
+            subprocess.run(["git", *args], cwd=directory, check=True,
+                           capture_output=True, text=True)
+        git("init", "-q", ".")
+        git("config", "user.email", "t@example.com")
+        git("config", "user.name", "t")
+        (pathlib.Path(directory) / "manifests").mkdir()
+        (pathlib.Path(directory) / "docs").mkdir()
+        (pathlib.Path(directory) / "manifests/pvc.yaml").write_text(
+            "kind: PersistentVolumeClaim\n")
+        git("add", "-A")
+        git("commit", "-qm", "base")
+        git("mv", "manifests/pvc.yaml", "docs/pvc.md")
+        git("commit", "-qm", "rename")
+
+    def _names(self, directory, *flags):
+        out = subprocess.run(["git", "diff", "--name-only", *flags, "HEAD~1", "HEAD"],
+                             cwd=directory, capture_output=True, text=True, check=True)
+        return sorted(line for line in out.stdout.splitlines() if line)
+
+    def test_the_default_hides_the_old_path_of_a_rename(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self._repo_with_a_rename(directory)
+            self.assertEqual(self._names(directory), ["docs/pvc.md"])
+
+    def test_no_renames_lists_the_delete_and_the_add(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self._repo_with_a_rename(directory)
+            self.assertEqual(self._names(directory, "--no-renames"),
+                             ["docs/pvc.md", "manifests/pvc.yaml"])
+
+    def test_the_gate_rule_reviews_the_rename_only_with_the_flag(self):
+        # The gate's own test: any name that is not Markdown means review.
+        def not_markdown(names):
+            return any(not name.endswith(".md") for name in names)
+
+        with tempfile.TemporaryDirectory() as directory:
+            self._repo_with_a_rename(directory)
+            self.assertFalse(not_markdown(self._names(directory)),
+                             "the default would review it, so the flag is pointless")
+            self.assertTrue(not_markdown(self._names(directory, "--no-renames")),
+                            "the flag must make the gate review the rename")
 
 
 class Prompt(unittest.TestCase):

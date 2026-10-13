@@ -418,7 +418,7 @@ LOCAL_TOOLS = [read_file, list_files, search_files, git_diff, git_log, helm_show
 #
 # NOTE: `helm_show_values` is the 1 tool that still fetches from the runner.
 # It reaches a chart repository only, from the list in
-# bootstrap/argocd-project.yaml. See PROJECT_FILE below.
+# bootstrap/argocd-project.yaml. See PROJECT_FILE above.
 #
 # max_uses bounds the cost of a review. web_fetch reads a URL that is already
 # in the conversation, so the search finds the release notes and the fetch
@@ -487,7 +487,7 @@ def run_review(client: anthropic.Anthropic, system: list[dict], task: str) -> st
     messages: list[dict] = [{"role": "user", "content": task}]
     turns = 0
 
-    for restart in range(MAX_RESTARTS + 1):
+    for attempt in range(MAX_RESTARTS + 1):
         runner = client.beta.messages.tool_runner(
             model=MODEL,
             max_tokens=MAX_TOKENS,
@@ -570,7 +570,14 @@ def run_review(client: anthropic.Anthropic, system: list[dict], task: str) -> st
                 )
             return final_text(closing)
 
-        print(f"Turn paused. Restarting it ({restart + 1}/{MAX_RESTARTS}).", file=sys.stderr)
+        # attempt 0 is the first run, so there are MAX_RESTARTS restarts after
+        # it. Report one only when it follows: the last pass falls out of the
+        # loop and gives up, and the counter used to read 6/5 there.
+        if attempt < MAX_RESTARTS:
+            print(
+                f"Turn paused. Restarting it ({attempt + 1}/{MAX_RESTARTS}).",
+                file=sys.stderr,
+            )
 
     raise SystemExit(f"The turn still paused after {MAX_RESTARTS} restarts.")
 

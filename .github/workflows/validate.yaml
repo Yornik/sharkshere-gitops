@@ -9,6 +9,8 @@ env:
   KUBECONFORM_VERSION: v0.8.0
   # renovate: datasource=pypi depName=anthropic
   ANTHROPIC_VERSION: 1.13.0
+  # renovate: datasource=pypi depName=pyyaml
+  PYYAML_VERSION: 6.0.3
   # CRD schemas (IngressRoute, Middleware, CNPG Cluster, Application,
   # PodMonitor, ...). Without this, kubeconform skips every CRD-typed
   # resource — more than half the repo — while reporting green.
@@ -43,8 +45,11 @@ jobs:
       # The tool list in review.py is the boundary that stops an instruction
       # hidden in a release note. These tests state each refusal, so a change
       # that widens a tool fails here instead of on the cluster.
-      - name: Install the Anthropic SDK
-        run: pip install "anthropic==${ANTHROPIC_VERSION}"
+      # pyyaml reads the workflow in the WorkflowShape tests. Without it those
+      # 4 tests fail, and the job says so: a skip would leave the check green
+      # while the concurrency split went untested.
+      - name: Install the Anthropic SDK and pyyaml
+        run: pip install "anthropic==${ANTHROPIC_VERSION}" "pyyaml==${PYYAML_VERSION}"
 
       - name: Test the review tools
         run: python3 .github/scripts/test_review.py

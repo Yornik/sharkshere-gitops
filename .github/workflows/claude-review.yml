@@ -100,7 +100,13 @@ jobs:
             SCOPE="the whole pull request"
           fi
 
-          CHANGED=$(git diff --name-only $RANGE)
+          # --no-renames is required. With rename detection, git lists the
+          # new path of a rename only. A push that moves
+          # manifests/x/pvc.yaml to docs/x.md then looks like Markdown, the
+          # review skips, and ArgoCD still prunes the PersistentVolumeClaim
+          # on merge. --no-renames lists the delete and the add, so the
+          # manifest path is in the list and the review runs.
+          CHANGED=$(git diff --name-only --no-renames $RANGE)
           echo "Files changed in ${SCOPE}:"
           echo "$CHANGED" | sed 's/^/  /'
 
