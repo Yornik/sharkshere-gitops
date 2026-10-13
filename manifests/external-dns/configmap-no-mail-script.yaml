@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: no-mail-script
+  namespace: external-dns
+data:
+  # Publish an SPF and a DMARC policy that reject all mail for a zone that
+  # sends no mail. Without them, any server can send mail with a From address
+  # in the zone, and a receiver has no policy that tells it to refuse the mail.
+  #
+  # No service sends from these zones: GoToSocial, soiree, Vaultwarden, GitLab
+  # and OpenProject all send from @yornik.eu.
+  #
+  # The script takes over an existing record of the same kind, whatever its
+  # comment. A second SPF or DMARC record makes the policy invalid, so the
+  # script never adds one beside another. If it finds more than 1, it stops
+  # and changes nothing, because deleting a record is not its job.
+  #
+  # NOTE: There is no null MX record (RFC 7505). The Cloudflare documentation
+  # for record types does not say that it accepts one, and a record the API
+  # rejects would fail this job every week.
+  update-no-mail.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${CF_API_TOKEN:?CF_API_TOKEN is required}"
+    : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
+    : "${MAIL_TTL:=3600}"
+
+    MANAGED_COMMENT="managed-by: sharkshere-no-mail"
+    SPF="v=spf1 -all"
+    DMARC="v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s;"
+
+    api() {
+      curl -fsS --retry 3 \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "$@"
+    }
+
+    ZONE_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones?name=${CF_ZONE_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
+    if [ -z "${ZONE_ID}" ]; then
+      echo "Failed to resolve Cloudflare zone id for ${CF_ZONE_NAME}"
+      exit 1
+    fi
+
+    # Set the 1 TXT record at $1 whose content starts with $2 to $3.
+    ensure_txt() {
+      name="$1"
+      prefix="$2"
+      content="$3"
+
+      # Cloudflare can return TXT content with or without quotes.
+      ids="$(
+        api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=TXT&name=${name}&per_page=100" \
+        | jq -r --arg p "${prefix}" '
+            .result[]
+            | select((.content | ltrimstr("\"")) | startswith($p))
+            | .id
+          '
+      )"
+      count="$(printf '%s' "${ids}" | grep -c . || true)"
+      if [ "${count}" -gt 1 ]; then
+        echo "Found ${count} records at ${name} that start with ${prefix}. Remove the extras by hand."
+        exit 1
+      fi
+
+      body="$(
+        jq -cn \
+          --arg name "${name}" \
+          --arg content "${content}" \
+          --arg comment "${MANAGED_COMMENT}" \
+          --argjson ttl "${MAIL_TTL}" \
+          '{type: "TXT", name: $name, content: $content, ttl: $ttl, comment: $comment}'
+      )"
+      if [ -n "${ids}" ]; then
+        api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${ids}" --data "${body}" >/dev/null
+      else
+        api -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" --data "${body}" >/dev/null
+      fi
+      echo "Ensured TXT ${name}: ${content}"
+    }
+
+    ensure_txt "${CF_ZONE_NAME}" "v=spf1" "${SPF}"
+    ensure_txt "_dmarc.${CF_ZONE_NAME}" "v=DMARC1" "${DMARC}"
+
+    echo "No-mail policy ensured for ${CF_ZONE_NAME}"
