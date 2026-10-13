@@ -16,7 +16,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-09-18 | [external-dns-annotation-prefix.md](2026-09-18-external-dns-annotation-prefix.md) | An auto-merged minor bump stopped ExternalDNS publishing anything, silently, for days |
 | 2026-09-29 | [qbittorrent-middleware-order.md](2026-09-29-qbittorrent-middleware-order.md) | A failed qBittorrent login skipped fail2ban and rate-limit, and got no security headers |
 | 2026-10-11 | [backup-prune-transient-delete-504.md](2026-10-11-backup-prune-transient-delete-504.md) | One object storage timeout made a week of alerts for a problem that corrected itself |
-| 2026-10-12 | [truenas-update-readonly-pv-remount.md](2026-10-12-truenas-update-readonly-pv-remount.md) | A storage update turned 6 volumes read-only; the Postgres instance that reported Ready was the one blocking repair |
+| 2026-10-12 | [truenas-update-readonly-pv-remount.md](2026-10-12-truenas-update-readonly-pv-remount.md) | A storage update turned 6 volumes read-only; the Postgres instance that reported Ready was the one blocking repair. 2 more volumes followed on 2026-10-13, and the new alert cleared itself while the fault remained |
 
 ## How to add an incident
 

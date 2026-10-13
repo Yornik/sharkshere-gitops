@@ -172,19 +172,34 @@ apps:
             groups:
               - name: storage-readonly
                 rules:
-                  # Alert on the transition, not the state. 6 mounts read 1 at
-                  # all times and none of them is a fault: 3 orphaned iSCSI
-                  # globalmounts that no PV owns, and the 3 Jellyfin CIFS media
-                  # shares, which are ReadOnlyMany with `ro` on purpose. A rule
-                  # on `== 1` alone fires on all 6 forever. `changes()` fires
-                  # only when a mount that was read-write turns read-only,
-                  # which is the event. Measured 2026-10-12: `== 1` matched 7
-                  # series, this expression matched 0.
+                  # Alert on the transition, not the state. Several mounts
+                  # read 1 at all times and none of them is a fault: the
+                  # orphaned iSCSI globalmounts that no PV owns, and the 3
+                  # Jellyfin CIFS media shares, which are ReadOnlyMany with
+                  # `ro` on purpose. A rule on `== 1` alone fires on each of
+                  # them for ever. `changes()` fires only when a mount that was
+                  # read-write turns read-only, which is the event.
+                  #
+                  # keep_firing_for holds the alert after the expression stops
+                  # matching. Without it the alert clears itself while the
+                  # volume is still read-only, because the transition leaves
+                  # the 2 hour window. That happened on 2026-10-13: the alert
+                  # fired at 23:44 UTC for soiree-pg-2, cleared at 01:39, and
+                  # the instance crash-looped for 14 more hours until
+                  # KubePodCrashLooping raised it. 24 hours covers a fault that
+                  # starts at night.
+                  #
+                  # CAUTION: After 24 hours the alert clears even when the
+                  # volume is still read-only. Remove the orphaned globalmounts
+                  # from the nodes, then drop the `changes()` guard and the
+                  # keep_firing_for, and alert on `== 1` alone. That state does
+                  # not expire.
                   - alert: VolumeRemountedReadOnly
                     expr: |-
                       node_filesystem_readonly{mountpoint=~".*/csi/.*/globalmount",fstype!~"cifs|nfs|nfs4|iso9660|squashfs"} == 1
                       and changes(node_filesystem_readonly[2h]) > 0
                     for: 5m
+                    keep_firing_for: 24h
                     labels:
                       severity: critical
                     annotations:

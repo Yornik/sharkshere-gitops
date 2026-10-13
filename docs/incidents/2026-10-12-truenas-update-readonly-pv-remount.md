@@ -1,6 +1,6 @@
 # A storage update turned 6 volumes read-only, and the pod that looked healthiest was the most broken
 
-**Date:** 2026-10-12
+**Date:** 2026-10-12, recurrence 2026-10-13
 **Component:** `truenas-ssd-iscsi` volumes; the `gitlab-pg` and `openproject-pg` CNPG clusters
 **Severity:** OpenProject down about 5 hours; GitLab accepted connections but served no query for the same time
 
@@ -99,6 +99,27 @@ NOTE: Do not add an alert on `cnpg_collector_up == 0`. The measurement on 2026-1
 ## Open item
 
 3 `globalmount` paths on `talos-3xg-mwx`, `talos-0wq-zph` and `talos-ako-s53` are read-only and no PersistentVolume owns them. They hold a device each. They are left from volumes that are gone. They have no effect on a workload. Remove them from the node.
+
+## Recurrence on 2026-10-13
+
+2 more volumes went read-only after the first correction: `soiree-pg-2` at 23:44 UTC on 2026-10-12, and `soiree-pg-3`. `soiree-pg` came through the first event with 3 of 3 instances ready, so a volume can turn read-only hours after the storage returns. Check each cluster again on the day after an event of this kind.
+
+The correction is the same. An operator deleted the 2 replicas and each came back ready in under 60 seconds with 0 restarts. The primary `soiree-pg-1` was not affected and stayed up, so the application kept its database.
+
+The alert did its job and then undid it:
+
+| Time (UTC) | State |
+|---|---|
+| 23:44 | The mount turns read-only. `VolumeRemountedReadOnly` goes to pending. |
+| 23:49 | The alert fires. |
+| 01:39 | The alert clears. The volume is still read-only. |
+| 14:04 | `KubePodCrashLooping` raises the fault, 14 hours later. |
+
+`changes(node_filesystem_readonly[2h])` stops matching 2 hours after the transition, so the rule cleared itself while the fault remained. An alert that clears while the fault remains is worse than no alert, because the record says the cluster recovered.
+
+The rule now has `keep_firing_for: 24h`. It holds the alert for 24 hours after the expression stops matching, which covers a fault that starts at night.
+
+CAUTION: After 24 hours the alert clears, even when the volume is still read-only. The guard is only needed because the orphaned globalmounts read 1 for ever. Remove them from the nodes, then alert on `node_filesystem_readonly == 1` alone. That state does not expire.
 
 ## Evidence
 
