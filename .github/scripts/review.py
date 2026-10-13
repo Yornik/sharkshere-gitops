@@ -47,10 +47,21 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 # accepts. Containment is the boundary: the runner holds ANTHROPIC_API_KEY in
 # its environment and a token that writes to pull requests.
 #
-# `.git` is denied because its config selects an external diff command.
-# `*.enc.yaml` is denied because a review has no reason to read a secret, even
-# an encrypted one.
-DENIED = (".git/*", ".git", "*.enc.yaml", "*.agekey", "*.key", "*.pem")
+# WARNING: apply the test to each file that a tool returns, not to the
+# argument alone. The first version of search_files checked its `path` and
+# then walked `rglob(glob)` unchecked. `glob="../../../proc/self/environ"`
+# returned ANTHROPIC_API_KEY, and the job posts the review in public. A
+# directory walk also reached every `*.enc.yaml` file, because the name test
+# ran on the argument only.
+#
+# `.git` is denied everywhere, because its config selects an external diff
+# command.
+DENIED_ALWAYS = (".git", ".git/*")
+
+# These hold a secret. A tool that returns the content of a file applies them.
+# A tool that returns a name does not: check B4 reads a name to confirm that a
+# new secret file is called `*.enc.yaml`.
+DENIED_CONTENT = ("*.enc.yaml", "*.agekey", "*.key", "*.pem")
 
 # A file larger than this is a lockfile or a binary. Reading it spends tokens
 # and teaches the review nothing.
@@ -72,7 +83,15 @@ class ToolError(Exception):
     """A tool rejected its arguments. The text goes back to the model."""
 
 
-def _resolve(path: str) -> Path:
+def _denied(relative: str, content: bool) -> str | None:
+    """Return the pattern that refuses this path, or None."""
+    for pattern in DENIED_ALWAYS + (DENIED_CONTENT if content else ()):
+        if fnmatch.fnmatch(relative, pattern):
+            return pattern
+    return None
+
+
+def _resolve(path: str, content: bool = True) -> Path:
     """Return an absolute path inside the repository, or raise ToolError."""
     if not path or path.startswith("-"):
         raise ToolError(f"Rejected path {path!r}: it is empty or it is a flag.")
@@ -86,12 +105,41 @@ def _resolve(path: str) -> Path:
             "A tool reads the repository only."
         )
 
-    relative = candidate.relative_to(REPO_ROOT).as_posix()
-    for pattern in DENIED:
-        if fnmatch.fnmatch(relative, pattern):
-            raise ToolError(f"Rejected path {path!r}: the review does not read {pattern}.")
+    pattern = _denied(candidate.relative_to(REPO_ROOT).as_posix(), content)
+    if pattern:
+        raise ToolError(f"Rejected path {path!r}: the review does not read {pattern}.")
 
     return candidate
+
+
+def _allowed(candidate: Path, content: bool = True) -> bool:
+    """Return True if a file found by a directory walk passes the same test.
+
+    A walk returns a path that no argument check has seen. `rglob` accepts
+    `..` in a pattern, and relative_to() compares text, so an unresolved path
+    out of the tree passes a text test. resolve() first, then test.
+    """
+    try:
+        real = candidate.resolve()
+    except OSError:
+        return False
+    if real != REPO_ROOT and REPO_ROOT not in real.parents:
+        return False
+    relative = real.relative_to(REPO_ROOT).as_posix()
+    if set(Path(relative).parts) & SKIP_DIRS:
+        return False
+    return _denied(relative, content) is None
+
+
+def _check_pattern(pattern: str) -> str | None:
+    """Return the reason a glob pattern is refused, or None."""
+    if not pattern:
+        return "Rejected pattern: it is empty."
+    if pattern.startswith("/") or pattern.startswith("-"):
+        return "Rejected pattern: give a glob relative to the repository root."
+    if ".." in Path(pattern).parts:
+        return "Rejected pattern: it leaves the repository."
+    return None
 
 
 def _git(*args: str) -> str:
@@ -158,14 +206,15 @@ def list_files(pattern: str = "**/*.yaml") -> str:
     Args:
         pattern: A glob relative to the repository root, such as manifests/**/*.yaml.
     """
-    if pattern.startswith("/") or ".." in pattern:
-        return "Rejected pattern: give a glob relative to the repository root."
+    refused = _check_pattern(pattern)
+    if refused:
+        return refused
 
     try:
         matches = sorted(
-            p.relative_to(REPO_ROOT).as_posix()
-            for p in REPO_ROOT.glob(pattern)
-            if p.is_file() and not set(p.relative_to(REPO_ROOT).parts) & SKIP_DIRS
+            candidate.resolve().relative_to(REPO_ROOT).as_posix()
+            for candidate in REPO_ROOT.glob(pattern)
+            if candidate.is_file() and _allowed(candidate, content=False)
         )
     except (ValueError, OSError) as err:
         return f"Cannot list {pattern}: {err}"
@@ -190,6 +239,10 @@ def search_files(regex: str, path: str = ".", glob: str = "*") -> str:
         path: Directory or file to search, relative to the repository root.
         glob: Only search file names that match this glob, such as *.yaml.
     """
+    refused = _check_pattern(glob)
+    if refused:
+        return refused
+
     try:
         root = _resolve(path)
         compiled = re.compile(regex)
@@ -198,9 +251,12 @@ def search_files(regex: str, path: str = ".", glob: str = "*") -> str:
     except re.error as err:
         return f"Rejected regex {regex!r}: {err}"
 
+    # Every walked file goes through the same test as an argument. The glob
+    # check above is not enough on its own: a symlink inside the tree can
+    # still point out of it.
     files = [root] if root.is_file() else [
-        p for p in root.rglob(glob)
-        if p.is_file() and not set(p.relative_to(REPO_ROOT).parts) & SKIP_DIRS
+        candidate for candidate in root.rglob(glob)
+        if candidate.is_file() and _allowed(candidate, content=True)
     ]
 
     hits: list[str] = []
@@ -211,7 +267,7 @@ def search_files(regex: str, path: str = ".", glob: str = "*") -> str:
             text = candidate.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        name = candidate.relative_to(REPO_ROOT).as_posix()
+        name = candidate.resolve().relative_to(REPO_ROOT).as_posix()
         for number, line in enumerate(text.splitlines(), start=1):
             if compiled.search(line):
                 hits.append(f"{name}:{number}:{line[:300]}")

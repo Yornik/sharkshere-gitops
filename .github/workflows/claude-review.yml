@@ -149,10 +149,15 @@ jobs:
       #    write to .git/config plus that rule ran a program through
       #    `diff.external`. The script offers 6 typed functions instead, and
       #    every git call clears `diff.external`.
-      # 2. A path argument resolves inside the repository or the tool refuses
-      #    it. /proc/self/environ holds ANTHROPIC_API_KEY, and the old job
-      #    denied that path by rule. Containment denies it because it is not
-      #    in the tree. `.git` and `*.enc.yaml` are denied by name.
+      # 2. Each file resolves inside the repository or the tool refuses it.
+      #    /proc/self/environ holds ANTHROPIC_API_KEY, and the old job denied
+      #    that path by rule. Containment denies it because it is not in the
+      #    tree. `.git` and `*.enc.yaml` are denied by name.
+      #
+      #    WARNING: the test runs on each file that a tool returns, not on the
+      #    argument alone. A review of this job caught the opposite: a glob of
+      #    `../../../proc/self/environ` walked out of the tree and returned
+      #    the key, because only the `path` argument was checked.
       # 3. A fetch runs on Anthropic's servers, not here. The old job fetched
       #    from the runner, which holds the API key. `web_fetch` reads a URL
       #    that is already in the conversation.

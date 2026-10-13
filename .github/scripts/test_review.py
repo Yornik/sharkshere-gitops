@@ -19,6 +19,11 @@ def call(tool, **kwargs):
     return tool.call(kwargs)
 
 
+def result(completed):
+    """Return the output of a helper process, so a failure is readable."""
+    return completed.stdout + completed.stderr
+
+
 class Containment(unittest.TestCase):
     def test_a_relative_escape_is_refused(self):
         for path in ("../../etc/passwd", "../README.md", "apps/../../etc/hosts"):
@@ -67,6 +72,76 @@ class Containment(unittest.TestCase):
 
     def test_search_refuses_a_path_outside_the_tree(self):
         self.assertIn("outside the repository", call(review.search_files, regex="root", path="/etc"))
+
+
+class SearchBoundary(unittest.TestCase):
+    """The first version checked `path` and walked `glob` unchecked.
+
+    `glob="../../../proc/self/environ"` returned ANTHROPIC_API_KEY, and the
+    job posts the review in public. Each test here is that hole.
+    """
+
+    def test_a_glob_that_leaves_the_repository_is_refused(self):
+        for glob in ("../../../proc/self/environ", "*/../../etc/hostname",
+                     "../../../etc/hostname", "..", "../*"):
+            out = call(review.search_files, regex=".", path=".", glob=glob)
+            self.assertIn("leaves the repository", out, glob)
+
+    def test_an_absolute_glob_is_refused(self):
+        out = call(review.search_files, regex=".", path=".", glob="/etc/*")
+        self.assertIn("relative to the repository root", out)
+
+    def test_the_process_environment_stays_unreadable(self):
+        # The exploit, as it was reported. The secret must be in the real
+        # environment: /proc/self/environ is fixed when the process starts, so
+        # setting os.environ in the test would prove nothing.
+        marker = "sk-ant-TESTSECRET"
+        out = subprocess.run(
+            [sys.executable, "-c",
+             "import sys; sys.path.insert(0, %r); import review;"
+             "print(review.search_files.call({'regex': 'FAKE_API_KEY=[A-Za-z0-9-]+',"
+             "'path': '.', 'glob': '../../../proc/self/environ'}))"
+             % os.path.dirname(os.path.abspath(__file__))],
+            cwd=ROOT, capture_output=True, text=True,
+            env={**os.environ, "FAKE_API_KEY": marker}, timeout=60,
+        )
+        self.assertNotIn(marker, result_text := result(out))
+        self.assertIn("leaves the repository", result_text)
+
+    def test_a_directory_search_returns_no_secret_content(self):
+        # 26 *.enc.yaml files leaked their content before the per-file test.
+        out = call(review.search_files, regex=r"ENC\[AES256_GCM|sops:", path=".", glob="*")
+        leaked = sorted({
+            line.split(":")[0] for line in out.splitlines()
+            if ":" in line and line.split(":")[0].endswith(".enc.yaml")
+        })
+        self.assertEqual(leaked, [], f"content returned from {leaked}")
+
+    def test_a_symlink_inside_the_tree_that_points_out_is_skipped(self):
+        # The glob test does not cover this: the pattern stays inside the tree.
+        link = ROOT / "test-escape-search-link"
+        try:
+            link.symlink_to("/etc/hostname")
+        except (OSError, NotImplementedError):
+            self.skipTest("cannot create a symlink here")
+        try:
+            out = call(review.search_files, regex=".+", path=".",
+                       glob="test-escape-search-link")
+            self.assertNotIn("test-escape-search-link:", out)
+        finally:
+            link.unlink()
+
+    def test_a_name_search_still_shows_a_secret_file_name(self):
+        # Check B4 confirms that a new secret file is called *.enc.yaml, so a
+        # name stays visible where the content does not.
+        out = call(review.list_files, pattern="manifests/**/*.enc.yaml")
+        self.assertIn(".enc.yaml", out)
+
+    def test_list_files_refuses_a_glob_that_leaves_the_repository(self):
+        for glob in ("../../../etc/*", "/etc/*"):
+            out = call(review.list_files, pattern=glob)
+            self.assertTrue(
+                "leaves the repository" in out or "relative to the repository root" in out, glob)
 
 
 class ReadFile(unittest.TestCase):
