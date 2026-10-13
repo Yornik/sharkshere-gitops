@@ -6,7 +6,7 @@ environment and a token that writes to pull requests. These tests state what a
 tool refuses.
 """
 
-import os, pathlib, re, subprocess, sys, tempfile, types, unittest
+import os, pathlib, re, shutil, subprocess, sys, tempfile, types, unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import review
@@ -399,6 +399,164 @@ class WorkflowShape(unittest.TestCase):
         body = (ROOT / ".github/workflows/validate.yaml").read_text()
         self.assertIn("PYYAML_VERSION", body)
         self.assertIn("pyyaml==", body)
+
+
+class GateDecision(unittest.TestCase):
+    """The gate must skip a Renovate bump that merges itself.
+
+    The decision used to come from the event payload. An `opened` payload
+    holds no label, because Renovate adds them in a second call, so the test
+    read "review" for every automerge bump. While the concurrency group sat
+    on the workflow, the later `labeled` run cancelled that review. Once the
+    group moved to the `review` job, a skipped job stopped joining the group
+    and stopped cancelling, so each automerge bump paid for a review that
+    REVIEW.md says has no reader.
+
+    These tests run the gate's own shell, with `gh` and `sleep` stubbed.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import yaml
+        except ImportError as err:  # pragma: no cover - the job installs it
+            raise unittest.SkipTest(f"pyyaml missing: {err}")
+        workflow = yaml.safe_load(
+            (ROOT / ".github/workflows/claude-review.yml").read_text())
+        cls.script = next(step["run"] for step in workflow["jobs"]["gate"]["steps"]
+                          if step.get("id") == "gate")
+        if not shutil.which("jq"):
+            raise unittest.SkipTest("jq is needed to run the gate")
+
+    def run_gate(self, labels=(), author="renovate[bot]", draft=False,
+                 changed=("manifests/x/pvc.yaml",), label_delay=0):
+        """Run the gate shell and return (skip, log)."""
+        with tempfile.TemporaryDirectory() as work:
+            root = pathlib.Path(work)
+            repo, stub = root / "repo", root / "bin"
+            repo.mkdir()
+            stub.mkdir()
+
+            def git(*args):
+                subprocess.run(["git", *args], cwd=repo, check=True,
+                               capture_output=True, text=True)
+
+            git("init", "-q", ".")
+            git("config", "user.email", "t@example.com")
+            git("config", "user.name", "t")
+            (repo / "seed.txt").write_text("seed\n")
+            git("add", "-A")
+            git("commit", "-qm", "base")
+            base = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo,
+                                  capture_output=True, text=True, check=True).stdout.strip()
+            for name in changed:
+                target = repo / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("changed\n")
+            git("add", "-A")
+            git("commit", "-qm", "push")
+            head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo,
+                                  capture_output=True, text=True, check=True).stdout.strip()
+
+            # `gh pr view` answers with the live state. label_delay makes the
+            # first calls return no label, as Renovate's second call pending.
+            counter = root / "calls"
+            counter.write_text("0")
+            (stub / "gh").write_text(f"""#!/usr/bin/env bash
+n=$(cat {counter})
+n=$((n + 1))
+echo "$n" > {counter}
+if [ "$n" -le {label_delay} ]; then
+  echo '{{"labels": [], "isDraft": {str(draft).lower()}}}'
+else
+  echo '{{"labels": [{", ".join('{"name": "%s"}' % l for l in labels)}], "isDraft": {str(draft).lower()}}}'
+fi
+""")
+            (stub / "sleep").write_text("#!/usr/bin/env bash\nexit 0\n")
+            for name in ("gh", "sleep"):
+                (stub / name).chmod(0o755)
+
+            output = root / "github_output"
+            output.write_text("")
+            script = root / "gate.sh"
+            script.write_text(self.script)
+            result = subprocess.run(
+                ["bash", str(script)], cwd=repo, capture_output=True, text=True,
+                env={
+                    "PATH": f"{stub}:{os.environ['PATH']}",
+                    "HOME": str(root),
+                    "GH_TOKEN": "x", "PR": "515", "AUTHOR": author,
+                    "ACTION": "synchronize", "BEFORE": base,
+                    "HEAD_SHA": head, "BASE_SHA": base,
+                    "GITHUB_OUTPUT": str(output),
+                },
+                timeout=120,
+            )
+            log = result.stdout + result.stderr
+            self.assertEqual(result.returncode, 0, log)
+            values = dict(line.split("=", 1) for line in
+                          output.read_text().splitlines() if "=" in line)
+            return values.get("skip"), log
+
+    def test_an_automerge_bump_is_skipped(self):
+        skip, log = self.run_gate(labels=("renovate", "dependencies", "automerge"))
+        self.assertEqual(skip, "true", log)
+        self.assertIn("merges itself", log)
+
+    def test_an_automerge_bump_is_skipped_even_when_the_push_is_code(self):
+        # This is the regression: the push touches a manifest, so the push
+        # test alone would review it.
+        skip, _ = self.run_gate(labels=("automerge",), changed=("apps/values.yaml",))
+        self.assertEqual(skip, "true")
+
+    def test_a_label_that_arrives_late_is_still_read(self):
+        # The `opened` payload holds no label. The gate waits for the second
+        # call rather than pay for the review.
+        skip, log = self.run_gate(labels=("renovate", "automerge"), label_delay=3)
+        self.assertEqual(skip, "true", log)
+        self.assertIn("No label yet", log)
+
+    def test_an_automerge_bump_that_a_person_applies_is_reviewed(self):
+        for extra in ("helm", "major", "manual-apply"):
+            skip, log = self.run_gate(labels=("automerge", extra))
+            self.assertEqual(skip, "false", f"{extra}: {log}")
+
+    def test_a_renovate_bump_without_automerge_is_reviewed(self):
+        skip, _ = self.run_gate(labels=("renovate", "dependencies"))
+        self.assertEqual(skip, "false")
+
+    def test_a_person_with_an_automerge_label_is_still_reviewed(self):
+        # The rule is for Renovate. A person's pull request is not exempt.
+        skip, _ = self.run_gate(labels=("automerge",), author="Yornik")
+        self.assertEqual(skip, "false")
+
+    def test_a_draft_is_skipped(self):
+        skip, log = self.run_gate(labels=("renovate",), author="Yornik", draft=True)
+        self.assertEqual(skip, "true", log)
+        self.assertIn("draft", log)
+
+    def test_a_prose_only_push_is_skipped(self):
+        skip, _ = self.run_gate(labels=("renovate",), author="Yornik",
+                                changed=("docs/runbooks/x.md",))
+        self.assertEqual(skip, "true")
+
+    def test_a_push_that_changes_the_rules_is_reviewed(self):
+        skip, _ = self.run_gate(labels=("renovate",), author="Yornik",
+                                changed=("REVIEW.md",))
+        self.assertEqual(skip, "false")
+
+    def test_a_new_markdown_file_is_skipped(self):
+        # A plain add of a .md file is the case the gate exists for. The
+        # rename case is in RenameDetection, which covers the git behaviour
+        # that --no-renames relies on.
+        skip, log = self.run_gate(labels=("renovate",), author="Yornik",
+                                  changed=("docs/x.md",))
+        self.assertEqual(skip, "true", log)
+
+    def test_a_mixed_push_is_reviewed(self):
+        skip, log = self.run_gate(labels=("renovate",), author="Yornik",
+                                  changed=("docs/x.md", "manifests/x/pvc.yaml"))
+        self.assertEqual(skip, "false", log)
 
 
 class RenameDetection(unittest.TestCase):

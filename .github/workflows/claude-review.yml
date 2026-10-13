@@ -5,9 +5,10 @@ on:
     branches: [main]
     # `labeled` is here because Renovate creates the pull request first and
     # adds the labels in a second call. The `opened` payload carries no label,
-    # so the job below skips every labelled bump it exists to review, until a
-    # later rebase. The concurrency group cancels the duplicate run. A label
-    # added to any pull request starts a run, not only a Renovate one.
+    # so a decision taken from that payload reviews a bump that merges itself.
+    # The gate reads the labels from the API instead, so both runs reach the
+    # same answer. A label added to any pull request starts a run, not only a
+    # Renovate one.
     types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # NOTE: the concurrency group sits on the `review` job, not on the workflow.
@@ -21,24 +22,16 @@ on:
 jobs:
   gate:
     name: Decide whether to review
-    # Every pull request except a draft and except a bump that merges itself.
-    # `renovate.json5` puts the `automerge` label on exactly the rules that
-    # set automerge, so the label is the test, not the update type: a minor
-    # bump from github-releases or git-refs carries no `automerge` label and
-    # waits for a person, so it gets a review. A grouped pull request unions
-    # the labels of its members, so one that is labelled `automerge` and also
-    # `helm`, `major` or `manual-apply` holds a bump that a person applies,
-    # and it gets a review too. See REVIEW.md.
-    if: >-
-      github.event.pull_request.draft == false
-      && (github.event.pull_request.user.login != 'renovate[bot]'
-      || !contains(github.event.pull_request.labels.*.name, 'automerge')
-      || contains(github.event.pull_request.labels.*.name, 'helm')
-      || contains(github.event.pull_request.labels.*.name, 'major')
-      || contains(github.event.pull_request.labels.*.name, 'manual-apply'))
+    # This job takes the whole decision, from the API and from the push. It
+    # carries no `if:` on the event payload on purpose. The payload of an
+    # `opened` event holds no label, because Renovate adds the labels in a
+    # second call, so a condition on it says "review" for every bump that
+    # merges itself. The job is cheap and the paid review is behind it.
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # The gate reads the labels and the draft state through `gh`.
+      pull-requests: read
     outputs:
       skip: ${{ steps.gate.outputs.skip }}
       checklist: ${{ steps.lens.outputs.checklist }}
@@ -82,12 +75,67 @@ jobs:
       - name: Decide whether to review this push
         id: gate
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
           ACTION: ${{ github.event.action }}
           BEFORE: ${{ github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
+
+          # Read the labels and the draft state now, not from the payload.
+          # Renovate adds the labels in a second call, so the payload of an
+          # `opened` event holds none and a test on it reviews every bump
+          # that merges itself.
+          #
+          # renovate.json5 sets `labels: [renovate, dependencies]` at the top
+          # level, so every Renovate pull request ends up with at least 2
+          # labels. An empty list on a Renovate pull request therefore means
+          # the second call has not landed yet. Wait for it: 6 tries, 5
+          # seconds apart.
+          LABELS=""
+          DRAFT="false"
+          for attempt in 1 2 3 4 5 6; do
+            STATE=$(gh pr view "$PR" --json labels,isDraft)
+            LABELS=$(jq -r '[.labels[].name] | join(" ")' <<< "$STATE")
+            DRAFT=$(jq -r '.isDraft' <<< "$STATE")
+            if [ -n "$LABELS" ] || [ "$AUTHOR" != "renovate[bot]" ]; then
+              break
+            fi
+            echo "No label yet on a Renovate pull request. Try ${attempt} of 6."
+            sleep 5
+          done
+          echo "author=${AUTHOR} draft=${DRAFT} labels=[${LABELS}]"
+
+          has_label() {
+            # A herestring, not a pipe. Under pipefail a `grep -q` that exits
+            # early makes the writer take SIGPIPE, and the test then reads as
+            # false.
+            grep -qw -- "$1" <<< "$LABELS"
+          }
+
+          if [ "$DRAFT" = "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: the pull request is a draft."
+            exit 0
+          fi
+
+          # The label is the test, not the update type. renovate.json5 puts
+          # `automerge` on exactly the 2 rules that set automerge, so a bump
+          # without it waits for a person and gets a review. A grouped pull
+          # request unions the labels of its members, so one labelled
+          # `automerge` together with `helm`, `major` or `manual-apply` holds
+          # a bump that a person applies, and it gets a review too.
+          # See REVIEW.md.
+          if [ "$AUTHOR" = "renovate[bot]" ] && has_label automerge \
+             && ! has_label helm && ! has_label major \
+             && ! has_label manual-apply; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: the bump merges itself, so a review has no reader."
+            exit 0
+          fi
 
           # A Renovate rebase force-pushes, so the `before` commit can be gone.
           # Read the whole pull request when it is not there.
@@ -116,10 +164,10 @@ jobs:
             exit 0
           fi
 
-          if echo "$CHANGED" | grep -qvE '\.md$'; then
+          if grep -qvE '\.md$' <<< "$CHANGED"; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "Reviewing: a file that is not Markdown changed."
-          elif echo "$CHANGED" | grep -qE '^(REVIEW|AGENTS|CLAUDE)\.md$'; then
+          elif grep -qE '^(REVIEW|AGENTS|CLAUDE)\.md$' <<< "$CHANGED"; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "Reviewing: a file that sets the rules of the review changed."
           else
