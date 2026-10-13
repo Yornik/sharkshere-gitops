@@ -52,7 +52,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: 91.4.1
+      targetRevision: 92.3.1
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
@@ -175,19 +175,52 @@ apps:
             groups:
               - name: storage-readonly
                 rules:
-                  # Alert on the transition, not the state. 6 mounts read 1 at
-                  # all times and none of them is a fault: 3 orphaned iSCSI
-                  # globalmounts that no PV owns, and the 3 Jellyfin CIFS media
-                  # shares, which are ReadOnlyMany with `ro` on purpose. A rule
-                  # on `== 1` alone fires on all 6 forever. `changes()` fires
-                  # only when a mount that was read-write turns read-only,
-                  # which is the event. Measured 2026-10-12: `== 1` matched 7
-                  # series, this expression matched 0.
+                  # Alert on the transition, not the state. Some mounts read
+                  # 1 at all times and none of them is a fault. They are the
+                  # orphaned iSCSI globalmounts that no PV owns, and the 3
+                  # Jellyfin CIFS media shares, which are ReadOnlyMany with
+                  # `ro` on purpose. A rule on `== 1` alone fires on each of
+                  # them for ever. `changes()` fires only when a mount that was
+                  # read-write turns read-only. That is the event.
+                  #
+                  # keep_firing_for holds the alert after the expression stops
+                  # matching. Without it the alert clears itself while the
+                  # volume is still read-only, because the transition leaves
+                  # the 2 hour window. That happened on 2026-10-12. The mount
+                  # for soiree-pg-2 turned read-only at 23:44 UTC. The alert
+                  # fired at 23:50 and cleared at 01:44, which is 23:44 plus
+                  # the window. KubePodCrashLooping raised the fault at 14:04,
+                  # 14 hours after the start. 24 hours covers a fault that
+                  # starts at night. See
+                  # docs/incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md.
+                  #
+                  # CAUTION: keep_firing_for does not read the repair. The
+                  # expression stops matching when an operator mounts the
+                  # volume read-write again. It also stops matching when the 2
+                  # hour window expires. In both cases the alert fires for 24
+                  # more hours. Alertmanager repeats a firing alert every 12
+                  # hours, so a repaired volume sends about 2 more mails. Read
+                  # `node_filesystem_readonly` for the mount to tell a repair
+                  # from a fault that continues.
+                  #
+                  # CAUTION: A volume that turns read-only again inside the
+                  # hold raises no second alert. Its mail reads the same as the
+                  # mail for the first fault.
+                  #
+                  # CAUTION: The alert clears about 26 hours after the
+                  # transition. That is the 2 hour window and then the 24 hour
+                  # hold. The volume can still be read-only. Remove the
+                  # orphaned globalmounts from the nodes, then drop the
+                  # `changes()` guard and the keep_firing_for, and alert on
+                  # `== 1` alone. Measured 2026-10-13, after the repair: 2
+                  # orphaned globalmounts read 1, and `== 1` alone and a 7 day
+                  # window match the same 2.
                   - alert: VolumeRemountedReadOnly
                     expr: |-
                       node_filesystem_readonly{mountpoint=~".*/csi/.*/globalmount",fstype!~"cifs|nfs|nfs4|iso9660|squashfs"} == 1
                       and changes(node_filesystem_readonly[2h]) > 0
                     for: 5m
+                    keep_firing_for: 24h
                     labels:
                       severity: critical
                     annotations:
@@ -200,6 +233,8 @@ apps:
                         and delete them, so that kubelet unmounts and mounts it again.
                         A Postgres instance can stay Ready with every query failing, so do
                         not trust the readiness probe here.
+                        This alert goes on firing for up to 24 hours after a repair. Read
+                        node_filesystem_readonly for this mount to confirm the repair.
 
         # Alertmanager
         alertmanager:
@@ -297,7 +332,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: alloy
-      targetRevision: 1.12.1
+      targetRevision: 1.13.1
       values: |
         alloy:
           mounts:
@@ -1318,7 +1353,7 @@ apps:
     helm:
       repoURL: https://charts.openproject.org/
       chart: openproject
-      targetRevision: 13.12.0
+      targetRevision: 13.13.1
       values: |
         # We ship our own IngressRoute (see manifests/openproject/) so the
         # chart's bundled Ingress stays off.
