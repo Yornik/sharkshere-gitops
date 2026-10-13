@@ -1,6 +1,6 @@
 # Instructions for an agent
 
-This file tells a coding agent how to work in this repository. It applies to Claude Code, to the `Review Renovate PR` CI job and to any other agent. A person reads [`README.md`](README.md) first.
+This file tells a coding agent how to work in this repository. It applies to Claude Code, to the `Claude review` CI job and to any other agent. A person reads [`README.md`](README.md) first.
 
 ArgoCD reads this repository and makes the cluster agree with it. A change that merges to `main` reaches the cluster within seconds. Treat every change as a change to a running system.
 
@@ -10,7 +10,7 @@ ArgoCD reads this repository and makes the cluster agree with it. A change that 
 |---|---|
 | [`README.md`](README.md) | You need the layout, the CI checks or a procedure. |
 | [`docs/tech/README.md`](docs/tech/README.md) | You need the traffic flow, the storage classes or the application inventory. |
-| [`REVIEW.md`](REVIEW.md) | You review a dependency pull request. |
+| [`REVIEW.md`](REVIEW.md) | You review a pull request. |
 | [`docs/styleguide.md`](docs/styleguide.md) | You write or edit a document, a README or a comment. |
 | [`docs/incidents/`](docs/incidents/README.md) | You touch a component. Read the write-up for that component first. |
 
@@ -63,6 +63,6 @@ renovate.json5              Which bumps automerge, which need a person.
 
 CAUTION: A change under `bootstrap/` does not reach the cluster on merge. It needs a `kubectl apply -k bootstrap/argocd/` by a person. A stale checkout on that apply rolls the cluster backwards. See [`docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md`](docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md).
 
-## How to review a dependency pull request
+## How to review a pull request
 
-Use [`REVIEW.md`](REVIEW.md). It holds the checklist and the verdicts.
+Use [`REVIEW.md`](REVIEW.md). It holds the 2 checklists and the verdicts. A dependency bump gets checklist A. A change written by a person gets checklist B.

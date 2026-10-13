@@ -22,7 +22,7 @@ This repository is one of three:
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
 | [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
-| [`REVIEW.md`](REVIEW.md) | Checklist for a dependency pull request. The `Review Renovate PR` CI job uses it. |
+| [`REVIEW.md`](REVIEW.md) | Two checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 
@@ -109,15 +109,15 @@ CI runs on each pull request. All seven checks must pass before a merge.
 
 The seven checks run in parallel and take about 20 seconds.
 
-One more check runs on a Renovate pull request that Renovate does not automerge. It does not gate the merge.
+One more check runs on each pull request. It does not gate the merge.
 
 | Check | What it does |
 |---|---|
-| Claude review | Reviews the bump against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
+| Claude review | Reviews the pull request against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
 
-The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check skips a pull request that automerges, so it runs about 15 times each month. See [`.github/workflows/renovate-review.yml`](.github/workflows/renovate-review.yml).
+The Claude review needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft, and it skips a Renovate pull request that automerges. See [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
 
-NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the bump is bad.
+NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the change is bad.
 
 ## Known limits
 
