@@ -83,7 +83,8 @@ jobs:
           # loops. It has no effect on a pull request a person opened.
           allowed_bots: 'renovate[bot]'
           # Authenticate as this repository, not as the Claude GitHub App, so
-          # the job needs no app installation. The job only reads.
+          # the job needs no app installation. The job reads the contents and
+          # writes 1 comment.
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             Review pull request #${{ github.event.pull_request.number }} of
@@ -111,10 +112,20 @@ jobs:
             for it, not a summary of the diff.
 
             Write no other file. Do not commit. Do not push. Do not comment.
+          # Edit(/claude-review.md) in place of a bare Write: the review may
+          # write that 1 file and nothing else. An unrestricted Write plus the
+          # allowed `git diff` is a way to run code on the runner. A prompt
+          # injected through the release notes writes `[diff] external = sh
+          # ./x.sh` into .git/config and writes the script, and `git diff` then
+          # runs it through a shell. The runner holds ANTHROPIC_API_KEY and a
+          # token that writes to pull requests.
+          # NOTE: the rule names Edit, not Write. Claude Code reads a path rule
+          # for Edit and Read only. It accepts `Write(path)` and never consults
+          # it, so that form looks correct and allows everything.
           claude_args: |
             --model claude-opus-5-5
             --max-turns 40
-            --allowedTools "Read,Glob,Grep,WebFetch,Write,Bash(git diff:*),Bash(git log:*),Bash(helm show:*)"
+            --allowedTools "Read,Glob,Grep,WebFetch,Edit(/claude-review.md),Bash(git diff:*),Bash(git log:*),Bash(helm show:*)"
 
       - name: Post the review
         # Not always(): the concurrency group cancels the run in flight on each
