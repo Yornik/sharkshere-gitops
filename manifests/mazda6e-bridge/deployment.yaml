@@ -36,8 +36,10 @@ spec:
             - secretRef:
                 name: mazda6e-api
           env:
+            # Every 2 minutes, so the dashboard follows a drive or a charge
+            # closely. The bridge refuses an interval below 60 s.
             - name: POLL_INTERVAL_SECONDS
-              value: "300"
+              value: "120"
             - name: LISTEN_PORT
               value: "9120"
             # On for the "Last known position" panel on the dashboard. /metrics

@@ -14,7 +14,7 @@ spec:
     matchNames:
       - monitoring
   endpoints:
-    # The bridge polls Mazda every 300 s. A 60 s scrape is enough to see each
+    # The bridge polls Mazda every 120 s. A 60 s scrape is enough to see each
     # poll. A shorter interval only stores the same value more often.
     - port: http
       path: /metrics
