@@ -113,7 +113,7 @@ ArgoCD applies a merge to `main` within seconds. It prunes what git does not hol
 
 1. List the Applications that the diff changes.
 2. Name the namespace and the public domain of each one.
-3. Report a change that reaches 1 of the 14 public domains.
+3. Report a change that reaches 1 of the 13 public domains.
 
 ### B2. Check a field that the API server does not let you change
 

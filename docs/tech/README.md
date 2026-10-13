@@ -131,7 +131,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `traefik-config` | `traefik` | shared edge middleware and `security.txt` |
 | `tailscale` | `tailscale` | cluster-side tailscale resources |
 | `backup-prune` | `backup-prune` | thins old backups in object storage by age (GitLab tarballs, Omni etcd snapshots) |
-| `truenas-monitoring` | `monitoring` | TrueNAS metrics (Graphite exporter) and a syslog receiver |
+| `truenas-monitoring` | `monitoring` | TrueNAS metrics (Graphite exporter) and a syslog NodePort (`alloy-syslog`) that feeds Alloy |
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 | `gitlab-pg` | `gitlab` | GitLab CE supporting resources — CNPG `gitlab-pg` Cluster (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS), IngressRoutes for `git.yornik.eu` + `registry.git.yornik.eu`, Tailscale-exposed `gitlab-shell` Service for SSH on `:2222`, and the SOPS Secrets the chart consumes (S3 buckets, registry storage, SMTP, initial root password) |
@@ -204,7 +204,13 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 
 ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu` and `bokings-driessen.party` — the third is a zone of its own, so it needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
-ExternalDNS runs with `--policy=upsert-only`: it creates and updates records but never deletes one. Removing a hostname annotation stops ExternalDNS managing the record; it does not remove it. Delete the record and its `reg-` TXT record by hand in Cloudflare, and remove the annotation first, or ExternalDNS recreates the record on its next run.
+ExternalDNS runs with `--policy=upsert-only`. It creates and updates records. It does not delete a record. To remove a hostname:
+
+1. Remove the hostname annotation and merge the change.
+2. After ArgoCD syncs, delete the record in Cloudflare.
+3. Delete each owner TXT record for that hostname. The prefix is `reg-%{record_type}-`, so there is 1 for each record type, for example `reg-cname-<host>` or `reg-a-<host>`.
+
+If you delete the record before the annotation is gone, ExternalDNS creates it again on its next run.
 
 ## Bootstrap
 
@@ -252,7 +258,7 @@ Known single points of failure:
 
 - Single residential power feed
 - Single residential internet uplink
-- Shared NAS-backed storage dependency for part of the stateful workload set. This one has caused outages: a TrueNAS update on 2026-10-12 turned Postgres volumes read-only and took OpenProject down for about 5 hours, and 2 more volumes went read-only the next day. See [`../incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md).
+- Shared NAS-backed storage dependency for part of the stateful workload set. This one has caused an outage: a TrueNAS update on 2026-10-12 turned Postgres volumes read-only and took OpenProject down for about 5 hours. 2 more volumes went read-only the next day, without an outage. See [`../incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md).
 
 A UPS on the cluster, NAS, and home router doesn't actually solve the power-outage failure mode — when neighborhood power drops, the ISP's street-cabinet equipment (DSLAM / GPON / DOCSIS amplifier) typically loses power within minutes too. Local battery backup keeps the cluster *running* but with no upstream connectivity, which serves nobody. Real mitigation needs a second independent uplink (LTE/5G failover with its own battery), and at that point dual power becomes the smaller problem.
 
