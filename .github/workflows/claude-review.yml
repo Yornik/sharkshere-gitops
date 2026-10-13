@@ -70,8 +70,11 @@ jobs:
       # worth one. `paths-ignore` on a pull_request event does not do this: it
       # reads every file in the pull request, not the files in the push, so a
       # pull request that touched 1 manifest keeps paying for each later
-      # documentation push. On 2026-10-13 that cost 5 reviews in 15 minutes on
-      # a single pull request. This step reads the push instead.
+      # documentation push. This step reads the push instead.
+      #
+      # NOTE: this gate does not stop a repeated push that edits a comment in
+      # a YAML file. That is YAML, so it gets a review, and check B10 reads a
+      # comment on purpose.
       #
       # REVIEW.md, AGENTS.md and CLAUDE.md are Markdown, and they are not
       # documentation for this test: they set the rules the review follows, so

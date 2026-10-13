@@ -478,12 +478,23 @@ def run_review(client: anthropic.Anthropic, system: list[dict], task: str) -> st
             raise SystemExit("The model returned no message.")
 
         if last.stop_reason != "pause_turn":
-            text = final_text(last)
-            if text:
-                return text
-            # The turn limit cut the loop off before the model wrote the
-            # review. Ask once more, with the tools declared so the mirrored
-            # history still validates, and `none` so no new call starts.
+            # Accept the text only when the turn ended on its own. A turn that
+            # the limit cut off, or that hit max_tokens, carries whatever the
+            # model wrote before its next tool call, such as "Let me read the
+            # values file". That is a note, not a review, and the job posts
+            # the review in public.
+            if last.stop_reason == "end_turn":
+                text = final_text(last)
+                if text:
+                    return text
+
+            print(
+                f"The turn ended on {last.stop_reason!r}. Asking for the review.",
+                file=sys.stderr,
+            )
+
+            # Ask once more, with the tools declared so the mirrored history
+            # still validates, and `none` so no new call starts.
             ask = {
                 "type": "text",
                 "text": "Write the review now, from what you have read. "
@@ -506,6 +517,11 @@ def run_review(client: anthropic.Anthropic, system: list[dict], task: str) -> st
                 tool_choice={"type": "none"},
                 messages=closing_messages,
             )
+            if closing.stop_reason == "max_tokens":
+                print(
+                    "WARNING: the review reached max_tokens and is cut off.",
+                    file=sys.stderr,
+                )
             return final_text(closing)
 
         print(f"Turn paused. Restarting it ({restart + 1}/{MAX_RESTARTS}).", file=sys.stderr)
