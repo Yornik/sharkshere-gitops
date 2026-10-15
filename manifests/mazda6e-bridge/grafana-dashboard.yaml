@@ -885,7 +885,7 @@ data:
         {
           "type": "stat",
           "title": "Time to limit",
-          "description": "Time until the charge limit is reached. Shows 'Not charging' when no cable is charging, and 'No estimate yet' while the car has not sent one.",
+          "description": "Time until the charge limit is reached while charging. Shows 'Not charging' otherwise.",
           "id": 13,
           "datasource": {
             "type": "prometheus",
@@ -911,6 +911,11 @@ data:
                       "text": "Not charging",
                       "color": "text",
                       "index": 0
+                    },
+                    "-2": {
+                      "text": "Charging",
+                      "color": "green",
+                      "index": 1
                     }
                   }
                 }
@@ -924,7 +929,7 @@ data:
                   }
                 ]
               },
-              "noValue": "No estimate yet"
+              "noValue": "Not charging"
             },
             "overrides": []
           },
@@ -950,7 +955,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "mazda6e_charge_remaining_seconds{vin=~\"$vin\"} or on(vin) (mazda6e_charging{vin=~\"$vin\"} == 0) - 1",
+              "expr": "(mazda6e_charge_remaining_seconds{vin=~\"$vin\"} and on(vin) mazda6e_charging{vin=~\"$vin\"} == 1) or on(vin) (mazda6e_charging{vin=~\"$vin\"} == 1) * 0 - 2 or on(vin) (mazda6e_charging{vin=~\"$vin\"} == 0) - 1",
               "refId": "A",
               "legendFormat": "__auto",
               "range": false,
