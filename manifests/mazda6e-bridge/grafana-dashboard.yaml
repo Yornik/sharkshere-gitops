@@ -979,7 +979,7 @@ data:
         {
           "type": "timeseries",
           "title": "Distance per day",
-          "description": "Odometer increase over the preceding 24 h, one bar per day.",
+          "description": "Odometer increase per day, over the last 7 days whatever the dashboard time range, because each bar sits at midnight.",
           "id": 15,
           "datasource": {
             "type": "prometheus",
@@ -1051,7 +1051,9 @@ data:
               "range": true
             }
           ],
-          "interval": "1d"
+          "interval": "1d",
+          "timeFrom": "7d",
+          "hideTimeOverride": false
         },
         {
           "type": "state-timeline",
