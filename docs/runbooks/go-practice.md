@@ -21,7 +21,7 @@ The `go-practice` Application serves a web IDE for the Go practice course on `go
 | [`../incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md) | Why the readiness probe of the web server writes to the database. |
 | [`../styleguide.md`](../styleguide.md) | The writing rules for this file. |
 
-WARNING: The runner runs code that any learner with an account sends. The isolation of the runner depends on 2 things: the CNI of the cluster must enforce NetworkPolicy, and the node kernel must have Landlock. This repository does not record the CNI. Read [What the runner sandbox does and does not do](#what-the-runner-sandbox-does-and-does-not-do) before you send the first invite.
+WARNING: The runner runs code that any learner with an account sends. The isolation of the runner depends on 2 things: the CNI of the cluster must enforce NetworkPolicy, and the node kernel must have Landlock. The CNI is Flannel, and Flannel does not enforce NetworkPolicy (checked on 2026-10-17). Landlock is then the only network control of learner code. Read [What the runner sandbox does and does not do](#what-the-runner-sandbox-does-and-does-not-do) before you send the first invite.
 
 ## How to deploy the first time
 
@@ -461,16 +461,16 @@ The runner runs code that we did not write. The table says what each layer gives
 | Pod | UID 65532, no capabilities, no privilege escalation, seccomp `RuntimeDefault`, read-only root filesystem, no service account token. The namespace enforces the restricted profile. |
 | Resources | 2 CPU, 5 GiB of memory, 1 GiB of `/tmp` and 4 GiB of `/cache`. Both volumes are on the disk of the node, not in memory. Past a limit, the kernel kills the container or the kubelet evicts the pod. |
 | Namespace | The only Secret in `go-practice-runner` is the runner token. The web Secrets and the database are in `go-practice`. |
-| NetworkPolicy | No egress. Ingress only from the web pod to `:8081` and from `monitoring` to `:9091`. It works only if the CNI enforces it. |
+| NetworkPolicy | No egress. Ingress only from the web pod to `:8081` and from `monitoring` to `:9091`. Flannel does not enforce it, so it has no effect until the cluster gets a CNI that enforces NetworkPolicy. |
 
 The sandbox does not give these protections:
 
-- **Network isolation without an enforcing CNI.** Learner code can then send UDP to any address, DNS included. With Landlock ABI 4 or later, TCP reaches only ephemeral ports. With a lower ABI, or without Landlock, learner code can connect to each Service in the cluster. It can also connect to the home network and to the internet.
+- **Network isolation by the CNI.** Flannel does not enforce NetworkPolicy. Learner code can send UDP to any address, DNS included. With Landlock ABI 4 or later, TCP reaches only ephemeral ports. With a lower ABI, or without Landlock, learner code can connect to each Service in the cluster. It can also connect to the home network and to the internet.
 - **Isolation from the runner process without Landlock.** Learner code runs as the same user in the same container. If the `sandbox for runs` line is a WARN, learner code can read the runner token from `/proc`. It can also send a signal to the runner. It can also read the files of a concurrent run. With Landlock below ABI 6, it can still send a signal to the runner and `tini`. That restarts the pod.
 - **A clean build cache.** Learner code can write to `/cache`. A changed cache entry can change the result of a later run of another learner. A new pod starts with a new cache from the image.
 - **A kernel boundary.** The pod shares the kernel of the node. A kernel exploit leaves the sandbox. There is no gVisor and no Kata.
 - **A hard disk quota.** The kubelet measures `/tmp` and `/cache` at intervals. A fast writer can go past the `sizeLimit` for some seconds before the eviction.
-- **A limit on processes.** The pod spec cannot set one. The kubelet can set `podPidsLimit`, and this repository does not record its value.
+- **A limit on processes.** The pod spec cannot set one, and the kubelet sets none: `podPidsLimit` is `-1` on all 4 nodes (checked on 2026-10-17). A fork bomb in a run can use up the PIDs of the node until the runner kills the run after 40 s. Then no pod on that node can start a process. Omni manages the kubelet configuration, so the fix is a config patch in Omni, not a change in this repository.
 
 ### How to find out if the CNI enforces NetworkPolicy
 
@@ -490,6 +490,8 @@ The sandbox does not give these protections:
 3. Record the result in `docs/tech/README.md`.
 
 Expected result with enforcement: step 1 shows `cilium` or `calico-node`, and `wget` in step 2 times out. If step 1 shows only `kube-flannel` and step 2 gets an answer, the CNI does not enforce NetworkPolicy.
+
+NOTE: On 2026-10-17, step 1 showed only `kube-flannel` (`ghcr.io/siderolabs/flannel:v0.28.4`), and the cluster had no CRD of Cilium, Calico or kube-router. The CNI does not enforce NetworkPolicy. Do the check again after a change of the CNI.
 
 WARNING: If the CNI does not enforce NetworkPolicy, Landlock is the only network control. With Landlock ABI 4 or later, learner code connects over TCP only to ephemeral ports. It can still send UDP to any address. Without Landlock, or below ABI 4, learner code has the network access of an ordinary pod. Then invite only people that you trust.
 
