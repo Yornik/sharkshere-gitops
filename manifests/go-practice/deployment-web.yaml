@@ -36,8 +36,9 @@ spec:
         runAsGroup: 65532
         # Gives group 65532 write access to the NFS volume. Grafana (fsGroup
         # 472) and Prometheus (fsGroup 2000) get fsGroup from their chart
-        # defaults and run on truenas-ssd, so the class accepts it. If /readyz
-        # fails with "permission denied", read docs/runbooks/go-practice.md.
+        # defaults and run on truenas-ssd, so the class accepts it. If the pod
+        # crash-loops with "unable to open database file", read
+        # docs/runbooks/go-practice.md.
         fsGroup: 65532
         # Skips the recursive change of ownership at each start when the root
         # of the volume already has the group.
@@ -94,10 +95,12 @@ spec:
               value: "465"
             - name: GPW_SMTP_USER
               value: "resend"
-            # The Resend API key. While the value is REPLACE_ME, the app writes
-            # each mail to the log and sends nothing. Sign-up still works: the
-            # setup link and the invite links do not need mail. Recovery by
-            # mail does not work until the key is set.
+            # The Resend API key, a copy of the key of soiree. While the value
+            # is REPLACE_ME, the app writes each mail to the log and sends
+            # nothing. Every new account, the admin included, then waits at
+            # /check-email until someone opens the verification link from the
+            # log. Recovery and the security notices do not work. Set the key
+            # before the first account. See docs/runbooks/go-practice.md.
             - name: GPW_SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:

@@ -86,9 +86,10 @@ spec:
             # logs a WARN line at start when the sum is above 55 s.
           # Before the runner opens port 8081, it copies the seed cache and
           # runs a small program with -race to test the race detector. No probe
-          # gets an answer during that time. In a local container both took
-          # about 3 s; the node can be slower. The startup probe gives them 3
-          # minutes before liveness can restart the pod.
+          # gets an answer during that time. On 2026-10-17, in a local
+          # container with a local build of the runner image, both took about
+          # 3 s; the node can be slower. The startup probe gives them 3 minutes
+          # before liveness can restart the pod.
           startupProbe:
             httpGet:
               path: /healthz
@@ -138,7 +139,9 @@ spec:
             # have the same limit: cpu_limit = "2" in the gitlab-runner values
             # in apps/values.yaml.
             #
-            # Memory: a race build of a test binary peaks at about 1 to 2 GiB.
+            # Memory, an estimate and not a measurement: a race build of a test
+            # binary peaks at about 1 to 2 GiB. Read the peak in
+            # container_memory_working_set_bytes after the first week.
             # 2 concurrent runs make 4 GiB, and 1 GiB is left for the runner,
             # staticcheck and the race runtime of the tests. A test that
             # allocates without end hits this limit. The kernel then kills the
@@ -158,7 +161,7 @@ spec:
         # the pod, and the new pod starts with an empty volume. The kubelet
         # measures the volume at intervals, so a fast writer can go past the
         # limit for some seconds. 2 runs need about 100 MiB of test binaries
-        # and build files.
+        # and build files, an estimate and not a measurement.
         - name: tmp
           emptyDir:
             sizeLimit: 1Gi

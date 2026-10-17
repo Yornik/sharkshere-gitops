@@ -138,7 +138,7 @@ Expected result: each pod is `1/1 Running`. `curl` shows a `200` and the `strict
 
 Every account must verify its email address before the course opens. Set the key first, so that the verification mail reaches you.
 
-1. If `GPW_SMTP_PASSWORD` is still `REPLACE_ME`, do [How to set the Resend API key](#how-to-set-the-resend-api-key).
+1. If `GPW_SMTP_PASSWORD` is still `REPLACE_ME`, do steps 1 to 8 of [How to set the Resend API key](#how-to-set-the-resend-api-key). No account exists yet, so the verification mail in the next step tests the key.
 2. Do [How to get the setup link](#how-to-get-the-setup-link).
 
 ### 6. Add the host to security.txt
@@ -175,7 +175,7 @@ NOTE: While no account exists, each start of the web server writes a new setup l
 3. Create the account and the passkey. Use an email address that you can read.
 4. Open the link in the verification mail.
 
-Expected result: the course opens, and the account page shows 1 passkey and a verified address.
+Expected result: the verification mail arrives from `go-practice@yornik.eu`. The course opens, and the account page shows 1 passkey and a verified address.
 
 If the Resend key is not set yet, the mail is in the log of the web server. Read the link from the log:
 
@@ -232,7 +232,7 @@ CAUTION: The web Deployment uses `Recreate`. The restart in the next step stops 
    kubectl --context yornik-sharkshere -n go-practice rollout restart deploy/go-practice-web
    ```
 
-9. Send an invite by mail to your own address from the admin page.
+9. If an admin account exists, send an invite by mail to your own address from the admin page. Then revoke the invite on the admin page. If no account exists yet, the verification mail in step 4 of [How to get the setup link](#how-to-get-the-setup-link) is the test.
 
 Expected result: the mail arrives from `go-practice@yornik.eu`.
 
@@ -529,7 +529,7 @@ Expected result: a `200` with no certificate error.
 | Symptom | Cause | Correction |
 |---|---|---|
 | A pod reports `ImagePullBackOff` with `unauthorized` or `denied`. | The GHCR package is private. | Do [step 1](#1-release-the-images) of the first deploy. |
-| The web pod is not ready, and the log shows `permission denied` on `/data`. | UID 65532 cannot write to the NFS dataset. The CSI driver did not apply `fsGroup`. | Read the mode of the dataset on TrueNAS. Make the dataset writable for UID 65532 or group 65532. |
+| The web pod is in `CrashLoopBackOff`, and the log shows `web server stopped` with `unable to open database file` for `/data/go-practice.db`. | UID 65532 cannot write to the NFS dataset. The CSI driver did not apply `fsGroup`. | Read the mode of the dataset on TrueNAS. Make the dataset writable for UID 65532 or group 65532. |
 | The IDE reports that the runner is down, and the web log shows 401 from the runner. | The 2 Secrets hold different tokens, or 1 pod still has the old token. | Do [How to rotate the runner token](#how-to-rotate-the-runner-token). It writes 1 new value to both Secrets and restarts both pods, and nobody has to print a token. |
 | The runner pod restarts with `OOMKilled`. | A test allocated past 5 GiB, or 2 race builds and a test came together. | No action for 1 event. If it repeats, read `container_memory_working_set_bytes` and the runner metrics before a change of the limit. |
 | The runner pod is `Evicted`. | `/tmp` or `/cache` went past its `sizeLimit`. | No action for 1 event. The Deployment starts a new pod. If it repeats, find the run in the runner log. If the kubelet evicts the pod every few days, the build cache in `/cache` grows faster than Go removes old entries. Read the comment on the volume in `deployment-runner.yaml`. |

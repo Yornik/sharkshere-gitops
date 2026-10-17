@@ -21,7 +21,7 @@ This repo is one of three:
 | Metric | Value |
 |---|---|
 | Nodes | 4× Intel N150 (3 control-plane + 1 worker, all schedulable), Talos Linux |
-| CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject` and `go-practice` have no effect. Checked on 2026-10-17. |
+| CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: -1` (no limit per pod) and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. Checked on 2026-10-17. |
 | Memory | 128 GiB cluster total |
 | Workloads | 46 ArgoCD Applications, 14 public HTTPS domains, 5 tailnet-only admin interfaces |
