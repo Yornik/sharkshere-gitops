@@ -164,3 +164,26 @@ spec:
     - name: dummy
       port: 80
       targetPort: 80
+---
+# go-practice is served from the apex of its own zone, go-learn.party. An apex
+# takes direct A and AAAA records, not the `target: jump.fedishark.eu` CNAME of
+# the subdomains above. A CNAME at an apex is not valid, and it conflicts with
+# the DANE TLSA records of this estate. The 4 addresses are the same as for the
+# yornik.eu and bokings-driessen.party apexes. They are both jump hosts, v4 and
+# v6, so the name stays up if 1 host is lost. There is no www record: the app
+# accepts 1 origin only, the WebAuthn relying party go-learn.party.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-go-learn-party
+  namespace: external-dns
+  annotations:
+    external-dns.kubernetes.io/hostname: go-learn.party
+    external-dns.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
+    external-dns.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80

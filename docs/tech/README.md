@@ -82,7 +82,7 @@ flowchart LR
 - **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains. Hosted repo data (gitaly on an iSCSI zvol, invisible to NAS file-level backup) is covered by the toolbox backup CronJob — 03:30 daily, `--skip db`, uploading tarballs to `yornik-gitlab-backups`; the database is already protected by CNPG barman base backups + continuous WAL archive.
 - **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
 - **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, ArchiSteamFarm, qBittorrent and the Vaultwarden admin panel to tailnet devices, with Tailnet Lock signing each new proxy device. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
-- **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu`, and a reject-all SPF and DMARC policy for the 2 zones that send no mail.
+- **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu`, and a reject-all SPF and DMARC policy for the 3 zones that send no mail.
 - **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
 - **SOPS + KSOPS** for in-cluster secret decryption. `.enc.yaml` files are decrypted by the repo-server init container with an age key mounted as a Secret; no plaintext secrets at rest or in git.
 - **PR-gated everything**: seven CI jobs before merge — yamllint, signed `security.txt` validation, a KSOPS version/hash guard, helm template, per-chart values rendering, and kubeconform with CRD schemas on both raw and rendered output (see [CI](#ci)).
@@ -109,7 +109,7 @@ manifests/      per-app manifests and Kustomize overlays
 | App | Namespace | Purpose |
 |-----|-----------|---------|
 | `local-path-provisioner` | `local-path-storage` | node-local default storage class |
-| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu` + `bokings-driessen.party`, plus CronJobs for CAA, DANE TLSA and mail records |
+| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party` + `go-learn.party`, plus CronJobs for CAA, DANE TLSA and mail records |
 | `monitoring` | `monitoring` | monitoring namespace, Grafana tailnet Ingress, secrets |
 | `tibber-exporter` | `monitoring` | energy metrics exporter |
 | `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
@@ -202,7 +202,7 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 | `qbittorrent.hedgehog-wage.ts.net` | qBittorrent |
 | `vaultwarden-admin.hedgehog-wage.ts.net` | Vaultwarden admin panel |
 
-ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu` and `bokings-driessen.party` — the third is a zone of its own, so it needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
+ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party` and `go-learn.party` — the last 2 are zones of their own, so each needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
 ExternalDNS runs with `--policy=upsert-only`. It creates and updates records. It does not delete a record. To remove a hostname:
 
