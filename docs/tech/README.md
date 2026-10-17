@@ -2,7 +2,7 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 45 ArgoCD Applications that serve 13 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 46 ArgoCD Applications that serve 14 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
@@ -21,8 +21,10 @@ This repo is one of three:
 | Metric | Value |
 |---|---|
 | Nodes | 4× Intel N150 (3 control-plane + 1 worker, all schedulable), Talos Linux |
+| CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
+| Kubelet | `podPidsLimit: -1` (no limit per pod) and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. Checked on 2026-10-17. |
 | Memory | 128 GiB cluster total |
-| Workloads | 45 ArgoCD Applications, 13 public HTTPS domains, 5 tailnet-only admin interfaces |
+| Workloads | 46 ArgoCD Applications, 14 public HTTPS domains, 5 tailnet-only admin interfaces |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
@@ -122,6 +124,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `muse` | `muse` | app workload |
 | `argocd-config` | `argocd` | public IngressRoute for `/api/webhook` only, tailnet Ingress for the UI and CLI, fail2ban middleware |
 | `soiree` | `soiree` | shared event budget/task planner + its CNPG cluster (`bokings-driessen.party`) |
+| `go-practice` | `go-practice`, `go-practice-runner` | web IDE for the Go practice course (`go-learn.party`) + a sandboxed runner for learner code in its own namespace — see [runbook](../runbooks/go-practice.md) |
 | `vaultwarden` | `vaultwarden` | password manager (`passwords.yornik.eu`); admin panel on the tailnet only |
 | `vikunja` | `vikunja` | task management (`todo.yornik.eu`) |
 | `asf` | `asf` | ArchiSteamFarm; IPC interface on the tailnet only |
@@ -188,6 +191,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `git.yornik.eu` | GitLab CE (web + git over HTTPS + git over SSH on `:2222`) |
 | `registry.git.yornik.eu` | GitLab Container Registry |
 | `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
+| `go-learn.party` | go-practice — web IDE for the Go practice course. Served from the **apex** of its own zone, with A/AAAA records straight at the jump hosts like `bokings-driessen.party`; no `www.`, because the app accepts 1 origin, its WebAuthn relying party. Sign-up is by invite only. The runner that executes learner code has no public route. |
 
 ### Tailnet only
 
@@ -252,7 +256,7 @@ Average run: ~20 seconds.
 
 ## Dependency updates
 
-Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A KSOPS bump also needs the manual bootstrap apply and an updated `KSOPS_SHA256`. See `renovate.json5`.
+Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A KSOPS bump also needs the manual bootstrap apply and an updated `KSOPS_SHA256`. See `renovate.json5`.
 
 ## Homelab constraints
 

@@ -1,0 +1,18 @@
+# The runner of the Go practice course. It runs `go vet`, `staticcheck` and
+# `go test -race` on Go code that any learner with an account sends. That is
+# code we did not write, so it runs in its own namespace, away from the web
+# Secrets and the PVC in `go-practice`. This is the same reason as
+# manifests/gitlab/namespace-gitlab-ci.yaml. The only Secret here is the runner
+# token, which the runner needs to check each request.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-practice-runner
+  labels:
+    # The runner pod meets the restricted profile: UID 65532, no privilege
+    # escalation, all capabilities dropped, seccomp RuntimeDefault and only
+    # emptyDir volumes. With the label, the API server refuses a later pod spec
+    # that weakens the sandbox. An example is a pod that runs as root or adds
+    # a capability. The profile does not check the read-only root filesystem.
+    # deployment-runner.yaml sets it.
+    pod-security.kubernetes.io/enforce: restricted

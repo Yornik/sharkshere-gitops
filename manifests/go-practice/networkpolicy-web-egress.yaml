@@ -1,0 +1,48 @@
+# The 3 destinations of the web server. See networkpolicy-web-default-deny.yaml
+# for the CNI that this needs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: go-practice-web-egress
+  namespace: go-practice
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: go-practice-web
+      app.kubernetes.io/instance: go-practice-web
+  policyTypes:
+    - Egress
+  egress:
+    # Cluster DNS, for the runner Service and smtp.resend.com.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # The runner API.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: go-practice-runner
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: go-practice-runner
+              app.kubernetes.io/instance: go-practice-runner
+      ports:
+        - port: 8081
+          protocol: TCP
+    # Resend SMTP with implicit TLS. A NetworkPolicy matches addresses, not
+    # names. The addresses of smtp.resend.com are not ours and can change, so
+    # the port is the limit.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - port: 465
+          protocol: TCP
