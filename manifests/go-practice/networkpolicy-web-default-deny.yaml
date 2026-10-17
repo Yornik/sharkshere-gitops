@@ -1,0 +1,21 @@
+# NetworkPolicy has an effect only if the CNI plugin of the cluster enforces it.
+# This repository does not record which CNI the cluster runs. 2 signs point to
+# Flannel, the Talos default, which does not enforce NetworkPolicy. The pod
+# CIDR is 10.244.0.0/16, and the network recording rules in apps/values.yaml
+# leave out `cni.*` interfaces. The Cilium kinds in bootstrap/argocd/install.yaml
+# are an upstream ArgoCD default and prove nothing. Treat these policies as
+# defense in depth. Do not depend on them. To find the CNI, see
+# docs/runbooks/go-practice.md.
+#
+# No ingress and no egress for any pod in this namespace, except what
+# networkpolicy-web-ingress.yaml and networkpolicy-web-egress.yaml allow.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: go-practice
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

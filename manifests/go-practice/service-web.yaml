@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-practice-web
+  namespace: go-practice
+  labels:
+    app.kubernetes.io/name: go-practice-web
+    app.kubernetes.io/instance: go-practice-web
+  # No ExternalDNS annotations on purpose. The site is on the zone apex, and
+  # the annotations that the subdomains use publish a CNAME to
+  # jump.fedishark.eu. A CNAME at an apex is not valid, and it conflicts with
+  # the DANE TLSA records of this estate. The apex A and AAAA records come from
+  # the dummy Service dns-go-learn-party in
+  # manifests/external-dns/dns-records.yaml, the same as for soiree.
+spec:
+  selector:
+    app.kubernetes.io/name: go-practice-web
+    app.kubernetes.io/instance: go-practice-web
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    # For the ServiceMonitor only. The IngressRoute routes to port 8080, so
+    # this port is not reachable from outside the cluster.
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP

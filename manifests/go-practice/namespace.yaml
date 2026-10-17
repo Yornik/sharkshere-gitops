@@ -1,0 +1,14 @@
+# The web server of the Go practice course. It holds the Secrets: the runner
+# token and the Resend API key. The runner that executes the code of a learner
+# is in go-practice-runner, away from these Secrets. See namespace-runner.yaml.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-practice
+  labels:
+    # The web pod meets the restricted profile: UID 65532, no privilege
+    # escalation, all capabilities dropped, seccomp RuntimeDefault, and only
+    # PVC and emptyDir volumes. With the label, the API server refuses a later
+    # pod spec that weakens one of these settings. The other namespaces in this
+    # repository that set the label set `privileged`, because their pods need it.
+    pod-security.kubernetes.io/enforce: restricted

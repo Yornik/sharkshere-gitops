@@ -1,0 +1,29 @@
+# Only the web pod can call the runner API. See networkpolicy-runner-default-deny.yaml
+# for the CNI that this needs. The kubelet probes come from the node, and
+# NetworkPolicy does not block traffic between a pod and its own node.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web
+  namespace: go-practice-runner
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: go-practice-runner
+      app.kubernetes.io/instance: go-practice-runner
+  policyTypes:
+    - Ingress
+  ingress:
+    # 1 element with both selectors: a pod with the web labels in the
+    # namespace go-practice. 2 elements would allow each one alone.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: go-practice
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: go-practice-web
+              app.kubernetes.io/instance: go-practice-web
+      ports:
+        - port: 8081
+          protocol: TCP

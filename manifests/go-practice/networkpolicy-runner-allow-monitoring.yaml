@@ -1,0 +1,22 @@
+# Prometheus scrapes the metrics port. See networkpolicy-runner-default-deny.yaml
+# for the CNI that this needs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring
+  namespace: go-practice-runner
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: go-practice-runner
+      app.kubernetes.io/instance: go-practice-runner
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 9091
+          protocol: TCP

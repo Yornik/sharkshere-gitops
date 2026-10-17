@@ -872,6 +872,17 @@ apps:
     namespace: soiree
     path: manifests/soiree
 
+  # Go practice course on go-learn.party: a web IDE, and a runner that runs
+  # the Go code of a learner. The runner is in its own namespace,
+  # go-practice-runner, away from the web Secrets, for the same reason as
+  # gitlab-ci. 1 Application holds both namespaces: each manifest sets its
+  # namespace, and namespace-runner.yaml creates the second one.
+  # CreateNamespace makes only the destination below. First deploy, secrets,
+  # restore and the limits of the sandbox: docs/runbooks/go-practice.md.
+  go-practice:
+    namespace: go-practice
+    path: manifests/go-practice
+
   # Thins old backups in object storage by age: the GitLab tarballs and Omni's
   # etcd snapshots, neither of which anything else ever deletes. Live: it
   # deletes. PRUNE_APPLY in manifests/backup-prune/ is the switch back to a dry
