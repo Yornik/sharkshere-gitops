@@ -33,6 +33,12 @@ spec:
             # ExternalDNS skips the record and the name never resolves. The
             # Cloudflare token in secret.enc.yaml must reach this zone too.
             - --domain-filter=bokings-driessen.party
+            # go-practice publishes its apex from the dummy Service
+            # dns-go-learn-party in dns-records.yaml. go-learn.party is a zone
+            # of its own in the same Cloudflare account, so without this filter
+            # ExternalDNS skips the record and the name does not resolve. The
+            # Cloudflare token in secret.enc.yaml must reach this zone too.
+            - --domain-filter=go-learn.party
             - --policy=upsert-only
             - --registry=txt
             - --txt-owner-id=sharkshere
