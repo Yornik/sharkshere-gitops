@@ -52,7 +52,7 @@ apps:
     helm:
       repoURL: https://prometheus-community.github.io/helm-charts
       chart: kube-prometheus-stack
-      targetRevision: 92.9.0
+      targetRevision: 92.10.1
       values: |
         # Talos Linux: control plane components not accessible via Omni
         kubeEtcd:
@@ -332,7 +332,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: alloy
-      targetRevision: 1.13.1
+      targetRevision: 1.14.0
       values: |
         alloy:
           mounts:
@@ -1364,7 +1364,7 @@ apps:
     helm:
       repoURL: https://charts.openproject.org/
       chart: openproject
-      targetRevision: 13.14.0
+      targetRevision: 13.15.1
       values: |
         # We ship our own IngressRoute (see manifests/openproject/) so the
         # chart's bundled Ingress stays off.
