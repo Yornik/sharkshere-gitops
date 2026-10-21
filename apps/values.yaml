@@ -1135,7 +1135,28 @@ apps:
                 # (every 3h) + continuous WAL archiving. This job's purpose
                 # is the gitaly repo data. A restore combines this tarball
                 # with a CNPG point-in-time recovery.
-                extraArgs: "--skip db"
+                #
+                # The object storage components are skipped too. Their data
+                # lives in Hetzner Object Storage, and so does the tarball, so
+                # the copy protects nothing a bucket loss would not also take.
+                # The copy downloaded every bucket and failed on Hetzner 503
+                # and 504 answers: 2026-10-21 the Job exhausted backoffLimit
+                # and KubeJobFailed stayed on. `registry` already failed with
+                # 403 on every run. See
+                # docs/incidents/2026-10-21-gitlab-backup-object-storage-504.md.
+                extraArgs: >-
+                  --skip db
+                  --skip registry
+                  --skip uploads
+                  --skip artifacts
+                  --skip lfs
+                  --skip packages
+                  --skip external_diffs
+                  --skip terraform_state
+                  --skip pages
+                  --skip ci_secure_files
+                  --skip agent_plan_content
+                  --skip ci_catalog_bundles
               objectStorage:
                 config:
                   secret: gitlab-backup-storage
