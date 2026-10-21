@@ -470,7 +470,7 @@ The sandbox does not give these protections:
 - **A clean build cache.** Learner code can write to `/cache`. A changed cache entry can change the result of a later run of another learner. A new pod starts with a new cache from the image.
 - **A kernel boundary.** The pod shares the kernel of the node. A kernel exploit leaves the sandbox. There is no gVisor and no Kata.
 - **A hard disk quota.** The kubelet measures `/tmp` and `/cache` at intervals. A fast writer can go past the `sizeLimit` for some seconds before the eviction.
-- **A limit on processes.** The pod spec cannot set one, and the kubelet sets none: `podPidsLimit` is `-1` on all 4 nodes (checked on 2026-10-17). A fork bomb in a run can use up the PIDs of the node until the runner kills the run after 40 s. Then no pod on that node can start a process. Omni manages the kubelet configuration, so the fix is a config patch in Omni, not a change in this repository.
+- **A limit on processes for each run.** The pod spec cannot set one. The kubelet limits each pod to 4096 PIDs (`podPidsLimit`, an Omni config patch since 2026-10-21, see `docs/tech/README.md`). A fork bomb in a run can use up the PIDs of the runner pod, not of the node, until the runner kills the run after 40 s. Until then, the other run in the pod fails.
 
 ### How to find out if the CNI enforces NetworkPolicy
 

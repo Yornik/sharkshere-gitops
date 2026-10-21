@@ -22,7 +22,7 @@ This repo is one of three:
 |---|---|
 | Nodes | 4× Intel N150 (3 control-plane + 1 worker, all schedulable), Talos Linux |
 | CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
-| Kubelet | `podPidsLimit: -1` (no limit per pod) and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. Checked on 2026-10-17. |
+| Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
 | Workloads | 46 ArgoCD Applications, 14 public HTTPS domains, 5 tailnet-only admin interfaces |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
