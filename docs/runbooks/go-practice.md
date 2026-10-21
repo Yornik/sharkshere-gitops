@@ -259,6 +259,60 @@ CAUTION: The web Deployment uses `Recreate`. The merge in the next step stops th
 
 Expected result: ArgoCD rolls out both Deployments, and each pod is `1/1 Running`. The 2 runner log lines match the expected result of the first deploy.
 
+## How to move the site to vesper-labs.org
+
+The site moves from `go-learn.party` to `vesper-labs.org`. `go-learn.party` stays, and redirects every path to the new name. Old links and the verify links in issued certificates keep working.
+
+The move has 2 changes, in this order. The DNS change goes first, because Traefik does not retry a failed ACME order (see [step 3 of the first deploy](#3-publish-the-dns-record-before-the-route)).
+
+| Change | What it does |
+|---|---|
+| DNS | `manifests/external-dns/`: the dummy Service `dns-vesper-labs-org`, `--domain-filter=vesper-labs.org`, and the jobs `caa-updater-vesper` and `no-mail-vesper`. Nothing serves the name yet. |
+| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, and `GPW_PUBLIC_URL=https://vesper-labs.org`. It ships with the release that rebrands the site. |
+
+CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys made on `go-learn.party` do not work on `vesper-labs.org`. Each person signs in once with account recovery by email, and makes a new passkey. Progress, code and certificates stay, because they belong to the account, not to the passkey. Tell the learners before you merge the route change.
+
+### 1. Prepare the zone
+
+1. In Cloudflare, make sure that the zone `vesper-labs.org` has the status Active.
+2. Edit the token that ExternalDNS uses (My Profile, then API Tokens). Add the zone `vesper-labs.org` to its zone resources, with Zone Read and DNS Edit. Save the token.
+3. In the zone `vesper-labs.org`, open SSL/TLS, then Edge Certificates, and disable Universal SSL. The reason is in the note of [step 2 of the first deploy](#2-prepare-the-cloudflare-zone).
+
+### 2. Merge the DNS change
+
+1. Merge the change to `manifests/external-dns/`.
+2. Wait 5 minutes. ExternalDNS runs every 5 minutes.
+3. Read the records from a public resolver:
+
+   ```sh
+   dig +short @1.1.1.1 vesper-labs.org A
+   dig +short @1.1.1.1 vesper-labs.org AAAA
+   ```
+
+Expected result: `78.47.240.158` and `77.42.94.152`, then `2a01:4f8:1c19:60c2::1` and `2a01:4f9:c014:e6de::1`.
+
+If the output is empty after 10 minutes, read the log of ExternalDNS:
+
+```sh
+kubectl --context yornik-sharkshere -n external-dns logs deploy/external-dns | grep vesper
+```
+
+A line about no matching zone means that the token cannot reach the zone. Do [step 1](#1-prepare-the-zone) again.
+
+The jobs `caa-updater-vesper` and `no-mail-vesper` run on Sunday morning. After the first Sunday, read the records:
+
+```sh
+dig +short @1.1.1.1 vesper-labs.org CAA
+dig +short @1.1.1.1 vesper-labs.org TXT
+dig +short @1.1.1.1 _dmarc.vesper-labs.org TXT
+```
+
+Expected result: the CAA records allow only Let's Encrypt, the SPF record is `v=spf1 -all`, and the DMARC policy is `p=reject`.
+
+### 3. Merge the route change
+
+This step comes with the release that rebrands the site. Its pull request describes the last steps: the new `Canonical` line in security.txt, which you sign again with the security.txt key, and the checks after the deploy.
+
 ## How to rotate the runner token
 
 If the token leaked outside the cluster, rotate it. The 2 Secrets hold the same value. Change both in 1 pull request.

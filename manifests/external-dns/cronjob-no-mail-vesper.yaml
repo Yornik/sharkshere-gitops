@@ -1,0 +1,50 @@
+# A reject-all SPF and DMARC policy for vesper-labs.org. go-practice sends its
+# mail from yornik.eu, so no mail comes from this zone. The same job as
+# no-mail-go-learn, 10 minutes later.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: no-mail-vesper
+  namespace: external-dns
+spec:
+  schedule: "43 5 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: no-mail
+              image: alpine:3.24
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  apk add --no-cache curl jq >/dev/null
+                  /scripts/update-no-mail.sh
+              env:
+                - name: CF_ZONE_NAME
+                  value: vesper-labs.org
+                - name: MAIL_TTL
+                  value: "3600"
+                - name: CF_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cloudflare-credentials
+                      key: api-token
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: no-mail-script
+                defaultMode: 0555

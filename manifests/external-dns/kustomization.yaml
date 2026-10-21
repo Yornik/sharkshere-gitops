@@ -15,6 +15,7 @@ resources:
   - cronjob-caa-updater-fedishark.yaml
   - cronjob-caa-updater-yornik.yaml
   - cronjob-caa-updater-go-learn.yaml
+  - cronjob-caa-updater-vesper.yaml
   - cronjob-dane-updater.yaml
   - cronjob-dane-updater-passwords.yaml
   - cronjob-dane-updater-yornik.yaml
@@ -22,5 +23,6 @@ resources:
   - cronjob-no-mail-bokings.yaml
   - cronjob-no-mail-fedishark.yaml
   - cronjob-no-mail-go-learn.yaml
+  - cronjob-no-mail-vesper.yaml
 generators:
   - cloudflare-secret-generator.yaml
