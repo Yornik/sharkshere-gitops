@@ -10,6 +10,12 @@ data:
   # nothing sends with the bare zone as its envelope sender, and the SPF of
   # the zone itself rejects all mail.
   #
+  # This is the layout that Resend shows for domains added since August
+  # 2026: a CNAME send and, for the fallback server, a CNAME rsend. An older
+  # domain has MX and TXT records on send instead; a CNAME cannot sit beside
+  # them, so this script does not fit such a domain. The CNAMEs go last, so
+  # that a failure there leaves DKIM, SPF and DMARC in place.
+  #
   # Resend's Cloudflare setup may have made these records already, without
   # the managed comment. The script takes over the 1 record of each name and
   # type (for TXT: the 1 record whose content starts with the prefix). If it
@@ -24,6 +30,7 @@ data:
     : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
     : "${RESEND_RETURN_PATH:?RESEND_RETURN_PATH is required}"
     : "${RESEND_DKIM:?RESEND_DKIM is required}"
+    : "${RESEND_FALLBACK_PATH:=}"
     : "${MAIL_DMARC:?MAIL_DMARC is required}"
     : "${MAIL_TTL:=3600}"
 
@@ -86,9 +93,12 @@ data:
       echo "Ensured ${type} ${name}: ${content}"
     }
 
-    ensure CNAME "send.${CF_ZONE_NAME}" "" "${RESEND_RETURN_PATH}"
     ensure TXT "resend._domainkey.${CF_ZONE_NAME}" "p=" "${RESEND_DKIM}"
     ensure TXT "${CF_ZONE_NAME}" "v=spf1" "${SPF}"
     ensure TXT "_dmarc.${CF_ZONE_NAME}" "v=DMARC1" "${MAIL_DMARC}"
+    ensure CNAME "send.${CF_ZONE_NAME}" "" "${RESEND_RETURN_PATH}"
+    if [ -n "${RESEND_FALLBACK_PATH}" ]; then
+      ensure CNAME "rsend.${CF_ZONE_NAME}" "" "${RESEND_FALLBACK_PATH}"
+    fi
 
     echo "Mail sender records ensured for ${CF_ZONE_NAME}"

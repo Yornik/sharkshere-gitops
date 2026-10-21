@@ -275,11 +275,15 @@ CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys mad
 ### 1. Prepare the zone
 
 1. In Cloudflare, make sure that the zone `vesper-labs.org` has the status Active.
-2. Edit the token that ExternalDNS uses (My Profile, then API Tokens). Add the zone `vesper-labs.org` to its zone resources, with Zone Read and DNS Edit. Save the token.
-3. In the zone `vesper-labs.org`, open SSL/TLS, then Edge Certificates, and disable Universal SSL. The reason is in the note of [step 2 of the first deploy](#2-prepare-the-cloudflare-zone).
-4. In Resend, open Domains and add `vesper-labs.org` in the region of `yornik.eu`, if it is not there yet. Resend's Cloudflare setup may add its records to the zone. The job `mail-sender-vesper` takes them over; it does not add a second copy.
-5. Compare the values in Resend with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`: `RESEND_RETURN_PATH` is the target of the CNAME `send`, and `RESEND_DKIM` is the TXT value of `resend._domainkey`. If Resend shows other values, change the job.
-6. In Resend, open API Keys. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`, and do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
+2. Open My Profile, then API Tokens.
+3. Edit the token that ExternalDNS uses.
+4. Add the zone `vesper-labs.org` to its zone resources, with Zone Read and DNS Edit.
+5. Save the token.
+6. In the zone `vesper-labs.org`, open SSL/TLS, then Edge Certificates.
+7. Disable Universal SSL. The reason is in the note of [step 2 of the first deploy](#2-prepare-the-cloudflare-zone).
+8. In Resend, open Domains. Add `vesper-labs.org` in the region of `yornik.eu` if it is not there yet. Resend's Cloudflare setup may add its records to the zone. The job `mail-sender-vesper` takes them over; it does not add a second copy.
+9. Compare the records in Resend with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`. The job expects 3 records: a CNAME `send` (its target is `RESEND_RETURN_PATH`), a CNAME `rsend` (`RESEND_FALLBACK_PATH`) and a TXT `resend._domainkey` (`RESEND_DKIM`). If Resend shows other values, change the job. If Resend shows MX and TXT records on `send` instead of a CNAME, the script does not fit: see its comment.
+10. In Resend, open API Keys. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`. Then do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
 
 ### 2. Merge the DNS change
 
@@ -309,10 +313,11 @@ dig +short @1.1.1.1 vesper-labs.org CAA
 dig +short @1.1.1.1 vesper-labs.org TXT
 dig +short @1.1.1.1 _dmarc.vesper-labs.org TXT
 dig +short @1.1.1.1 send.vesper-labs.org CNAME
+dig +short @1.1.1.1 rsend.vesper-labs.org CNAME
 dig +short @1.1.1.1 resend._domainkey.vesper-labs.org TXT
 ```
 
-Expected result: the CAA records allow only Let's Encrypt; the SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address; the DMARC policy is `p=quarantine`, as for `yornik.eu`; `send` points to Resend; the DKIM key is the one in Resend.
+Expected result: the CAA records allow only Let's Encrypt; the SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address; the DMARC policy is `p=quarantine`, as for `yornik.eu`; `send` and `rsend` point to Resend; the DKIM key is the one in Resend.
 
 4. In Resend, make sure that `vesper-labs.org` shows Verified before you merge the route change. After the route change, everyone recovers their account by email, so the mail must work from the start.
 
