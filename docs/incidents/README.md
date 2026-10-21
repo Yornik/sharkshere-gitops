@@ -18,6 +18,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-10-11 | [backup-prune-transient-delete-504.md](2026-10-11-backup-prune-transient-delete-504.md) | One object storage timeout made a week of alerts for a problem that corrected itself |
 | 2026-10-12 | [truenas-update-readonly-pv-remount.md](2026-10-12-truenas-update-readonly-pv-remount.md) | A storage update turned 6 volumes read-only; the Postgres instance that reported Ready was the one blocking repair |
 | 2026-10-13 | [readonly-alert-cleared-while-volume-broken.md](2026-10-13-readonly-alert-cleared-while-volume-broken.md) | 2 more volumes turned read-only a day later, and the alert written to catch them cleared itself while they stayed broken |
+| 2026-10-21 | [renovate-frozen-by-tag-suffix.md](2026-10-21-renovate-frozen-by-tag-suffix.md) | Renovate opened no bump for a pinned image for 8 months, and nothing reported the gap |
 | 2026-10-21 | [privatebin-disabled-php2shell-rce.md](2026-10-21-privatebin-disabled-php2shell-rce.md) | PrivateBin, the only public PHP service, taken offline during the unpatched php2shell PHP core RCE |
 
 ## How to add an incident
