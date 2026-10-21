@@ -1,0 +1,63 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: go-practice
+  namespace: go-practice
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # DNS must resolve before this route exists. Traefik does not retry a
+    # failed ACME order, so a route that comes first uses up the attempt. The
+    # certificate then needs a restart of Traefik. See the first deploy in
+    # docs/runbooks/go-practice.md.
+    #
+    # Order of the middlewares, for each route (REVIEW.md B8):
+    #   1. security-headers first, so a ban (403) or a rate limit (429) also
+    #      gets HSTS, nosniff and frameDeny.
+    #   2. fail2ban and rate-limit next. Each one can end the chain.
+    #   3. no-compression last. It changes the request only.
+    # No middleware here authenticates. The app does that.
+    #
+    # No CSP middleware: the app sets its own Content-Security-Policy on each
+    # HTML response. 2 policies on 1 response give the intersection, and the
+    # app policy has the worker-src that the Monaco editor needs.
+    #
+    # no-compression: test results come back as an NDJSON stream, 1 line for
+    # each test event. A compressed response holds lines back until its buffer
+    # is full, and the test tree in the IDE stops moving.
+
+    # The auth API: passkey login, sign-up, recovery and passkey management.
+    # fail2ban watches this route only. See middleware-fail2ban.yaml.
+    - match: Host(`go-learn.party`) && PathPrefix(`/api/auth/`)
+      kind: Rule
+      priority: 10
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: fail2ban-go-practice
+          namespace: go-practice
+        - name: rate-limit
+          namespace: traefik
+        - name: no-compression
+          namespace: traefik
+      services:
+        - name: go-practice-web
+          port: 8080
+
+    # Everything else: the same chain without fail2ban.
+    - match: Host(`go-learn.party`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: rate-limit
+          namespace: traefik
+        - name: no-compression
+          namespace: traefik
+      services:
+        - name: go-practice-web
+          port: 8080
+  tls:
+    certResolver: letsencrypt

@@ -1,0 +1,175 @@
+# The runner executes Go code that a learner sends: `go vet`, `staticcheck`,
+# `gofmt` and `go test -race`. Treat this pod as hostile. What the sandbox
+# gives and what it does not give is in docs/runbooks/go-practice.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-practice-runner
+  namespace: go-practice-runner
+  labels:
+    app.kubernetes.io/name: go-practice-runner
+    app.kubernetes.io/instance: go-practice-runner
+spec:
+  # The web server sends all runs to 1 Service. GPR_MAX_CONCURRENT below limits
+  # the load of this replica. A second replica doubles the load that learner
+  # code can put on the cluster.
+  replicas: 1
+  # No volume that 2 pods cannot share, so the default RollingUpdate applies.
+  # The new pod is ready before the old pod stops, and the IDE keeps a runner
+  # during a rollout.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: go-practice-runner
+      app.kubernetes.io/instance: go-practice-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: go-practice-runner
+        app.kubernetes.io/instance: go-practice-runner
+    spec:
+      # Learner code runs in this pod. Without a token it has no identity on
+      # the Kubernetes API.
+      automountServiceAccountToken: false
+      # After SIGTERM the runner waits GPR_TEST_TIMEOUT (40 s by default) plus
+      # 5 s for its runs. Then it kills them and waits 5 s more: 50 s in all.
+      # The source is cmd/runner/main.go in go-practice-web. A run that
+      # started before a rollout then ends with a result. If you set
+      # GPR_TEST_TIMEOUT, keep this value at GPR_TEST_TIMEOUT plus 15 s or more.
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: runner
+          # Source and CI: github.com/Yornik/go-practice-web. The image holds
+          # the Go toolchain, gcc for -race, staticcheck, the course at
+          # /course and a built cache at /opt/gocache-seed. A new course
+          # commit needs a new image tag, here and on the web image, together.
+          image: ghcr.io/yornik/go-practice-runner:v0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+            - name: metrics
+              containerPort: 9091
+              protocol: TCP
+          env:
+            # The bearer token that the web server sends. The same value as
+            # GPW_RUNNER_TOKEN in secret-web.enc.yaml.
+            - name: GPR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: go-practice-runner
+                  key: GPR_TOKEN
+            # On the tmp emptyDir. The runner makes 1 directory for each run
+            # and deletes it when the run ends.
+            - name: GPR_WORK_DIR
+              value: "/tmp/runs"
+            # On the cache emptyDir. The runner copies /opt/gocache-seed here
+            # at start, so the first run does not compile the standard library
+            # with -race. A new pod starts with a clean cache.
+            - name: GPR_GOCACHE
+              value: "/cache/go-build"
+            # 2 race builds at the same time fit in the memory limit below.
+            # More requests wait in the queue of the runner.
+            - name: GPR_MAX_CONCURRENT
+              value: "2"
+            # Not set, because the defaults are correct: GPR_TEST_TIMEOUT (40 s)
+            # plus GPR_MAX_QUEUE_WAIT (12 s) is 52 s. That stays below 60 s, the
+            # default readTimeout of the Traefik entrypoints, which
+            # apps/values.yaml does not change. The IDE then gets a result with
+            # timedOut, or a busy answer, instead of a cut stream. The runner
+            # logs a WARN line at start when the sum is above 55 s.
+          # Before the runner opens port 8081, it copies the seed cache and
+          # runs a small program with -race to test the race detector. No probe
+          # gets an answer during that time. On 2026-10-17, in a local
+          # container with a local build of the runner image, both took about
+          # 3 s; the node can be slower. The startup probe gives them 3 minutes
+          # before liveness can restart the pod.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 36
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Ready when the course is loaded, `go version` works and the work
+          # directory is writable. A runner that is not ready leaves the
+          # Service, and the IDE shows that the runner is down.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /cache
+          resources:
+            # A cpu limit here, against the convention of this repository (see
+            # fedishark/deployment.yaml). That convention is for a trusted
+            # server with short bursts, where a CFS quota only adds latency.
+            # This pod runs code that a learner wrote. A busy loop in a test
+            # takes every core it can get until the timeout of 40 s. 2 runs can
+            # do that at the same time, on a node with 4 cores that also runs
+            # Postgres. The limit keeps that to 2 cores. A slower build costs
+            # only the learner who waits for it. The CI job pods in gitlab-ci
+            # have the same limit: cpu_limit = "2" in the gitlab-runner values
+            # in apps/values.yaml.
+            #
+            # Memory, an estimate and not a measurement: a race build of a test
+            # binary peaks at about 1 to 2 GiB. Read the peak in
+            # container_memory_working_set_bytes after the first week.
+            # 2 concurrent runs make 4 GiB, and 1 GiB is left for the runner,
+            # staticcheck and the race runtime of the tests. A test that
+            # allocates without end hits this limit. The kernel then kills the
+            # container, every run in flight fails, and the kubelet starts the
+            # container again.
+            requests:
+              cpu: 250m
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 5Gi
+      # Both volumes are disk-backed on purpose: no `medium: Memory`. A tmpfs
+      # counts against the memory limit, and 5 GiB of volumes would leave no
+      # memory for the race builds.
+      volumes:
+        # Learner code can write here. Past the sizeLimit, the kubelet evicts
+        # the pod, and the new pod starts with an empty volume. The kubelet
+        # measures the volume at intervals, so a fast writer can go past the
+        # limit for some seconds. 2 runs need about 100 MiB of test binaries
+        # and build files, an estimate and not a measurement.
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        # The seed cache plus the packages that learners build. Go removes a
+        # cache entry that nobody used for 5 days. If learners fill the volume
+        # faster, the kubelet evicts the pod, and the new pod starts again from
+        # the seed. The size is an estimate: read the volume usage after the
+        # first week.
+        - name: cache
+          emptyDir:
+            sizeLimit: 4Gi

@@ -1,0 +1,194 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-practice-web
+  namespace: go-practice
+  labels:
+    app.kubernetes.io/name: go-practice-web
+    app.kubernetes.io/instance: go-practice-web
+spec:
+  # SQLite allows 1 writer, and the PVC is ReadWriteOnce.
+  replicas: 1
+  # Recreate stops the old pod before the new pod starts. With RollingUpdate,
+  # the new pod waits on FailedAttachVolume while the old pod holds the
+  # volume. See docs/incidents/grafana-rwo-multi-attach.md and
+  # docs/incidents/2026-09-08-gitlab-valkey-rollingupdate-multi-attach.md.
+  # The first commit sets Recreate. The live object then has no rollingUpdate
+  # block for the API server to reject, as in part 2 of the Valkey incident.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: go-practice-web
+      app.kubernetes.io/instance: go-practice-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: go-practice-web
+        app.kubernetes.io/instance: go-practice-web
+    spec:
+      # The web server talks to the runner, to SMTP and to its own volume. It
+      # needs no Kubernetes API access.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        # Gives group 65532 write access to the NFS volume. Grafana (fsGroup
+        # 472) and Prometheus (fsGroup 2000) get fsGroup from their chart
+        # defaults and run on truenas-ssd, so the class accepts it. If the pod
+        # crash-loops with "unable to open database file", read
+        # docs/runbooks/go-practice.md.
+        fsGroup: 65532
+        # Skips the recursive change of ownership at each start when the root
+        # of the volume already has the group.
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          # Source and CI: github.com/Yornik/go-practice-web. The course is
+          # copied into the image at /course, so a new course commit needs a
+          # new image tag. Do not move this to `latest`: the running version
+          # then changes on a restart, and nobody can tell which one it is.
+          image: ghcr.io/yornik/go-practice-web:v0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            # A separate port, so that the IngressRoute cannot route a request
+            # to /metrics. The metrics count users, sessions and runner load.
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            # The canonical origin. The app builds the links in mail and in
+            # certificates from it, not from the request Host, which a client
+            # sets. It is also the WebAuthn relying party: the RP ID is the
+            # host, go-learn.party. Each passkey holds a hash of the RP ID, so
+            # a change of this host makes every registered passkey fail.
+            - name: GPW_PUBLIC_URL
+              value: "https://go-learn.party"
+            - name: GPW_DB_PATH
+              value: "/data/go-practice.db"
+            # In the image. See the note on the image above.
+            - name: GPW_COURSE_DIR
+              value: "/course"
+            # The Service in the other namespace. The full name does not
+            # depend on the DNS search path of the pod.
+            - name: GPW_RUNNER_URL
+              value: "http://runner.go-practice-runner.svc.cluster.local:8081"
+            # The same value as GPR_TOKEN in secret-runner.enc.yaml. To rotate
+            # it, change both. See docs/runbooks/go-practice.md.
+            - name: GPW_RUNNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: go-practice-web
+                  key: GPW_RUNNER_TOKEN
+            # Resend, the relay that soiree, Vikunja, GoToSocial, GitLab and
+            # OpenProject use. Port 465 is implicit TLS. Only the API key is
+            # secret.
+            - name: GPW_SMTP_HOST
+              value: "smtp.resend.com"
+            - name: GPW_SMTP_PORT
+              value: "465"
+            - name: GPW_SMTP_USER
+              value: "resend"
+            # The Resend API key, a copy of the key of soiree. While the value
+            # is REPLACE_ME, the app writes each mail to the log and sends
+            # nothing. Every new account, the admin included, then waits at
+            # /check-email until someone opens the verification link from the
+            # log. Recovery and the security notices do not work. Set the key
+            # before the first account. See docs/runbooks/go-practice.md.
+            - name: GPW_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: go-practice-web
+                  key: GPW_SMTP_PASSWORD
+            # From yornik.eu, not from go-learn.party. Resend already verifies
+            # yornik.eu, and the domain has a history with mail filters. A new
+            # .party domain went to spam with all checks passing. See the mail
+            # note in soiree/deployment.yaml. go-learn.party publishes a
+            # reject-all SPF and DMARC policy, from
+            # external-dns/cronjob-no-mail-go-learn.yaml.
+            - name: GPW_MAIL_FROM
+              value: "Go Practice <go-practice@yornik.eu>"
+            # Traefik reaches the pod from the pod CIDR and sets
+            # X-Forwarded-For. Without this, the per-address rate limits of
+            # the app see the address of Traefik for every client. The same
+            # CIDR as the trustedIPs of Traefik in apps/values.yaml.
+            - name: GPW_TRUSTED_PROXIES
+              value: "10.244.0.0/16"
+            # Read by the Go runtime. A soft limit below the hard memory limit,
+            # so that the collector runs before the kernel kills the container.
+            - name: GOMEMLIMIT
+              value: "300MiB"
+            # Not set, because the defaults are correct: GPW_ADDR (:8080) and
+            # GPW_METRICS_ADDR (:9090) are the containerPorts above. GPW_DEV
+            # stays false: true allows http origins and drops the Secure and
+            # __Host- cookie attributes.
+          # Liveness checks the process only. Readiness writes a row to the
+          # database, so a pod that cannot write leaves the Service instead of
+          # a restart loop. A restart does not repair a volume. A probe that
+          # only proves a listening port reported Ready on a broken volume for
+          # 5 hours: see docs/incidents/2026-10-12-truenas-update-readonly-pv-remount.md.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            # SQLite and the Go runtime write temporary files here, and the
+            # root filesystem is read-only.
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            # No cpu limit by design. See fedishark/deployment.yaml for the
+            # reason. The web server is a Go HTTP server with bursts of work.
+            # A CFS quota turns a burst into a stall, and the request below
+            # already gives a fair share under contention. The runner does the
+            # heavy work, and it has a cpu limit.
+            #
+            # The memory limit is an estimate, not a measurement: v0.1.0 has
+            # not run in the cluster. The estimate allows for a PDF certificate
+            # with embedded fonts. Read container_memory_working_set_bytes
+            # after the first week, then set the limit from the measurement.
+            # Keep GOMEMLIMIT at about 80 % of the limit.
+            requests:
+              cpu: 20m
+              memory: 96Mi
+            limits:
+              memory: 384Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: go-practice-data-ssd
+        # Disk-backed on purpose: no `medium: Memory`. A tmpfs counts against
+        # the memory limit of 384Mi above.
+        - name: tmp
+          emptyDir:
+            # A full /tmp evicts the pod. SQLite needs temporary space for a
+            # large sort or a VACUUM, and the database is some MiB.
+            sizeLimit: 256Mi

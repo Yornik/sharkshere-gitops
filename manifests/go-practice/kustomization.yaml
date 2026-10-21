@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# No `namespace:` here. Each manifest sets its own namespace, because 1
+# Application holds 2 namespaces: go-practice for the web server and
+# go-practice-runner for the runner.
+resources:
+  - namespace.yaml
+  - namespace-runner.yaml
+  # go-practice
+  - pvc-data.yaml
+  - deployment-web.yaml
+  - service-web.yaml
+  - ingressroute.yaml
+  - ingressroute-web.yaml
+  - middleware-redirect-https.yaml
+  - middleware-fail2ban.yaml
+  - servicemonitor-web.yaml
+  - networkpolicy-web-default-deny.yaml
+  - networkpolicy-web-ingress.yaml
+  - networkpolicy-web-egress.yaml
+  # go-practice-runner
+  - deployment-runner.yaml
+  - service-runner.yaml
+  - servicemonitor-runner.yaml
+  - networkpolicy-runner-default-deny.yaml
+  - networkpolicy-runner-allow-web.yaml
+  - networkpolicy-runner-allow-monitoring.yaml
+generators:
+  - secret-generator.yaml
