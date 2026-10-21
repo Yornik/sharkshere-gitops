@@ -39,6 +39,11 @@ spec:
             # ExternalDNS skips the record and the name does not resolve. The
             # Cloudflare token in secret.enc.yaml must reach this zone too.
             - --domain-filter=go-learn.party
+            # go-practice moves to vesper-labs.org, also a zone of its own in the
+            # same account. Its apex comes from the dummy Service
+            # dns-vesper-labs-org in dns-records.yaml. go-learn.party stays: it
+            # redirects old links and the verify links of issued certificates.
+            - --domain-filter=vesper-labs.org
             - --policy=upsert-only
             - --registry=txt
             - --txt-owner-id=sharkshere

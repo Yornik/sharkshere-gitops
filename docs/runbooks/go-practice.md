@@ -259,6 +259,98 @@ CAUTION: The web Deployment uses `Recreate`. The merge in the next step stops th
 
 Expected result: ArgoCD rolls out both Deployments, and each pod is `1/1 Running`. The 2 runner log lines match the expected result of the first deploy.
 
+## How to move the site to vesper-labs.org
+
+The site moves from `go-learn.party` to `vesper-labs.org`. `go-learn.party` stays, and redirects every path to the new name. Old links and the verify links in issued certificates keep working.
+
+The move has 2 changes, in this order. The DNS change goes first, because Traefik does not retry a failed ACME order (see [step 3 of the first deploy](#3-publish-the-dns-record-before-the-route)).
+
+| Change | What it does |
+|---|---|
+| DNS | `manifests/external-dns/`: the dummy Service `dns-vesper-labs-org`, `--domain-filter=vesper-labs.org`, and the jobs `caa-updater-vesper` and `mail-sender-vesper`. Nothing serves the name yet, and nothing sends from it yet. |
+| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, `GPW_PUBLIC_URL=https://vesper-labs.org`, and `GPW_MAIL_FROM` on `vesper-labs.org`. It ships with the release that rebrands the site. |
+
+CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys made on `go-learn.party` do not work on `vesper-labs.org`. Each person signs in once with account recovery by email, and makes a new passkey. Progress, code and certificates stay, because they belong to the account, not to the passkey. Tell the learners before you merge the route change.
+
+### 1. Prepare the zone
+
+1. In Cloudflare, make sure that the zone `vesper-labs.org` has the status Active.
+2. Open My Profile, then API Tokens.
+3. Edit the token that ExternalDNS uses.
+4. Add the zone `vesper-labs.org` to its zone resources, with Zone Read and DNS Edit.
+5. Save the token.
+6. In the zone `vesper-labs.org`, open SSL/TLS, then Edge Certificates.
+7. Disable Universal SSL. The reason is in the note of [step 2 of the first deploy](#2-prepare-the-cloudflare-zone).
+8. In Resend, open Domains.
+9. If `vesper-labs.org` is not in the list, add it in the region of `yornik.eu`.
+10. Open `vesper-labs.org` and compare its records with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`. The table below lists them.
+11. If a value differs, change it in the job.
+12. Open API Keys.
+13. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`.
+14. If you made a new key, do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
+
+| Record in Resend | Variable in the job | Value on 21 October 2026 |
+|---|---|---|
+| CNAME `send` | `RESEND_RETURN_PATH` | `send.forge.rmta.net` |
+| CNAME `rsend` | `RESEND_FALLBACK_PATH` | `rsend-euw1.forge.rmta.net` |
+| TXT `resend._domainkey` | `RESEND_DKIM` | `p=MIGfMA0GCSqGSIb3DQEB…` |
+| MX at the apex | `RESEND_INBOUND_MX` | `receive-euw1.forge.rmta.net`, priority 10 |
+
+NOTE: Resend's Cloudflare setup writes these records into the zone. The job takes them over and does not add a second copy. If Resend shows MX and TXT records on `send` instead of a CNAME, the script does not fit that layout: see its comment.
+
+### 2. Merge the DNS change
+
+1. Merge the change to `manifests/external-dns/`.
+2. Wait 5 minutes. ExternalDNS runs every 5 minutes.
+3. Read the records from a public resolver:
+
+   ```sh
+   dig +short @1.1.1.1 vesper-labs.org A
+   dig +short @1.1.1.1 vesper-labs.org AAAA
+   ```
+
+Expected result: `78.47.240.158` and `77.42.94.152`, then `2a01:4f8:1c19:60c2::1` and `2a01:4f9:c014:e6de::1`.
+
+If the output is empty after 10 minutes, read the log of ExternalDNS:
+
+```sh
+kubectl --context yornik-sharkshere -n external-dns logs deploy/external-dns | grep vesper
+```
+
+A line about no matching zone means that the token cannot reach the zone. Do [step 1](#1-prepare-the-zone) again.
+
+### 3. Check the mail records
+
+The jobs `caa-updater-vesper` and `mail-sender-vesper` run on Sunday morning.
+
+1. After the first Sunday, read the records:
+
+   ```sh
+   dig +short @1.1.1.1 vesper-labs.org CAA
+   dig +short @1.1.1.1 vesper-labs.org TXT
+   dig +short @1.1.1.1 _dmarc.vesper-labs.org TXT
+   dig +short @1.1.1.1 vesper-labs.org MX
+   dig +short @1.1.1.1 send.vesper-labs.org CNAME
+   dig +short @1.1.1.1 rsend.vesper-labs.org CNAME
+   dig +short @1.1.1.1 resend._domainkey.vesper-labs.org TXT
+   ```
+
+2. In Resend, make sure that `vesper-labs.org` shows Verified.
+
+Expected result:
+
+- The CAA records allow only Let's Encrypt.
+- The SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address.
+- The DMARC policy is `p=none` with reports to `dmarcreports@vesper-labs.org`: Resend's starting policy. Raise it to `p=quarantine`, as for `yornik.eu`, once the reports show only Resend sending as the zone.
+- The MX is `10 receive-euw1.forge.rmta.net`, so replies to `hush@vesper-labs.org` reach Resend.
+- `send`, `rsend` and the DKIM key have the values of the table in step 1.
+
+### 4. Merge the route change
+
+CAUTION: Merge the route change only when Resend shows `vesper-labs.org` as Verified. After the route change, everyone recovers their account by email, so the mail must work from the start.
+
+This step comes with the release that rebrands the site. Its pull request describes the last steps: the new `Canonical` line in security.txt, which you sign again with the security.txt key, and the checks after the deploy.
+
 ## How to rotate the runner token
 
 If the token leaked outside the cluster, rotate it. The 2 Secrets hold the same value. Change both in 1 pull request.

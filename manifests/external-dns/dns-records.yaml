@@ -187,3 +187,23 @@ spec:
     - name: dummy
       port: 80
       targetPort: 80
+---
+# vesper-labs.org is the new home of go-practice, again the apex of its own
+# zone, with the same 4 jump-host addresses as go-learn.party above. There is
+# no www record: the app accepts 1 origin only, the WebAuthn relying party
+# vesper-labs.org. go-learn.party keeps its record and redirects here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-vesper-labs-org
+  namespace: external-dns
+  annotations:
+    external-dns.kubernetes.io/hostname: vesper-labs.org
+    external-dns.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
+    external-dns.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80

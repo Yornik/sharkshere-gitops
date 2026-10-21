@@ -1,0 +1,54 @@
+# CAA for vesper-labs.org: only Let's Encrypt issues, and nobody issues a
+# wildcard. The same job as caa-updater-go-learn, 10 minutes earlier, so that
+# the CAA jobs do not run at the same time.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: caa-updater-vesper
+  namespace: external-dns
+spec:
+  schedule: "13 4 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: caa-updater
+              image: alpine:3.24
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  apk add --no-cache curl jq >/dev/null
+                  /scripts/update-caa.sh
+              env:
+                - name: CF_ZONE_NAME
+                  value: vesper-labs.org
+                - name: CAA_RECORD_NAME
+                  value: vesper-labs.org
+                - name: CAA_REPORT_EMAIL
+                  value: yornik@yornik.nl
+                - name: CAA_TTL
+                  value: "3600"
+                - name: CF_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cloudflare-credentials
+                      key: api-token
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: caa-updater-script
+                defaultMode: 0555

@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mail-sender-script
+  namespace: external-dns
+data:
+  # Publish the records of a zone that sends mail through Resend, and its
+  # SPF and DMARC policy. Resend signs with DKIM for the zone itself, and its
+  # bounce address is on send.<zone>, a CNAME to Resend's mail servers. So
+  # nothing sends with the bare zone as its envelope sender, and the SPF of
+  # the zone itself rejects all mail.
+  #
+  # Mail to the zone itself goes to Resend's inbound servers: an MX record at
+  # the apex. That does not need an SPF entry, because SPF is about senders.
+  #
+  # This is the layout that Resend showed for vesper-labs.org on 2026-10-21:
+  # a CNAME send and, for the fallback server, a CNAME rsend. An older
+  # domain has MX and TXT records on send instead; a CNAME cannot sit beside
+  # them, so this script does not fit such a domain. The CNAMEs go last, so
+  # that a failure there leaves DKIM, SPF and DMARC in place.
+  #
+  # Resend's Cloudflare setup writes these records without the managed
+  # comment. The script takes over the 1 record of each name and type (for
+  # TXT: the 1 record whose content starts with the prefix). If it finds more
+  # than 1, it stops there and changes neither of them, because deleting a
+  # record is not its job; the records it set earlier in the same run stay
+  # set. A second SPF or DMARC record makes the policy invalid.
+  update-mail-sender.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${CF_API_TOKEN:?CF_API_TOKEN is required}"
+    : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
+    : "${RESEND_RETURN_PATH:?RESEND_RETURN_PATH is required}"
+    : "${RESEND_DKIM:?RESEND_DKIM is required}"
+    : "${RESEND_FALLBACK_PATH:=}"
+    : "${RESEND_INBOUND_MX:=}"
+    : "${MAIL_DMARC:?MAIL_DMARC is required}"
+    : "${MAIL_TTL:=3600}"
+
+    MANAGED_COMMENT="managed-by: sharkshere-mail-sender"
+    SPF="v=spf1 -all"
+
+    api() {
+      curl -fsS --retry 3 \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "$@"
+    }
+
+    ZONE_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones?name=${CF_ZONE_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
+
+    if [ -z "${ZONE_ID}" ]; then
+      echo "Failed to resolve Cloudflare zone id for ${CF_ZONE_NAME}"
+      exit 1
+    fi
+
+    # Set the 1 record of type $1 at $2 whose content starts with $3 to
+    # content $4, with priority $5 for an MX record. An empty prefix matches
+    # every record of the type.
+    ensure() {
+      type="$1"
+      name="$2"
+      prefix="$3"
+      content="$4"
+      priority="${5:-10}"
+      # Cloudflare can return TXT content with or without quotes.
+      ids="$(
+        api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=${type}&name=${name}&per_page=100" \
+        | jq -r --arg p "${prefix}" '
+            .result[]
+            | select((.content | ltrimstr("\"")) | startswith($p))
+            | .id
+          '
+      )"
+      count="$(printf '%s' "${ids}" | grep -c . || true)"
+      if [ "${count}" -gt 1 ]; then
+        echo "Found ${count} ${type} records at ${name} that start with '${prefix}'. Remove the extras by hand."
+        exit 1
+      fi
+      # proxied is false: Cloudflare must not proxy a mail name.
+      body="$(
+        jq -cn \
+          --arg type "${type}" \
+          --arg name "${name}" \
+          --arg content "${content}" \
+          --arg comment "${MANAGED_COMMENT}" \
+          --argjson ttl "${MAIL_TTL}" \
+          --argjson priority "${priority}" \
+          '{type: $type, name: $name, content: $content, ttl: $ttl, proxied: false, comment: $comment}
+           + (if $type == "MX" then {priority: $priority} else {} end)'
+      )"
+      if [ -n "${ids}" ]; then
+        api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${ids}" --data "${body}" >/dev/null
+      else
+        api -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" --data "${body}" >/dev/null
+      fi
+      echo "Ensured ${type} ${name}: ${content}"
+    }
+
+    ensure TXT "resend._domainkey.${CF_ZONE_NAME}" "p=" "${RESEND_DKIM}"
+    ensure TXT "${CF_ZONE_NAME}" "v=spf1" "${SPF}"
+    ensure TXT "_dmarc.${CF_ZONE_NAME}" "v=DMARC1" "${MAIL_DMARC}"
+    if [ -n "${RESEND_INBOUND_MX}" ]; then
+      ensure MX "${CF_ZONE_NAME}" "" "${RESEND_INBOUND_MX}" 10
+    fi
+    ensure CNAME "send.${CF_ZONE_NAME}" "" "${RESEND_RETURN_PATH}"
+    if [ -n "${RESEND_FALLBACK_PATH}" ]; then
+      ensure CNAME "rsend.${CF_ZONE_NAME}" "" "${RESEND_FALLBACK_PATH}"
+    fi
+
+    echo "Mail sender records ensured for ${CF_ZONE_NAME}"

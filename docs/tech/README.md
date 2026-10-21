@@ -111,7 +111,7 @@ manifests/      per-app manifests and Kustomize overlays
 | App | Namespace | Purpose |
 |-----|-----------|---------|
 | `local-path-provisioner` | `local-path-storage` | node-local default storage class |
-| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party` + `go-learn.party`, plus CronJobs for CAA, DANE TLSA and mail records |
+| `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party` + `vesper-labs.org`, plus CronJobs for CAA, DANE TLSA and mail records |
 | `monitoring` | `monitoring` | monitoring namespace, Grafana tailnet Ingress, secrets |
 | `tibber-exporter` | `monitoring` | energy metrics exporter |
 | `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
@@ -191,7 +191,8 @@ manifests/      per-app manifests and Kustomize overlays
 | `git.yornik.eu` | GitLab CE (web + git over HTTPS + git over SSH on `:2222`) |
 | `registry.git.yornik.eu` | GitLab Container Registry |
 | `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
-| `go-learn.party` | go-practice — web IDE for the Go practice course. Served from the **apex** of its own zone, with A/AAAA records straight at the jump hosts like `bokings-driessen.party`; no `www.`, because the app accepts 1 origin, its WebAuthn relying party. Sign-up is by invite only. The runner that executes learner code has no public route. |
+| `go-learn.party` | go-practice — web IDE for the Go practice course. Served from the **apex** of its own zone, with A/AAAA records straight at the jump hosts like `bokings-driessen.party`; no `www.`, because the app accepts 1 origin, its WebAuthn relying party. Sign-up is by invite only. The runner that executes learner code has no public route. The site moves to `vesper-labs.org`; this name then only redirects there. |
+| `vesper-labs.org` | Not served yet. The new home of go-practice, the apex of its own zone like `go-learn.party`. ExternalDNS publishes its A/AAAA and CAA records, and a job publishes the records of Resend, so the site can send its mail from this zone. The site moves here with the release that rebrands it; see [the runbook](../runbooks/go-practice.md#how-to-move-the-site-to-vesper-labsorg). |
 
 ### Tailnet only
 
@@ -207,7 +208,7 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 | `qbittorrent.hedgehog-wage.ts.net` | qBittorrent |
 | `vaultwarden-admin.hedgehog-wage.ts.net` | Vaultwarden admin panel |
 
-ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party` and `go-learn.party` — the last 2 are zones of their own, so each needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
+ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party` and `vesper-labs.org` — the last 3 are zones of their own, so each needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
 ExternalDNS runs with `--policy=upsert-only`. It creates and updates records. It does not delete a record. To remove a hostname:
 

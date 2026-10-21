@@ -1,0 +1,68 @@
+# The mail records of vesper-labs.org: go-practice sends its mail from this
+# zone through Resend, as hush@vesper-labs.org, and replies arrive there too.
+# The values come from the Resend dashboard (Domains, vesper-labs.org). The
+# same slot as no-mail-go-learn, 10 minutes later.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mail-sender-vesper
+  namespace: external-dns
+spec:
+  schedule: "43 5 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: mail-sender
+              image: alpine:3.24
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  apk add --no-cache curl jq >/dev/null
+                  /scripts/update-mail-sender.sh
+              env:
+                - name: CF_ZONE_NAME
+                  value: vesper-labs.org
+                - name: RESEND_RETURN_PATH
+                  value: send.forge.rmta.net
+                # Resend's fallback server; without it Resend reports the
+                # domain as partially verified.
+                - name: RESEND_FALLBACK_PATH
+                  value: rsend-euw1.forge.rmta.net
+                # Mail to hush@vesper-labs.org, the site's sender, arrives in
+                # Resend's inbound.
+                - name: RESEND_INBOUND_MX
+                  value: receive-euw1.forge.rmta.net
+                - name: RESEND_DKIM
+                  value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDE80sfEHw18JWA4YY4D3QU1kpqypHYTAAQPf2fGJtMDEWjIJOWCpRGw3M5fS11l7zMuB5Q2yWSFEU1OTS17S/jmqLTx6XCipXPsODzySqBsJvRJtVWc9FOZV1ePSApQCyViDZCbu1bY/EaU9JuLqDScX3VXNBThwRgYe/VOPWAoQIDAQAB"
+                # Resend's starting policy: report only, with aggregate
+                # reports to an address in the zone. Raise p to quarantine
+                # once the reports show only Resend sending as this zone.
+                - name: MAIL_DMARC
+                  value: "v=DMARC1; p=none; rua=mailto:dmarcreports@vesper-labs.org;"
+                - name: MAIL_TTL
+                  value: "3600"
+                - name: CF_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cloudflare-credentials
+                      key: api-token
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: mail-sender-script
+                defaultMode: 0555
