@@ -17,6 +17,7 @@ spec:
   # as its own PR. Do not restore on tag 2.1.0 and do not just revert
   # this commit: 2.1.0 runs the unpatched PHP, and a node can reuse a
   # cached 2.1.0 even if upstream re-pushes that tag.
+  # See docs/incidents/2026-10-21-privatebin-disabled-php2shell-rce.md.
   replicas: 0
   strategy:
     type: Recreate
