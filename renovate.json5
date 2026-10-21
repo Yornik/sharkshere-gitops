@@ -163,9 +163,12 @@
       // compatibility suffix that an update must not change. The pin
       // `5.1.4-r2-ls440` therefore asked for the suffix `r2-ls440`, which no
       // later tag carries, so no upgrade PR ever opened. Even the rebuilds of
-      // the same release (`ls441` to `ls446`) were rejected. Measured on
-      // 2026-10-20: the pin had not moved since 2026-08-31, while 5.2.0 to
-      // 5.3.0 shipped.
+      // the same release (`ls441` to `ls446`) were rejected.
+      //
+      // Measured on 2026-10-21. The tag replaced `latest` on 2026-08-31, and
+      // the build it names is from 2026-02-08, so it was already 6 months old
+      // when it was pinned. It did not move again, while 5.2.0 to 5.3.0
+      // shipped.
       //
       // LinuxServer also changed the scheme at 5.2.0. `-r<N>-ls<build>`
       // became `_v<libtorrent>-ls<build>`, so the pin sat in a scheme that
@@ -184,10 +187,11 @@
       versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)_v[\\d.]+-ls(?<build>\\d+)$',
       // The libtorrent version in the tag is not a group above, because a
       // capture group has to be numeric and `2.1.2` is not. It therefore
-      // changes inside a bump that this regex reads as a build bump:
-      // measured on 2026-10-21, qBittorrent 5.3.0 moved from
-      // `_v2.0.15-ls482` to `_v2.1.2-ls484`, so libtorrent went from 2.0.15
-      // to 2.1.2 with no change in the qBittorrent version.
+      // changes inside a bump that this regex reads as a build bump. On
+      // 2026-10-20 qBittorrent 5.3.0 moved from `_v2.0.15-ls482` to
+      // `_v2.1.2-ls484`, which is libtorrent 2.0.15 to 2.1.2 with no change
+      // in the qBittorrent version. Both build dates were read from the image
+      // labels on 2026-10-21.
       //
       // libtorrent writes the resume data, so check A5 applies and a person
       // reads the diff. Without this the bump would be a patch update and
@@ -199,6 +203,16 @@
       // label would skip the review of a pull request that does not
       // automerge.
       automerge: false,
+      // `automerge: false` alone is not enough. Rule 1 above sets
+      // `groupName: 'patch updates'` for every patch update, and a rebuild
+      // here is a patch update, so this bump would join that group. A grouped
+      // pull request takes the labels of each bump in it, so a sibling in the
+      // group brings the `automerge` label, and the gate in
+      // claude-review.yml skips a pull request that carries it. The libtorrent
+      // change would then reach `main` with no review, which is the opposite
+      // of the intent above. `null` keeps this package out of every group, so
+      // the labels on it are the ones set here.
+      groupName: null,
       labels: [
         'renovate',
         'dependencies',
