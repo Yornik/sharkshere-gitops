@@ -158,61 +158,57 @@
       matchPackageNames: [
         'lscr.io/linuxserver/qbittorrent',
       ],
-      // LinuxServer puts its own build counter in the tag, and the default
-      // docker versioning reads everything after the first hyphen as a
-      // compatibility suffix that an update must not change. The pin
-      // `5.1.4-r2-ls440` therefore asked for the suffix `r2-ls440`, which no
-      // later tag carries, so no upgrade PR ever opened. Even the rebuilds of
-      // the same release (`ls441` to `ls446`) were rejected.
+      // LinuxServer puts a build counter in the tag. The default docker
+      // versioning reads the text after the first hyphen as a compatibility
+      // suffix and keeps it. So the pin `5.1.4-r2-ls440` asked for the suffix
+      // `r2-ls440`. No later tag carries it, so Renovate opened no bump. It
+      // also rejected the rebuilds `ls441` to `ls446`.
       //
-      // Measured on 2026-10-21. The tag replaced `latest` on 2026-08-31, and
-      // the build it names is from 2026-02-08, so it was already 6 months old
-      // when it was pinned. It did not move again, while 5.2.0 to 5.3.0
-      // shipped.
+      // Measured on 2026-10-21. The tag replaced `latest` on 2026-08-31. The
+      // build it names is from 2026-02-08, so it was 6 months old already. It
+      // did not move again, and 5.2.0 to 5.3.0 shipped.
       //
-      // LinuxServer also changed the scheme at 5.2.0. `-r<N>-ls<build>`
-      // became `_v<libtorrent>-ls<build>`, so the pin sat in a scheme that
-      // no longer exists. A versioning rule alone could not fix that: the
-      // old tag matches no pattern for the new one, so the pin moved by
-      // hand in the same commit.
+      // LinuxServer changed the scheme at 5.2.0. `-r<N>-ls<build>` became
+      // `_v<libtorrent>-ls<build>`. The old tag matches no new pattern, so a
+      // rule alone cannot help. The pin moved by hand in the same commit.
       //
-      // This regex reads the qBittorrent version and treats the LinuxServer
-      // counter as the build, so a rebuild arrives as a bump as well.
+      // This regex reads the qBittorrent version. It treats the LinuxServer
+      // counter as the build, so a rebuild arrives as a bump.
       //
-      // The pattern is anchored, so it takes the plain release tags only. It
+      // The pattern is anchored. It takes the plain release tags only, and
       // rejects `latest`, `libtorrentv1`, the `version-` tags and the per-arch
-      // tags. It also rejects the `-libtorrentv1` line, which matters: that
-      // line is a different libtorrent major, and a move to it would change
-      // the on-disk resume data.
+      // tags. It rejects the `-libtorrentv1` line as well. That line is
+      // another libtorrent major, and a move to it rewrites the resume data.
       versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)_v[\\d.]+-ls(?<build>\\d+)$',
-      // The libtorrent version in the tag is not a group above, because a
-      // capture group has to be numeric and `2.1.2` is not. It therefore
-      // changes inside a bump that this regex reads as a build bump. On
-      // 2026-10-20 qBittorrent 5.3.0 moved from `_v2.0.15-ls482` to
-      // `_v2.1.2-ls484`, which is libtorrent 2.0.15 to 2.1.2 with no change
-      // in the qBittorrent version. Both build dates were read from the image
-      // labels on 2026-10-21.
+    },
+    {
+      matchPackageNames: [
+        'lscr.io/linuxserver/qbittorrent',
+      ],
+      // A major update keeps the `major` label from the rule above, so this
+      // rule takes a patch and a minor only.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      // The libtorrent version in the tag is not a capture group, because a
+      // group holds digits only. It changes inside a bump that the regex
+      // reads as a build bump. On 2026-10-20 qBittorrent 5.3.0 moved from
+      // `_v2.0.15-ls482` to `_v2.1.2-ls484`. libtorrent went from 2.0.15 to
+      // 2.1.2, and qBittorrent did not move.
       //
-      // libtorrent writes the resume data, so check A5 applies and a person
-      // reads the diff. Without this the bump would be a patch update and
-      // the group above would merge it unseen.
-      //
-      // NOTE: the labels are set again here on purpose. A later rule
-      // replaces `labels`, it does not merge them, and the `automerge` label
-      // decides whether the `Claude review` job runs. Leaving the inherited
+      // libtorrent writes the resume data, so check A5 applies. A person
+      // reads the diff.
+      automerge: false,
+      // Rule 1 groups every patch update. A grouped pull request takes the
+      // labels of each bump in it. A sibling then brings the `automerge`
+      // label, and the gate in claude-review.yml skips the review. `null`
+      // keeps this package out of every group.
+      groupName: null,
+      // NOTE: a later rule replaces `labels`, it does not merge them. The
+      // `automerge` label decides whether the review runs, so the inherited
       // label would skip the review of a pull request that does not
       // automerge.
-      automerge: false,
-      // `automerge: false` alone is not enough. Rule 1 above sets
-      // `groupName: 'patch updates'` for every patch update, and a rebuild
-      // here is a patch update, so this bump would join that group. A grouped
-      // pull request takes the labels of each bump in it, so a sibling in the
-      // group brings the `automerge` label, and the gate in
-      // claude-review.yml skips a pull request that carries it. The libtorrent
-      // change would then reach `main` with no review, which is the opposite
-      // of the intent above. `null` keeps this package out of every group, so
-      // the labels on it are the ones set here.
-      groupName: null,
       labels: [
         'renovate',
         'dependencies',
