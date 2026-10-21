@@ -259,6 +259,14 @@ CAUTION: The web Deployment uses `Recreate`. The merge in the next step stops th
 
 Expected result: ArgoCD rolls out both Deployments, and each pod is `1/1 Running`. The 2 runner log lines match the expected result of the first deploy.
 
+### A release that migrates the database
+
+Some releases change the database schema. 0.2.0 does: migration 0003 moves the stored progress, code, notes, reveals and certificate kinds to the course of 50 exercises.
+
+- Before the first pending migration, the web server writes a checked copy to `/data/backups/go-practice-before-NNNN.db`, for example `go-practice-before-0003.db`. If it cannot write the copy, it does not start. A web pod that is `1/1 Running` after the release therefore has the copy.
+- The daily backups rotate by weekday and never touch this file. It stays until you delete it.
+- A migration is one way: the previous image refuses a schema it does not know. To roll back, do [How to restore the database](#how-to-restore-the-database) with `go-practice-before-NNNN.db` as the copy, and set both image tags back to the previous release in the same change.
+
 ## How to move the site to vesper-labs.org
 
 The site moves from `go-learn.party` to `vesper-labs.org`. `go-learn.party` stays, and redirects every path to the new name. Old links and the verify links in issued certificates keep working.
