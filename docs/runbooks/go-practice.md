@@ -341,7 +341,7 @@ Expected result:
 
 - The CAA records allow only Let's Encrypt.
 - The SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address.
-- The DMARC policy is `p=quarantine`, as for `yornik.eu`.
+- The DMARC policy is `p=none` with reports to `dmarcreports@vesper-labs.org`: Resend's starting policy. Raise it to `p=quarantine`, as for `yornik.eu`, once the reports show only Resend sending as the zone.
 - The MX is `10 receive-euw1.forge.rmta.net`, so replies to `hush@vesper-labs.org` reach Resend.
 - `send`, `rsend` and the DKIM key have the values of the table in step 1.
 

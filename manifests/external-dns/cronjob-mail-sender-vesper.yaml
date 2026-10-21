@@ -44,9 +44,11 @@ spec:
                   value: receive-euw1.forge.rmta.net
                 - name: RESEND_DKIM
                   value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDE80sfEHw18JWA4YY4D3QU1kpqypHYTAAQPf2fGJtMDEWjIJOWCpRGw3M5fS11l7zMuB5Q2yWSFEU1OTS17S/jmqLTx6XCipXPsODzySqBsJvRJtVWc9FOZV1ePSApQCyViDZCbu1bY/EaU9JuLqDScX3VXNBThwRgYe/VOPWAoQIDAQAB"
-                # The same policy as yornik.eu, the other zone that sends.
+                # Resend's starting policy: report only, with aggregate
+                # reports to an address in the zone. Raise p to quarantine
+                # once the reports show only Resend sending as this zone.
                 - name: MAIL_DMARC
-                  value: "v=DMARC1; p=quarantine;"
+                  value: "v=DMARC1; p=none; rua=mailto:dmarcreports@vesper-labs.org;"
                 - name: MAIL_TTL
                   value: "3600"
                 - name: CF_API_TOKEN
