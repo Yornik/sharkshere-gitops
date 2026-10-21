@@ -281,9 +281,22 @@ CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys mad
 5. Save the token.
 6. In the zone `vesper-labs.org`, open SSL/TLS, then Edge Certificates.
 7. Disable Universal SSL. The reason is in the note of [step 2 of the first deploy](#2-prepare-the-cloudflare-zone).
-8. In Resend, open Domains. Add `vesper-labs.org` in the region of `yornik.eu` if it is not there yet. Resend's Cloudflare setup may add its records to the zone. The job `mail-sender-vesper` takes them over; it does not add a second copy.
-9. Compare the records in Resend with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`. The job expects 4 records: a CNAME `send` (its target is `RESEND_RETURN_PATH`), a CNAME `rsend` (`RESEND_FALLBACK_PATH`), a TXT `resend._domainkey` (`RESEND_DKIM`) and, for inbound mail, an MX at the apex (`RESEND_INBOUND_MX`). If Resend shows other values, change the job. If Resend shows MX and TXT records on `send` instead of a CNAME, the script does not fit: see its comment.
-10. In Resend, open API Keys. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`. Then do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
+8. In Resend, open Domains.
+9. If `vesper-labs.org` is not in the list, add it in the region of `yornik.eu`.
+10. Open `vesper-labs.org` and compare its records with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`. The table below lists them.
+11. If a value differs, change it in the job.
+12. Open API Keys.
+13. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`.
+14. If you made a new key, do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
+
+| Record in Resend | Variable in the job | Value on 21 October 2026 |
+|---|---|---|
+| CNAME `send` | `RESEND_RETURN_PATH` | `send.forge.rmta.net` |
+| CNAME `rsend` | `RESEND_FALLBACK_PATH` | `rsend-euw1.forge.rmta.net` |
+| TXT `resend._domainkey` | `RESEND_DKIM` | `p=MIGfMA0GCSqGSIb3DQEB…` |
+| MX at the apex | `RESEND_INBOUND_MX` | `receive-euw1.forge.rmta.net`, priority 10 |
+
+NOTE: Resend's Cloudflare setup writes these records into the zone. The job takes them over and does not add a second copy. If Resend shows MX and TXT records on `send` instead of a CNAME, the script does not fit that layout: see its comment.
 
 ### 2. Merge the DNS change
 
@@ -306,23 +319,35 @@ kubectl --context yornik-sharkshere -n external-dns logs deploy/external-dns | g
 
 A line about no matching zone means that the token cannot reach the zone. Do [step 1](#1-prepare-the-zone) again.
 
-The jobs `caa-updater-vesper` and `mail-sender-vesper` run on Sunday morning. After the first Sunday, read the records:
+### 3. Check the mail records
 
-```sh
-dig +short @1.1.1.1 vesper-labs.org CAA
-dig +short @1.1.1.1 vesper-labs.org TXT
-dig +short @1.1.1.1 _dmarc.vesper-labs.org TXT
-dig +short @1.1.1.1 send.vesper-labs.org CNAME
-dig +short @1.1.1.1 rsend.vesper-labs.org CNAME
-dig +short @1.1.1.1 vesper-labs.org MX
-dig +short @1.1.1.1 resend._domainkey.vesper-labs.org TXT
-```
+The jobs `caa-updater-vesper` and `mail-sender-vesper` run on Sunday morning.
 
-Expected result: the CAA records allow only Let's Encrypt; the SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address; the DMARC policy is `p=quarantine`, as for `yornik.eu`; `send` and `rsend` point to Resend; the MX is `10 receive-euw1.forge.rmta.net`, so replies to `hush@vesper-labs.org` reach Resend; the DKIM key is the one in Resend.
+1. After the first Sunday, read the records:
 
-4. In Resend, make sure that `vesper-labs.org` shows Verified before you merge the route change. After the route change, everyone recovers their account by email, so the mail must work from the start.
+   ```sh
+   dig +short @1.1.1.1 vesper-labs.org CAA
+   dig +short @1.1.1.1 vesper-labs.org TXT
+   dig +short @1.1.1.1 _dmarc.vesper-labs.org TXT
+   dig +short @1.1.1.1 vesper-labs.org MX
+   dig +short @1.1.1.1 send.vesper-labs.org CNAME
+   dig +short @1.1.1.1 rsend.vesper-labs.org CNAME
+   dig +short @1.1.1.1 resend._domainkey.vesper-labs.org TXT
+   ```
 
-### 3. Merge the route change
+2. In Resend, make sure that `vesper-labs.org` shows Verified.
+
+Expected result:
+
+- The CAA records allow only Let's Encrypt.
+- The SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address.
+- The DMARC policy is `p=quarantine`, as for `yornik.eu`.
+- The MX is `10 receive-euw1.forge.rmta.net`, so replies to `hush@vesper-labs.org` reach Resend.
+- `send`, `rsend` and the DKIM key have the values of the table in step 1.
+
+### 4. Merge the route change
+
+CAUTION: Merge the route change only when Resend shows `vesper-labs.org` as Verified. After the route change, everyone recovers their account by email, so the mail must work from the start.
 
 This step comes with the release that rebrands the site. Its pull request describes the last steps: the new `Canonical` line in security.txt, which you sign again with the security.txt key, and the checks after the deploy.
 

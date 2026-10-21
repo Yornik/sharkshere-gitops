@@ -19,12 +19,12 @@ data:
   # them, so this script does not fit such a domain. The CNAMEs go last, so
   # that a failure there leaves DKIM, SPF and DMARC in place.
   #
-  # Resend's Cloudflare setup may have made these records already, without
-  # the managed comment. The script takes over the 1 record of each name and
-  # type (for TXT: the 1 record whose content starts with the prefix). If it
-  # finds more than 1, it stops and changes nothing, because deleting a
-  # record is not its job. A second SPF or DMARC record makes the policy
-  # invalid.
+  # Resend's Cloudflare setup writes these records without the managed
+  # comment. The script takes over the 1 record of each name and type (for
+  # TXT: the 1 record whose content starts with the prefix). If it finds more
+  # than 1, it stops there and changes neither of them, because deleting a
+  # record is not its job; the records it set earlier in the same run stay
+  # set. A second SPF or DMARC record makes the policy invalid.
   update-mail-sender.sh: |
     #!/bin/sh
     set -eu
