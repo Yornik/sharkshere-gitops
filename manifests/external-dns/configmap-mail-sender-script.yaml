@@ -13,8 +13,8 @@ data:
   # Mail to the zone itself goes to Resend's inbound servers: an MX record at
   # the apex. That does not need an SPF entry, because SPF is about senders.
   #
-  # This is the layout that Resend shows for domains added since August
-  # 2026: a CNAME send and, for the fallback server, a CNAME rsend. An older
+  # This is the layout that Resend showed for vesper-labs.org on 2026-10-21:
+  # a CNAME send and, for the fallback server, a CNAME rsend. An older
   # domain has MX and TXT records on send instead; a CNAME cannot sit beside
   # them, so this script does not fit such a domain. The CNAMEs go last, so
   # that a failure there leaves DKIM, SPF and DMARC in place.

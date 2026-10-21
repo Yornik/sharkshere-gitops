@@ -1,6 +1,7 @@
 # The mail records of vesper-labs.org: go-practice sends its mail from this
-# zone through Resend, as hush@vesper-labs.org, and replies arrive there too. The values come from the Resend dashboard (Domains,
-# vesper-labs.org). The same slot as no-mail-go-learn, 10 minutes later.
+# zone through Resend, as hush@vesper-labs.org, and replies arrive there too.
+# The values come from the Resend dashboard (Domains, vesper-labs.org). The
+# same slot as no-mail-go-learn, 10 minutes later.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
