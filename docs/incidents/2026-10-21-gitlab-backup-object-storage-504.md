@@ -22,9 +22,9 @@ creation of working directory of artifacts failed
 WARNING: Remote file ''. S3Error: 504 (GatewayTimeout): The server did not respond in time.
 ```
 
-The container exited with `Error` and restarted. The Job has `restartPolicy: OnFailure` and `backoffLimit: 6`. The restarts at 03:34, 03:36, 03:40, 03:44 and 03:55 used the limit. The last attempt failed on `packages`.
+The container exited with `Error` and restarted. The Job has `restartPolicy: OnFailure` and `backoffLimit: 6`. The container ran 6 times: the start at 03:30 and the restarts at 03:34, 03:36, 03:40 and 03:44. The failure of the last run, on `packages`, at 03:55 used the limit.
 
-Three facts explain why this repeats:
+3 facts explain why this repeats:
 
 1. The download takes 5 to 15 minutes and sends one request for each object. Each request can fail.
 2. A restart begins again at the repositories. It does not continue where the last attempt stopped.
@@ -32,7 +32,7 @@ Three facts explain why this repeats:
 
 The `registry` bucket answered `403 AccessDenied` in every run. The utility skips it. This did not cause the failure.
 
-NOTE: The tarball is stored in the `yornik-gitlab-backups` bucket, in the same provider as the buckets it copies. The copy did not protect against the loss of Hetzner Object Storage.
+NOTE: The tarball is stored in the `yornik-gitlab-backups` bucket, in the same provider as the buckets it copies. The copy did not protect against the loss of Hetzner Object Storage. It did keep a daily history in a separate bucket.
 
 ## Correction
 
@@ -48,12 +48,18 @@ kubectl --context yornik-sharkshere -n gitlab delete job gitlab-toolbox-backup-2
 
 The Job now needs only the gitaly service and one upload of the tarball. The repository data is the purpose of this Job. See [2026-07-10-gitlab-backup-pg-dump-version.md](2026-07-10-gitlab-backup-pg-dump-version.md).
 
-WARNING: Nothing outside Hetzner holds a copy of the object storage buckets. The buckets hold CI artifacts, uploads, LFS objects, packages and registry images. If a bucket is lost, the data is lost. To change this, add a bucket replication or a `rclone` job to a second provider. Do not return to `backup-utility` for this.
+WARNING: The daily history of the object storage buckets is gone. Nothing can restore these cases any more:
+
+- An object deleted through GitLab, such as a deleted project with its uploads, LFS objects and packages.
+- The loss or misconfiguration of 1 bucket, such as `yornik-gitlab-uploads`.
+- A return to an earlier day. No history exists.
+
+The buckets hold CI artifacts, uploads, LFS objects, packages and registry images. To close the gap, enable bucket versioning, or copy the buckets to a second provider with a `rclone` job. Track this as a follow-up. Do not return to `backup-utility` for this.
 
 NOTE: A restore uses the tarball for repository data and a CNPG point-in-time recovery for the database. The tarball lists the skipped components in `backup_information.yml`, so the restore does not look for them.
 
 ## Evidence
 
-- Loki, pod `gitlab-toolbox-backup-29875890-4tv8g`, 03:30 to 03:55 UTC. The pod restarted its container 6 times. Each restart logged `Attempting to run ... backup-utility --skip db`.
+- Loki, pod `gitlab-toolbox-backup-29875890-4tv8g`, 03:30 to 03:55 UTC. The container ran 6 times (1 start and 5 restarts). Each restart logged `Attempting to run ... backup-utility --skip db`.
 - `kube_pod_container_status_last_terminated_reason` was `Error` for this pod and for `gitlab-toolbox-backup-29871570-lbdhj`.
 - Job condition: `BackoffLimitExceeded`, `startTime=2026-10-21T03:30:00Z`.
