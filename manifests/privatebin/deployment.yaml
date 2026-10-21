@@ -12,11 +12,14 @@ spec:
   # (CVE-2026-109618, CVE-2026-109619, CVSS 9.2). No in-application fix
   # exists. The fix is a patched PHP runtime.
   # To restore, bump the image below to a PrivateBin release built on
-  # patched PHP (8.5.12 or later once PHP publishes the fix). Then set
-  # replicas to 1 in the same change. Renovate proposes the image bump
-  # as its own PR. Do not restore on tag 2.1.0 and do not just revert
-  # this commit: 2.1.0 runs the unpatched PHP, and a node can reuse a
-  # cached 2.1.0 even if upstream re-pushes that tag.
+  # the fixed version of its PHP branch. The expected fixed versions are
+  # 8.5.12, 8.4.27, 8.3.36 and 8.2.35, once PHP publishes them. Confirm
+  # the branch with `php -v` in the container. Set replicas to 1 in the
+  # same change. Do not just revert this commit. Do not restore on the
+  # unpatched 2.1.0: a node can reuse a cached 2.1.0 even if upstream
+  # re-pushes that tag. If upstream re-pushes 2.1.0 in place, Renovate
+  # opens no PR; pin the new digest (2.1.0@sha256:...) in that same
+  # change.
   # See docs/incidents/2026-10-21-privatebin-disabled-php2shell-rce.md.
   replicas: 0
   strategy:

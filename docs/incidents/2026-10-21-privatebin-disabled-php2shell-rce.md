@@ -49,16 +49,18 @@ if upstream re-pushes that tag. A bare revert is not a safe restore.
 
 To restore:
 
-1. Bump `image` to a PrivateBin release built on patched PHP. Use 8.5.12 or
-   later, once PHP publishes the fix.
-2. Set `replicas` to 1 in the same change.
+1. Find which PHP branch the image runs. Run `php -v` in the container. The
+   expected fixed versions are 8.5.12, 8.4.27, 8.3.36 and 8.2.35.
+2. Bump `image` to a PrivateBin release built on the fixed version of that
+   branch, once PHP publishes it.
+3. Set `replicas` to 1 in the same change.
 
-Renovate watches `manifests/**/*.yaml`. The image bump arrives as its own pull
-request. Pair the `replicas` change with that pull request.
+Renovate watches `manifests/**/*.yaml`. A new upstream tag arrives as its own
+pull request. Pair the `replicas` change with that pull request.
 
-NOTE: Recent `nginx-fpm-alpine` tags bundle PHP from the 8.5 branch. 8.5 is a
-supported branch and receives the fix. Confirm the running version with
-`php -v` in the container before you rely on this.
+CAUTION: Renovate opens no pull request if upstream re-pushes `2.1.0` in place.
+The image has no digest pin, so a re-push is invisible. In that case, pin the
+new digest (`2.1.0@sha256:...`) and set `replicas` to 1 in the same change.
 
 ## Evidence
 
