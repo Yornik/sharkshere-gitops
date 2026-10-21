@@ -185,8 +185,10 @@
       matchPackageNames: [
         'lscr.io/linuxserver/qbittorrent',
       ],
-      // A major update keeps the `major` label from the rule above, so this
-      // rule takes a patch and a minor only.
+      // The rule for a major update, near the top of this list, sets the
+      // `major` label. This rule takes a patch and a minor only, so a major
+      // keeps that label. The rule directly above sets `versioning` and no
+      // label.
       matchUpdateTypes: [
         'patch',
         'minor',
