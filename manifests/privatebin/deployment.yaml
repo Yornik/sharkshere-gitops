@@ -6,7 +6,13 @@ metadata:
   labels:
     app: privatebin
 spec:
-  replicas: 1
+  # Scaled to 0 on 2026-10-21 to stop the PHP-FPM process.
+  # PrivateBin is the only PHP workload in this repository and is
+  # internet-facing. It is exposed to the php2shell PHP core RCE
+  # (CVE-2026-109618, CVE-2026-109619, CVSS 9.2). No in-application fix
+  # exists. The fix is a patched PHP runtime. Set this back to 1 after
+  # the image ships patched PHP.
+  replicas: 0
   strategy:
     type: Recreate
   selector:
