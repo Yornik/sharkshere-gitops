@@ -142,13 +142,18 @@ boundary instead. Traffic is encrypted by WireGuard.
 
 The middleware still applies to the public ArgoCD webhook route.
 
-Each application keeps its own login:
+Each application keeps its own login, except Alertmanager:
 
 | Application | Gate on the tailnet |
 |---|---|
 | ArchiSteamFarm | `IPCPassword` |
 | qBittorrent | The WebUI login. It bans an address after repeated failed logins. The Traefik `basicAuth` layer no longer applies. |
 | Vaultwarden admin | The admin token |
+| Alertmanager | None. The tailnet is the only gate. A tailnet device can read alerts and create silences. |
+
+CAUTION: Alertmanager has no login. A device on the tailnet can silence every
+alert. Keep the tailnet limited to your own devices. To add a gate, use
+`alertmanagerSpec.web` basic auth or a Tailscale ACL on the proxy device.
 
 ## How to undo the change
 
