@@ -10,6 +10,9 @@ data:
   # nothing sends with the bare zone as its envelope sender, and the SPF of
   # the zone itself rejects all mail.
   #
+  # Mail to the zone itself goes to Resend's inbound servers: an MX record at
+  # the apex. That does not need an SPF entry, because SPF is about senders.
+  #
   # This is the layout that Resend shows for domains added since August
   # 2026: a CNAME send and, for the fallback server, a CNAME rsend. An older
   # domain has MX and TXT records on send instead; a CNAME cannot sit beside
@@ -31,6 +34,7 @@ data:
     : "${RESEND_RETURN_PATH:?RESEND_RETURN_PATH is required}"
     : "${RESEND_DKIM:?RESEND_DKIM is required}"
     : "${RESEND_FALLBACK_PATH:=}"
+    : "${RESEND_INBOUND_MX:=}"
     : "${MAIL_DMARC:?MAIL_DMARC is required}"
     : "${MAIL_TTL:=3600}"
 
@@ -55,12 +59,14 @@ data:
     fi
 
     # Set the 1 record of type $1 at $2 whose content starts with $3 to
-    # content $4. An empty prefix matches every record of the type.
+    # content $4, with priority $5 for an MX record. An empty prefix matches
+    # every record of the type.
     ensure() {
       type="$1"
       name="$2"
       prefix="$3"
       content="$4"
+      priority="${5:-10}"
       # Cloudflare can return TXT content with or without quotes.
       ids="$(
         api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=${type}&name=${name}&per_page=100" \
@@ -83,7 +89,9 @@ data:
           --arg content "${content}" \
           --arg comment "${MANAGED_COMMENT}" \
           --argjson ttl "${MAIL_TTL}" \
-          '{type: $type, name: $name, content: $content, ttl: $ttl, proxied: false, comment: $comment}'
+          --argjson priority "${priority}" \
+          '{type: $type, name: $name, content: $content, ttl: $ttl, proxied: false, comment: $comment}
+           + (if $type == "MX" then {priority: $priority} else {} end)'
       )"
       if [ -n "${ids}" ]; then
         api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${ids}" --data "${body}" >/dev/null
@@ -96,6 +104,9 @@ data:
     ensure TXT "resend._domainkey.${CF_ZONE_NAME}" "p=" "${RESEND_DKIM}"
     ensure TXT "${CF_ZONE_NAME}" "v=spf1" "${SPF}"
     ensure TXT "_dmarc.${CF_ZONE_NAME}" "v=DMARC1" "${MAIL_DMARC}"
+    if [ -n "${RESEND_INBOUND_MX}" ]; then
+      ensure MX "${CF_ZONE_NAME}" "" "${RESEND_INBOUND_MX}" 10
+    fi
     ensure CNAME "send.${CF_ZONE_NAME}" "" "${RESEND_RETURN_PATH}"
     if [ -n "${RESEND_FALLBACK_PATH}" ]; then
       ensure CNAME "rsend.${CF_ZONE_NAME}" "" "${RESEND_FALLBACK_PATH}"

@@ -1,5 +1,5 @@
 # The mail records of vesper-labs.org: go-practice sends its mail from this
-# zone through Resend. The values come from the Resend dashboard (Domains,
+# zone through Resend, as hush@vesper-labs.org, and replies arrive there too. The values come from the Resend dashboard (Domains,
 # vesper-labs.org). The same slot as no-mail-go-learn, 10 minutes later.
 apiVersion: batch/v1
 kind: CronJob
@@ -38,6 +38,10 @@ spec:
                 # domain as partially verified.
                 - name: RESEND_FALLBACK_PATH
                   value: rsend-euw1.forge.rmta.net
+                # Mail to hush@vesper-labs.org, the site's sender, arrives in
+                # Resend's inbound.
+                - name: RESEND_INBOUND_MX
+                  value: receive-euw1.forge.rmta.net
                 - name: RESEND_DKIM
                   value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDE80sfEHw18JWA4YY4D3QU1kpqypHYTAAQPf2fGJtMDEWjIJOWCpRGw3M5fS11l7zMuB5Q2yWSFEU1OTS17S/jmqLTx6XCipXPsODzySqBsJvRJtVWc9FOZV1ePSApQCyViDZCbu1bY/EaU9JuLqDScX3VXNBThwRgYe/VOPWAoQIDAQAB"
                 # The same policy as yornik.eu, the other zone that sends.
