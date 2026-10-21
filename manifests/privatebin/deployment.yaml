@@ -10,8 +10,13 @@ spec:
   # PrivateBin is the only PHP workload in this repository and is
   # internet-facing. It is exposed to the php2shell PHP core RCE
   # (CVE-2026-109618, CVE-2026-109619, CVSS 9.2). No in-application fix
-  # exists. The fix is a patched PHP runtime. Set this back to 1 after
-  # the image ships patched PHP.
+  # exists. The fix is a patched PHP runtime.
+  # To restore, bump the image below to a PrivateBin release built on
+  # patched PHP (8.5.12 or later once PHP publishes the fix). Then set
+  # replicas to 1 in the same change. Renovate proposes the image bump
+  # as its own PR. Do not restore on tag 2.1.0 and do not just revert
+  # this commit: 2.1.0 runs the unpatched PHP, and a node can reuse a
+  # cached 2.1.0 even if upstream re-pushes that tag.
   replicas: 0
   strategy:
     type: Recreate
