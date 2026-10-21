@@ -1,0 +1,26 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-go-practice
+  namespace: go-practice
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        # A backstop, not the main control. The app limits the WebAuthn begin
+        # endpoints to 20 a minute for each address, and recovery to 5 an hour
+        # for each address. Login is by passkey only, so there is no password
+        # to guess. This catches an address that keeps on getting refusals
+        # from the auth API.
+        #
+        # On the /api/auth/ route only. See ingressroute.yaml. The rest of the
+        # API answers 401 to a request without a session. On the whole site,
+        # this rule counts a tab that stays open after its session ended. A
+        # ban then hits every learner behind the same NAT.
+        #
+        # The numbers are the ones that soiree and Vaultwarden settled on.
+        statuscode: "401-403"
+        maxretry: 30
+        findtime: 10m
+        bantime: 1h
+        enabled: "true"
