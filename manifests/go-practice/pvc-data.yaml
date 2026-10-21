@@ -1,0 +1,37 @@
+# The SQLite database of the web server: accounts, passkeys, saved code,
+# progress and certificates.
+#
+# truenas-ssd is the class for app state here, and it is NFS. SQLite in WAL
+# mode needs shared memory between the processes that open the file, and NFS
+# cannot give it. The app therefore runs with journal_mode=DELETE. Only 1
+# process opens the file: the Deployment has 1 replica and uses Recreate.
+#
+# Backups: the app writes 1 copy a day with `VACUUM INTO` to /data/backups and
+# keeps 7. The copies are on this volume, so they do not survive the loss of
+# the NAS dataset by themselves. The NAS takes a ZFS snapshot of the dataset at
+# 00:00 (see vaultwarden/cronjob-sqlite-backup.yaml), and the snapshot holds
+# the copies. To restore, see docs/runbooks/go-practice.md.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: go-practice-data-ssd
+  namespace: go-practice
+  annotations:
+    # truenas-ssd has reclaimPolicy Delete, so a deleted PVC deletes its NAS
+    # dataset. The database holds the passkeys and the key that signs the
+    # certificates, and nothing can make them again. A PVC that leaves git by
+    # mistake stays on the cluster. The CNPG clusters use the same option.
+    argocd.argoproj.io/sync-options: Prune=false
+  labels:
+    app.kubernetes.io/name: go-practice-web
+    app.kubernetes.io/instance: go-practice-web
+spec:
+  # 1 node at a time. deployment-web.yaml uses Recreate for this reason.
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-ssd
+  resources:
+    # The database of a course for a few learners is some MiB. 7 backup copies
+    # multiply it by 8. 2Gi leaves room for years, and the class can expand.
+    requests:
+      storage: 2Gi

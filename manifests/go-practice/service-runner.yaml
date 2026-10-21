@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # GPW_RUNNER_URL in deployment-web.yaml holds this name. Change both or
+  # neither.
+  name: runner
+  namespace: go-practice-runner
+  labels:
+    app.kubernetes.io/name: go-practice-runner
+    app.kubernetes.io/instance: go-practice-runner
+  # Cluster-internal: no IngressRoute and no DNS annotations. Only the web
+  # server calls the API. See networkpolicy-runner-allow-web.yaml.
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: go-practice-runner
+    app.kubernetes.io/instance: go-practice-runner
+  ports:
+    - name: http
+      port: 8081
+      targetPort: http
+      protocol: TCP
+    # For the ServiceMonitor only.
+    - name: metrics
+      port: 9091
+      targetPort: metrics
+      protocol: TCP

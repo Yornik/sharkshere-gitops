@@ -46,6 +46,25 @@
         'automerge',
       ],
     },
+    // The web server and the runner of go-practice share the runner API and
+    // the course version, so they move together in 1 pull request. Separate
+    // CI jobs push the 2 images, and a Renovate run can see 1 new tag before
+    // the other. A person merges the group after both tags moved. This rule
+    // turns automerge off. Its labels replace those of the 2 rules above and
+    // leave out `automerge`. It comes before the major rule, so a major bump
+    // still gets the `major` label.
+    {
+      matchPackageNames: [
+        'ghcr.io/yornik/go-practice-web',
+        'ghcr.io/yornik/go-practice-runner',
+      ],
+      groupName: 'go-practice images',
+      automerge: false,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
     {
       matchUpdateTypes: [
         'major',

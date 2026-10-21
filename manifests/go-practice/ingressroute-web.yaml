@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: go-practice-web
+  namespace: go-practice
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`go-learn.party`)
+      kind: Rule
+      middlewares:
+        - name: redirect-https
+          namespace: go-practice
+      services:
+        - name: go-practice-web
+          port: 8080

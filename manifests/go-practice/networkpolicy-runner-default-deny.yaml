@@ -1,0 +1,21 @@
+# NetworkPolicy has an effect only if the CNI plugin of the cluster enforces it.
+# The CNI is Flannel, and Flannel does not enforce NetworkPolicy (checked on
+# 2026-10-17, see docs/tech/README.md). These policies take effect only after a
+# change to a CNI that enforces them. Treat them as defense in depth. Do not
+# depend on them. To check the CNI again, see docs/runbooks/go-practice.md.
+#
+# No ingress and no egress for any pod in this namespace, except what the
+# other policies here allow. Learner code then cannot reach the cluster, the
+# home network or the internet, if the CNI enforces this. The runner needs no
+# egress, not even DNS: the course and the build cache are in the pod, and
+# GOPROXY is off.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: go-practice-runner
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

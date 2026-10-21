@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: go-practice-web
+  namespace: go-practice
+  labels:
+    app.kubernetes.io/name: go-practice-web
+    app.kubernetes.io/instance: go-practice-web
+    # Without this label Prometheus ignores the monitor, with no error. See
+    # docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: go-practice-web
+      app.kubernetes.io/instance: go-practice-web
+  namespaceSelector:
+    matchNames:
+      - go-practice
+  endpoints:
+    # The metrics port, not the site port. See service-web.yaml.
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
