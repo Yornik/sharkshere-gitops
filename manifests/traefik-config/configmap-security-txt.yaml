@@ -28,12 +28,13 @@ data:
     Canonical: https://registry.git.yornik.eu/.well-known/security.txt
     Canonical: https://bokings-driessen.party/.well-known/security.txt
     Canonical: https://www.bokings-driessen.party/.well-known/security.txt
+    Canonical: https://go-learn.party/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCas6EngAKCRDt+zCFSkKz
-    8DxvAQC44zCCVPoMwbhobJHyt17x4ZruP3m+WumXQdUhLtpkYAD9Go3eiUy5WV8E
-    eusTTMt80goKymZWXiJ821iSWsTlKQU=
-    =jx63
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCatihTAAKCRDt+zCFSkKz
+    8MmIAQCmAY3GFwjMD3Iwz0nV9E5KmC0CblPmhQ+kTtFEAr6hUwD+NMLp+8MxFXUm
+    WFEIQrKV5uIr6hfu0SmqNyGo/wWsTwM=
+    =5BF2
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----
