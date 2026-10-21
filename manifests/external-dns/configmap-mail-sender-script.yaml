@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mail-sender-script
+  namespace: external-dns
+data:
+  # Publish the records of a zone that sends mail through Resend, and its
+  # SPF and DMARC policy. Resend signs with DKIM for the zone itself, and its
+  # bounce address is on send.<zone>, a CNAME to Resend's mail servers. So
+  # nothing sends with the bare zone as its envelope sender, and the SPF of
+  # the zone itself rejects all mail.
+  #
+  # Resend's Cloudflare setup may have made these records already, without
+  # the managed comment. The script takes over the 1 record of each name and
+  # type (for TXT: the 1 record whose content starts with the prefix). If it
+  # finds more than 1, it stops and changes nothing, because deleting a
+  # record is not its job. A second SPF or DMARC record makes the policy
+  # invalid.
+  update-mail-sender.sh: |
+    #!/bin/sh
+    set -eu
+
+    : "${CF_API_TOKEN:?CF_API_TOKEN is required}"
+    : "${CF_ZONE_NAME:?CF_ZONE_NAME is required}"
+    : "${RESEND_RETURN_PATH:?RESEND_RETURN_PATH is required}"
+    : "${RESEND_DKIM:?RESEND_DKIM is required}"
+    : "${MAIL_DMARC:?MAIL_DMARC is required}"
+    : "${MAIL_TTL:=3600}"
+
+    MANAGED_COMMENT="managed-by: sharkshere-mail-sender"
+    SPF="v=spf1 -all"
+
+    api() {
+      curl -fsS --retry 3 \
+        -H "Authorization: Bearer ${CF_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "$@"
+    }
+
+    ZONE_ID="$(
+      api "https://api.cloudflare.com/client/v4/zones?name=${CF_ZONE_NAME}" \
+      | jq -r '.result[0].id // empty'
+    )"
+
+    if [ -z "${ZONE_ID}" ]; then
+      echo "Failed to resolve Cloudflare zone id for ${CF_ZONE_NAME}"
+      exit 1
+    fi
+
+    # Set the 1 record of type $1 at $2 whose content starts with $3 to
+    # content $4. An empty prefix matches every record of the type.
+    ensure() {
+      type="$1"
+      name="$2"
+      prefix="$3"
+      content="$4"
+      # Cloudflare can return TXT content with or without quotes.
+      ids="$(
+        api "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records?type=${type}&name=${name}&per_page=100" \
+        | jq -r --arg p "${prefix}" '
+            .result[]
+            | select((.content | ltrimstr("\"")) | startswith($p))
+            | .id
+          '
+      )"
+      count="$(printf '%s' "${ids}" | grep -c . || true)"
+      if [ "${count}" -gt 1 ]; then
+        echo "Found ${count} ${type} records at ${name} that start with '${prefix}'. Remove the extras by hand."
+        exit 1
+      fi
+      # proxied is false: Cloudflare must not proxy a mail name.
+      body="$(
+        jq -cn \
+          --arg type "${type}" \
+          --arg name "${name}" \
+          --arg content "${content}" \
+          --arg comment "${MANAGED_COMMENT}" \
+          --argjson ttl "${MAIL_TTL}" \
+          '{type: $type, name: $name, content: $content, ttl: $ttl, proxied: false, comment: $comment}'
+      )"
+      if [ -n "${ids}" ]; then
+        api -X PUT "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records/${ids}" --data "${body}" >/dev/null
+      else
+        api -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/dns_records" --data "${body}" >/dev/null
+      fi
+      echo "Ensured ${type} ${name}: ${content}"
+    }
+
+    ensure CNAME "send.${CF_ZONE_NAME}" "" "${RESEND_RETURN_PATH}"
+    ensure TXT "resend._domainkey.${CF_ZONE_NAME}" "p=" "${RESEND_DKIM}"
+    ensure TXT "${CF_ZONE_NAME}" "v=spf1" "${SPF}"
+    ensure TXT "_dmarc.${CF_ZONE_NAME}" "v=DMARC1" "${MAIL_DMARC}"
+
+    echo "Mail sender records ensured for ${CF_ZONE_NAME}"

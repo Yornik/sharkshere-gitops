@@ -267,8 +267,8 @@ The move has 2 changes, in this order. The DNS change goes first, because Traefi
 
 | Change | What it does |
 |---|---|
-| DNS | `manifests/external-dns/`: the dummy Service `dns-vesper-labs-org`, `--domain-filter=vesper-labs.org`, and the jobs `caa-updater-vesper` and `no-mail-vesper`. Nothing serves the name yet. |
-| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, and `GPW_PUBLIC_URL=https://vesper-labs.org`. It ships with the release that rebrands the site. |
+| DNS | `manifests/external-dns/`: the dummy Service `dns-vesper-labs-org`, `--domain-filter=vesper-labs.org`, and the jobs `caa-updater-vesper` and `mail-sender-vesper`. Nothing serves the name yet, and nothing sends from it yet. |
+| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, `GPW_PUBLIC_URL=https://vesper-labs.org`, and `GPW_MAIL_FROM` on `vesper-labs.org`. It ships with the release that rebrands the site. |
 
 CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys made on `go-learn.party` do not work on `vesper-labs.org`. Each person signs in once with account recovery by email, and makes a new passkey. Progress, code and certificates stay, because they belong to the account, not to the passkey. Tell the learners before you merge the route change.
 
@@ -277,6 +277,9 @@ CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys mad
 1. In Cloudflare, make sure that the zone `vesper-labs.org` has the status Active.
 2. Edit the token that ExternalDNS uses (My Profile, then API Tokens). Add the zone `vesper-labs.org` to its zone resources, with Zone Read and DNS Edit. Save the token.
 3. In the zone `vesper-labs.org`, open SSL/TLS, then Edge Certificates, and disable Universal SSL. The reason is in the note of [step 2 of the first deploy](#2-prepare-the-cloudflare-zone).
+4. In Resend, open Domains and add `vesper-labs.org` in the region of `yornik.eu`, if it is not there yet. Resend's Cloudflare setup may add its records to the zone. The job `mail-sender-vesper` takes them over; it does not add a second copy.
+5. Compare the values in Resend with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`: `RESEND_RETURN_PATH` is the target of the CNAME `send`, and `RESEND_DKIM` is the TXT value of `resend._domainkey`. If Resend shows other values, change the job.
+6. In Resend, open API Keys. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`, and do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
 
 ### 2. Merge the DNS change
 
@@ -299,15 +302,19 @@ kubectl --context yornik-sharkshere -n external-dns logs deploy/external-dns | g
 
 A line about no matching zone means that the token cannot reach the zone. Do [step 1](#1-prepare-the-zone) again.
 
-The jobs `caa-updater-vesper` and `no-mail-vesper` run on Sunday morning. After the first Sunday, read the records:
+The jobs `caa-updater-vesper` and `mail-sender-vesper` run on Sunday morning. After the first Sunday, read the records:
 
 ```sh
 dig +short @1.1.1.1 vesper-labs.org CAA
 dig +short @1.1.1.1 vesper-labs.org TXT
 dig +short @1.1.1.1 _dmarc.vesper-labs.org TXT
+dig +short @1.1.1.1 send.vesper-labs.org CNAME
+dig +short @1.1.1.1 resend._domainkey.vesper-labs.org TXT
 ```
 
-Expected result: the CAA records allow only Let's Encrypt, the SPF record is `v=spf1 -all`, and the DMARC policy is `p=reject`.
+Expected result: the CAA records allow only Let's Encrypt; the SPF record of the zone is `v=spf1 -all`, because Resend sends with `send.vesper-labs.org` as the bounce address; the DMARC policy is `p=quarantine`, as for `yornik.eu`; `send` points to Resend; the DKIM key is the one in Resend.
+
+4. In Resend, make sure that `vesper-labs.org` shows Verified before you merge the route change. After the route change, everyone recovers their account by email, so the mail must work from the start.
 
 ### 3. Merge the route change
 

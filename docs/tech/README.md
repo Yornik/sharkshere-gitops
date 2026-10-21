@@ -192,7 +192,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `registry.git.yornik.eu` | GitLab Container Registry |
 | `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
 | `go-learn.party` | go-practice — web IDE for the Go practice course. Served from the **apex** of its own zone, with A/AAAA records straight at the jump hosts like `bokings-driessen.party`; no `www.`, because the app accepts 1 origin, its WebAuthn relying party. Sign-up is by invite only. The runner that executes learner code has no public route. The site moves to `vesper-labs.org`; this name then only redirects there. |
-| `vesper-labs.org` | The new home of go-practice, the apex of its own zone like `go-learn.party`. ExternalDNS publishes its A/AAAA, CAA and reject-all mail records. The site moves here with the release that rebrands it; see [the runbook](../runbooks/go-practice.md#how-to-move-the-site-to-vesper-labsorg). |
+| `vesper-labs.org` | The new home of go-practice, the apex of its own zone like `go-learn.party`. ExternalDNS publishes its A/AAAA and CAA records, and a job publishes the records of Resend, so the site can send its mail from this zone. The site moves here with the release that rebrands it; see [the runbook](../runbooks/go-practice.md#how-to-move-the-site-to-vesper-labsorg). |
 
 ### Tailnet only
 

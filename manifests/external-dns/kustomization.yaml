@@ -9,6 +9,7 @@ resources:
   - dns-records.yaml
   - configmap-caa-updater-script.yaml
   - configmap-dane-updater-script.yaml
+  - configmap-mail-sender-script.yaml
   - configmap-mail-updater-script.yaml
   - configmap-no-mail-script.yaml
   - cronjob-caa-updater-bokings.yaml
@@ -19,10 +20,10 @@ resources:
   - cronjob-dane-updater.yaml
   - cronjob-dane-updater-passwords.yaml
   - cronjob-dane-updater-yornik.yaml
+  - cronjob-mail-sender-vesper.yaml
   - cronjob-mail-updater-yornik.yaml
   - cronjob-no-mail-bokings.yaml
   - cronjob-no-mail-fedishark.yaml
   - cronjob-no-mail-go-learn.yaml
-  - cronjob-no-mail-vesper.yaml
 generators:
   - cloudflare-secret-generator.yaml

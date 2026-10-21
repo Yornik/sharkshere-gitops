@@ -1,10 +1,10 @@
-# A reject-all SPF and DMARC policy for vesper-labs.org. go-practice sends its
-# mail from yornik.eu, so no mail comes from this zone. The same job as
-# no-mail-go-learn, 10 minutes later.
+# The mail records of vesper-labs.org: go-practice sends its mail from this
+# zone through Resend. The values come from the Resend dashboard (Domains,
+# vesper-labs.org). The same slot as no-mail-go-learn, 10 minutes later.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: no-mail-vesper
+  name: mail-sender-vesper
   namespace: external-dns
 spec:
   schedule: "43 5 * * 0"
@@ -19,7 +19,7 @@ spec:
         spec:
           restartPolicy: OnFailure
           containers:
-            - name: no-mail
+            - name: mail-sender
               image: alpine:3.24
               imagePullPolicy: IfNotPresent
               command:
@@ -28,10 +28,17 @@ spec:
                 - |
                   set -eu
                   apk add --no-cache curl jq >/dev/null
-                  /scripts/update-no-mail.sh
+                  /scripts/update-mail-sender.sh
               env:
                 - name: CF_ZONE_NAME
                   value: vesper-labs.org
+                - name: RESEND_RETURN_PATH
+                  value: send.forge.rmta.net
+                - name: RESEND_DKIM
+                  value: "p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDE80sfEHw18JWA4YY4D3QU1kpqypHYTAAQPf2fGJtMDEWjIJOWCpRGw3M5fS11l7zMuB5Q2yWSFEU1OTS17S/jmqLTx6XCipXPsODzySqBsJvRJtVWc9FOZV1ePSApQCyViDZCbu1bY/EaU9JuLqDScX3VXNBThwRgYe/VOPWAoQIDAQAB"
+                # The same policy as yornik.eu, the other zone that sends.
+                - name: MAIL_DMARC
+                  value: "v=DMARC1; p=quarantine;"
                 - name: MAIL_TTL
                   value: "3600"
                 - name: CF_API_TOKEN
@@ -46,5 +53,5 @@ spec:
           volumes:
             - name: script
               configMap:
-                name: no-mail-script
+                name: mail-sender-script
                 defaultMode: 0555
