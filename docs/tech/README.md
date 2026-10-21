@@ -202,6 +202,7 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 |---|---|
 | `argocd.hedgehog-wage.ts.net` | ArgoCD UI and CLI |
 | `grafana.hedgehog-wage.ts.net` | Grafana |
+| `alertmanager.hedgehog-wage.ts.net` | Alertmanager; the alert e-mail links to it |
 | `asf.hedgehog-wage.ts.net` | ArchiSteamFarm |
 | `qbittorrent.hedgehog-wage.ts.net` | qBittorrent |
 | `vaultwarden-admin.hedgehog-wage.ts.net` | Vaultwarden admin panel |
