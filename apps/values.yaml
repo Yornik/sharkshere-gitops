@@ -247,6 +247,10 @@ apps:
             # rendering its default null-receiver config Secret alongside it.
             configSecret: alertmanager-config
             useExistingSecret: true
+            # The "View in Alertmanager" link in each alert e-mail uses this
+            # address. Without it the link names the in-cluster Service.
+            # The address is served by manifests/monitoring/ingress-alertmanager-tailnet.yaml.
+            externalUrl: https://alertmanager.hedgehog-wage.ts.net
             storage:
               volumeClaimTemplate:
                 spec:

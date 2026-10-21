@@ -1,6 +1,6 @@
 # Tailnet-only admin interfaces
 
-ArgoCD, Grafana, ArchiSteamFarm, qBittorrent and the Vaultwarden admin
+ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent and the Vaultwarden admin
 panel are reachable on the tailnet only, over HTTPS. This file
 says how to reach them, how to activate a new proxy device, what changed, and
 how to undo the change.
@@ -9,6 +9,7 @@ how to undo the change.
 |---|---|---|
 | ArgoCD | `https://argocd.hedgehog-wage.ts.net` | `/api/webhook` only |
 | Grafana | `https://grafana.hedgehog-wage.ts.net` | none |
+| Alertmanager | `https://alertmanager.hedgehog-wage.ts.net` | none |
 | ArchiSteamFarm | `https://asf.hedgehog-wage.ts.net` | none |
 | qBittorrent | `https://qbittorrent.hedgehog-wage.ts.net` | none |
 | Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
@@ -77,7 +78,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|argocd|asf|qbittorrent|vaultwarden-admin'
+   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|vaultwarden-admin'
    ```
 
 Expected result: each name is as in the table above, without a suffix.
@@ -101,6 +102,10 @@ The proxy follows the new name and gets a certificate for it.
   Grafana's Service keeps `tailscale.com/expose: "false"` in
   `apps/values.yaml`, so the old proxy does not come back.
 - The public IngressRoute for Grafana is removed.
+- Alertmanager had no address outside the cluster. Since 2026-10-21 it has
+  `manifests/monitoring/ingress-alertmanager-tailnet.yaml`, and
+  `alertmanagerSpec.externalUrl` makes the alert e-mail link to it. It has no
+  public route and no public DNS record.
 - The public IngressRoute for ArgoCD matches `/api/webhook` only.
 - ArchiSteamFarm and qBittorrent use `manifests/asf/ingress-tailnet.yaml` and
   `manifests/qbittorrent/ingress-tailnet.yaml`. Their public IngressRoutes
@@ -174,12 +179,14 @@ Use this to get in at once, before or instead of a revert.
    ```sh
    kubectl --context yornik-sharkshere -n argocd port-forward svc/argocd-server 8080:80
    kubectl --context yornik-sharkshere -n monitoring port-forward svc/kube-prometheus-stack-grafana 3000:80
+   kubectl --context yornik-sharkshere -n monitoring port-forward svc/kube-prometheus-stack-alertmanager 9093:9093
    kubectl --context yornik-sharkshere -n asf port-forward svc/asf 1242:1242
    kubectl --context yornik-sharkshere -n jellyfin port-forward svc/qbittorrent 8081:8080
    ```
 
 2. Open the local address: `http://localhost:8080` for ArgoCD,
-   `http://localhost:3000` for Grafana, `http://localhost:1242` for
+   `http://localhost:3000` for Grafana, `http://localhost:9093` for
+   Alertmanager, `http://localhost:1242` for
    ArchiSteamFarm or `http://localhost:8081` for qBittorrent.
 
 ### If a Tailscale Ingress does not publish its address
