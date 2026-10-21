@@ -51,16 +51,18 @@ To restore:
 
 1. Find which PHP branch the image runs. Run `php -v` in the container. The
    expected fixed versions are 8.5.12, 8.4.27, 8.3.36 and 8.2.35.
-2. Bump `image` to a PrivateBin release built on the fixed version of that
-   branch, once PHP publishes it.
-3. Set `replicas` to 1 in the same change.
+2. Open one pull request that sets `image` to a PrivateBin release built on the
+   fixed version of that branch and sets `replicas` to 1.
 
-Renovate watches `manifests/**/*.yaml`. A new upstream tag arrives as its own
-pull request. Pair the `replicas` change with that pull request.
+Do not wait for a Renovate pull request to pair the `replicas` change with. A
+patch or a minor bump of this image automerges on its own (`renovate.json5`). It
+can merge with no pull request left open, and it lands with `replicas` still 0.
+Open your own pull request with both changes.
 
-CAUTION: Renovate opens no pull request if upstream re-pushes `2.1.0` in place.
-The image has no digest pin, so a re-push is invisible. In that case, pin the
-new digest (`2.1.0@sha256:...`) and set `replicas` to 1 in the same change.
+CAUTION: Renovate opens no pull request at all if upstream re-pushes `2.1.0` in
+place. The image has no digest pin, so a re-push is invisible. In that case, pin
+the new digest (`2.1.0@sha256:...`) and set `replicas` to 1 in the same pull
+request.
 
 ## Evidence
 
