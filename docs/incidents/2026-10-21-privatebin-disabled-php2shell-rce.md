@@ -6,15 +6,18 @@
 
 ## Effect
 
-PrivateBin is scaled to 0 replicas. `secrets.yornik.eu` returns an error from
-Traefik. The service is offline on purpose.
+PrivateBin was scaled to 0 replicas on 2026-10-21. `secrets.yornik.eu` returned
+an error from Traefik. The service was offline on purpose.
 
 PrivateBin is the only PHP workload in the cluster. It runs on PHP-FPM and
-serves a public domain. It is exposed to the php2shell PHP core remote code
-execution flaws. No patched PHP runtime is published yet.
+serves a public domain. It was exposed to the php2shell PHP core remote code
+execution flaws, and no patched PHP runtime had shipped.
 
-No other workload is affected. No other PHP workload exists in `manifests/` or
+No other workload was affected. No other PHP workload exists in `manifests/` or
 `apps/values.yaml`.
+
+The fix shipped on 2026-10-21. The service was restored on 2026-10-22. See
+Correction.
 
 ## Cause
 
@@ -39,30 +42,39 @@ terminates. See [pull request 542](https://github.com/Yornik/sharkshere-gitops/p
 The change edits `spec.replicas` only. The `privatebin-data-ssd` PVC stays. The
 namespace stays. The Service and both IngressRoutes stay. No paste data is lost.
 
+PrivateBin rebuilt `nginx-fpm-alpine` on PHP 8.5.12 and re-pushed the `2.1.0`
+tag in place on 2026-10-21. The service was restored on 2026-10-22. The restore
+set `replicas` back to 1 and pinned `image` to that rebuild by digest
+(`2.1.0@sha256:0f80fb24...`). See
+[pull request 551](https://github.com/Yornik/sharkshere-gitops/pull/551).
+
 ## Prevention
 
-Do not restore by setting `replicas` back to 1 on tag `2.1.0`. Do not revert the
-scale-down commit on its own. Both restart the unpatched PHP runtime.
+The `image` is pinned by digest (`2.1.0@sha256:...`). Keep the pin. It makes the
+patched runtime deterministic on every node. It closes the gap where a node
+reuses a cached pre-fix `2.1.0`.
 
-The Deployment sets no `imagePullPolicy`. A node can reuse a cached `2.1.0` even
-if upstream re-pushes that tag. A bare revert is not a safe restore.
+A re-push of the same tag arrives as a Renovate digest pull request. No automerge
+rule matches a digest update, so a person reviews it. Treat it as a runtime
+change.
 
-To restore:
+Before you merge a digest pull request, check the new digest, not the running
+pod. The pod still carries the old digest, so `php -v` on it reports the current
+runtime. Confirm on the registry that the new digest also carries an
+`-alpine<x>-php<fixed version>` tag, or read its runtime directly:
 
-1. Find which PHP branch the image runs. Run `php -v` in the container. The
-   expected fixed versions are 8.5.12, 8.4.27, 8.3.36 and 8.2.35.
-2. Open one pull request that sets `image` to a PrivateBin release built on the
-   fixed version of that branch and sets `replicas` to 1.
+```sh
+docker run --rm privatebin/nginx-fpm-alpine@<new digest> php -v
+```
 
-Do not wait for a Renovate pull request to pair the `replicas` change with. A
-patch or a minor bump of this image automerges on its own (`renovate.json5`). It
-can merge with no pull request left open, and it lands with `replicas` still 0.
-Open your own pull request with both changes.
+A fixed PHP release is 8.5.12, 8.4.27, 8.3.36 or 8.2.35, or a later version on
+its branch.
 
-CAUTION: Renovate opens no pull request at all if upstream re-pushes `2.1.0` in
-place. The image has no digest pin, so a re-push is invisible. In that case, pin
-the new digest (`2.1.0@sha256:...`) and set `replicas` to 1 in the same pull
-request.
+After the merge and the ArgoCD sync, confirm the deployed runtime:
+
+```sh
+kubectl --context yornik-sharkshere -n privatebin exec deploy/privatebin -- php -v
+```
 
 ## Evidence
 
@@ -72,7 +84,8 @@ request.
   2026-10-21 at 14:00 UTC for 2 critical flaws rated CVSS v4.0 9.2.
 - CVE-2026-109618 and CVE-2026-109619 (php2shell) are reported by watchTowr,
   Tenable, Sansec and others.
-- `manifests/privatebin/deployment.yaml` pins `image:
-  privatebin/nginx-fpm-alpine:2.1.0` and sets no `imagePullPolicy`.
+- At the time of the incident `manifests/privatebin/deployment.yaml` pinned
+  `image: privatebin/nginx-fpm-alpine:2.1.0` with no `imagePullPolicy` and no
+  digest.
 - The advisory review on pull request 542 (checklist B) found that a bare
   restore to tag `2.1.0` brings the unpatched runtime back.
