@@ -68,7 +68,7 @@ NOTE: Universal SSL adds CAA records for the CAs of Cloudflare to a zone that ha
 
 ### 3. Publish the DNS record before the route
 
-CAUTION: Merge the DNS change before the change that adds the Application. Traefik does not retry a failed ACME order. If the IngressRoute exists before `go-learn.party` resolves, the site has no certificate until a restart of Traefik.
+CAUTION: Merge the DNS change before the change that adds the Application. Traefik does not try a failed ACME order again on a timer. It tries again only when its configuration changes. If the IngressRoute exists before `go-learn.party` resolves, the site can stay without a certificate until a restart of Traefik.
 
 NOTE: If 1 pull request holds both changes, the route comes first. Then do [If the site has no valid certificate](#if-the-site-has-no-valid-certificate) after the name resolves.
 
@@ -271,12 +271,13 @@ Some releases change the database schema. 0.2.0 does: migration 0003 moves the s
 
 The site moves from `go-learn.party` to `vesper-labs.org`. `go-learn.party` stays, and redirects every path to the new name. Old links and the verify links in issued certificates keep working.
 
-The move has 2 changes, in this order. The DNS change goes first, because Traefik does not retry a failed ACME order (see [step 3 of the first deploy](#3-publish-the-dns-record-before-the-route)).
+The move has 3 changes, in this order. The DNS change goes first, because Traefik does not try a failed ACME order again on a timer (see [step 3 of the first deploy](#3-publish-the-dns-record-before-the-route)). The certificate change goes before the route change. If its ACME order fails, `go-learn.party` still serves the site.
 
 | Change | What it does |
 |---|---|
 | DNS | `manifests/external-dns/`: the dummy Service `dns-vesper-labs-org`, `--domain-filter=vesper-labs.org`, and the jobs `caa-updater-vesper` and `mail-sender-vesper`. Nothing serves the name yet, and nothing sends from it yet. |
-| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, `GPW_PUBLIC_URL=https://vesper-labs.org`, and `GPW_MAIL_FROM` on `vesper-labs.org`. It ships with the release that rebrands the site. |
+| Certificate | `manifests/go-practice/`: a temporary route for `vesper-labs.org` that redirects to `go-learn.party`, so that Traefik gets the certificate of the new name. `manifests/external-dns/`: the job `dane-updater-vesper`, and a guard in the DANE script. The site stays on `go-learn.party`. |
+| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, `GPW_PUBLIC_URL=https://vesper-labs.org`, and `GPW_MAIL_FROM` on `vesper-labs.org`. It removes the temporary route of the certificate change. It ships with the release that rebrands the site. |
 
 CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys made on `go-learn.party` do not work on `vesper-labs.org`. Each person signs in once with account recovery by email, and makes a new passkey. Progress, code and certificates stay, because they belong to the account, not to the passkey. Tell the learners before you merge the route change.
 
@@ -353,7 +354,163 @@ Expected result:
 - The MX is `10 receive-euw1.forge.rmta.net`, so replies to `hush@vesper-labs.org` reach Resend.
 - `send`, `rsend` and the DKIM key have the values of the table in step 1.
 
-### 4. Merge the route change
+### 4. Get the certificate of vesper-labs.org
+
+The certificate change gets the Let's Encrypt certificate of `vesper-labs.org` while the site stays on `go-learn.party`. It does these things:
+
+- The temporary route `vesper-labs-temporary` on `websecure` makes Traefik order the certificate of `vesper-labs.org`. Traefik stores it in `acme.json`, and the route change uses it.
+- Each request to `https://vesper-labs.org` goes to the same path and query on `https://go-learn.party`, except the 2 paths of security.txt below. Traefik answers 302 to GET and 307 to every other method. A browser does not keep these answers, so the route change can turn the direction around.
+- `/.well-known/security.txt` and `/.well-known/pgp-key.txt` are not redirected. The `security-txt` route serves them on every host, with priority 9999. From the certificate change to the route change, the signed file has no `Canonical` line for `vesper-labs.org`. RFC 9116 tells a reader not to trust such a file, so a security.txt scanner can report this host. The route change adds the line.
+- The app gets no request from `vesper-labs.org`. Its WebAuthn relying party and its Origin check stay `go-learn.party` until the route change.
+- `go-learn.party` does not change.
+- The job `dane-updater-vesper` publishes the TLSA record `_443._tcp.vesper-labs.org` each night at 03:43 UTC.
+- The DANE script of all DANE jobs stops, and keeps the record, if a host serves no certificate. Before this change, it published the hash of empty input.
+
+NOTE: Let's Encrypt validates the order with HTTP-01 on port 80. The challenge router of Traefik has priority `MaxInt`, above the redirection of the `web` entry point at `MaxInt - 1`. So the challenge path is not redirected. Step 2 of [Before the certificate change](#before-the-certificate-change) shows that port 80 of the name reaches that router.
+
+#### Before the certificate change
+
+1. Make sure that `vesper-labs.org` resolves. Use the commands of [step 2](#2-merge-the-dns-change).
+2. Request an unknown challenge token on the new name:
+
+   ```sh
+   curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' http://vesper-labs.org/.well-known/acme-challenge/cert-precheck
+   ```
+
+   Expected result: `404 0`. The challenge handler answers an unknown token with an empty 404. If you get a `301`, a `308` or an error, do not merge. Find out why the challenge path does not reach Traefik.
+
+#### Merge the certificate change
+
+NOTE: No pod restarts. The change adds an IngressRoute, a Middleware and a CronJob, and changes the ConfigMap of the DANE script.
+
+1. Merge the pull request.
+2. Make sure that the Applications `go-practice` and `external-dns` report Synced and Healthy in ArgoCD.
+3. Wait 1 minute. Traefik orders the certificate after the sync.
+
+#### Checks after the certificate change
+
+1. Read the certificate of the new host:
+
+   ```sh
+   echo | openssl s_client -connect vesper-labs.org:443 -servername vesper-labs.org 2>/dev/null | openssl x509 -noout -text | grep -e 'Issuer:' -e 'DNS:' -e 'Not After'
+   ```
+
+   Expected result: an issuer with `O=Let's Encrypt`, `DNS:vesper-labs.org` and a `Not After` date about 90 days ahead. If `openssl` cannot load a certificate, the order failed. Do [If the order failed](#if-the-order-failed).
+
+2. Read the temporary redirect of a GET with a path and a query:
+
+   ```sh
+   curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' 'https://vesper-labs.org/guide?from=cert-check'
+   ```
+
+   Expected result: `302 https://go-learn.party/guide?from=cert-check`.
+
+3. Read the headers of the redirect:
+
+   ```sh
+   curl -sSI https://vesper-labs.org/ | grep -i -e '^HTTP' -e '^location' -e '^cache-control' -e strict-transport-security
+   ```
+
+   Expected result: `HTTP/2 307`, `location: https://go-learn.party/` and the `strict-transport-security` header. No `cache-control` line shows, so no browser keeps the redirect. The status is 307 because `curl -I` sends HEAD.
+
+4. Follow the redirect from http to the end:
+
+   ```sh
+   curl -sSL -o /dev/null -w '%{http_code} %{num_redirects} %{url_effective}\n' 'http://vesper-labs.org/guide?from=cert-check'
+   ```
+
+   Expected result: `200 2 https://go-learn.party/guide?from=cert-check`. The redirection of the web entry point answers first and sends the request to `https://vesper-labs.org`. The second redirect goes to `go-learn.party`.
+
+5. Read the headers of the old host:
+
+   ```sh
+   curl -sSI https://go-learn.party/ | grep -i -e '^HTTP' -e strict-transport-security
+   ```
+
+   Expected result: `HTTP/2 200` and the `strict-transport-security` header, with no certificate error. `go-learn.party` did not change.
+
+NOTE: The job runs each night at 03:43 UTC. Steps 6 to 8 start a run at once. The Job of step 6 is not in git. ArgoCD does not prune it, and it deletes itself after 1 day. If you wait for the night, skip steps 6 to 8.
+
+6. Start a run of the job:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n external-dns create job --from=cronjob/dane-updater-vesper dane-updater-vesper-first
+   ```
+
+7. Wait until the run ends:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n external-dns wait --for=condition=complete --timeout=3m job/dane-updater-vesper-first
+   ```
+
+   Expected result: `job.batch/dane-updater-vesper-first condition met`. If the command times out, the run failed. Step 8 shows why.
+
+8. Read the log of the run:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n external-dns logs job/dane-updater-vesper-first
+   ```
+
+   Expected result: the log ends with `TLSA update succeeded`.
+
+NOTE: Step 9 asks a name server of the zone, not a public resolver. A resolver keeps an empty answer for up to 30 minutes, the negative TTL in the SOA of the zone. If somebody asked for the record before the run, a resolver can still show no record.
+
+9. Read the TLSA record from a name server of the zone:
+
+   ```sh
+   dig +short @vick.ns.cloudflare.com _443._tcp.vesper-labs.org TLSA
+   ```
+
+10. Compute the hash of the key that the host serves:
+
+    ```sh
+    echo | openssl s_client -connect vesper-labs.org:443 -servername vesper-labs.org 2>/dev/null | openssl x509 -pubkey -noout | openssl pkey -pubin -outform DER | openssl dgst -sha256 | awk '{print toupper($NF)}'
+    ```
+
+    Expected result: step 9 shows `3 1 1` and the 64 hex characters of step 10. `dig` can split the hex into 2 groups.
+
+11. Make sure that DNSSEC signs the record:
+
+    ```sh
+    dig +dnssec @1.1.1.1 _443._tcp.vesper-labs.org TLSA | grep 'flags:'
+    ```
+
+    Expected result: the first line has the flag `ad` and `ANSWER: 2`, the record and its signature. An empty answer also has `ad`. If you get `ANSWER: 0`, the resolver still holds the empty answer from before the run. Wait 30 minutes, then do this step again.
+
+If step 9 shows no record, do these steps:
+
+1. List the runs of the job:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n external-dns get jobs | grep dane-updater-vesper
+   ```
+
+2. Read the log of the last run. Replace `<job>` with its name:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n external-dns logs job/<job>
+   ```
+
+A log line with `it served no certificate` means that the host served no certificate at the time of the run. The job did not change the record. See [Problems](#problems).
+
+#### If the order failed
+
+If `openssl` in step 1 of the checks loads no certificate, the ACME order failed. Only the temporary redirect on `vesper-labs.org` has no certificate. `go-learn.party` still serves the site with its own certificate.
+
+Traefik does not try the order again on a timer. It tries again each time its configuration changes. While the cause stays, each of these tries fails too, and Let's Encrypt counts it.
+
+WARNING: Do not merge the route change while `vesper-labs.org` has no certificate. The redirect of `go-learn.party` then sends every learner to a name that has no certificate.
+
+1. Read the error of the order in the log of Traefik:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n traefik logs deploy/traefik | grep 'Unable to obtain ACME certificate' | grep vesper-labs.org
+   ```
+
+2. Do [If the site has no valid certificate](#if-the-site-has-no-valid-certificate). It fixes the cause before it restarts Traefik.
+3. Do the [checks after the certificate change](#checks-after-the-certificate-change) again.
+
+### 5. Merge the route change
 
 CAUTION: Merge the route change only when Resend shows `vesper-labs.org` as Verified. After the route change, everyone recovers their account by email, so the mail must work from the start.
 
@@ -597,32 +754,45 @@ WARNING: If the CNI does not enforce NetworkPolicy, Landlock is the only network
 
 ## If the site has no valid certificate
 
-The cause is an ACME order that failed because the name did not resolve yet. Traefik does not retry it.
+The cause is a failed ACME order. Examples are a name that did not resolve yet, or a challenge path that did not reach Traefik.
+
+Traefik v3.7.4 does not try a failed order again on a timer. It tries again each time its dynamic configuration changes, for example when a route, or a pod behind a route, changes anywhere in the cluster. While the cause stays, each of these tries fails too. After the fix, the next change can get the certificate without a restart.
 
 CAUTION: A restart of Traefik stops every public domain for some seconds. The Deployment has `maxSurge: 0`.
 
-NOTE: Let's Encrypt refuses new orders for a host for 1 hour after 5 failed validations. Do not restart Traefik again and again.
+NOTE: Let's Encrypt refuses new orders for a host for 1 hour after 5 failed validations. The tries that Traefik starts by itself count too. Fix the cause first, and do not restart Traefik again and again.
 
-1. Make sure that the name resolves. See [step 3](#3-publish-the-dns-record-before-the-route) of the first deploy.
-2. Restart Traefik:
+1. Make sure that the name resolves. For `vesper-labs.org`, see [step 2](#2-merge-the-dns-change) of the move. For `go-learn.party`, see [step 3](#3-publish-the-dns-record-before-the-route) of the first deploy.
+2. Make sure that the challenge path reaches Traefik. Use the command of step 2 in [Before the certificate change](#before-the-certificate-change). For `go-learn.party`, put that name in the URL.
+3. Read the certificate of the name. Replace `<host>` with the name:
+
+   ```sh
+   echo | openssl s_client -connect <host>:443 -servername <host> 2>/dev/null | openssl x509 -noout -text | grep -e 'Issuer:' -e 'DNS:'
+   ```
+
+   If you get an issuer with `O=Let's Encrypt` and `DNS:<host>`, a later try got the certificate. Do not restart Traefik, and skip steps 4 to 6.
+
+4. Restart Traefik:
 
    ```sh
    kubectl --context yornik-sharkshere -n traefik rollout restart deploy/traefik
    ```
 
-3. Wait for the rollout:
+5. Wait for the rollout:
 
    ```sh
    kubectl --context yornik-sharkshere -n traefik rollout status deploy/traefik
    ```
 
-4. Read the headers of the site:
+6. Read the headers of the site:
 
    ```sh
    curl -sSI https://go-learn.party/ | grep -i '^HTTP'
    ```
 
 Expected result: a `200` with no certificate error.
+
+NOTE: For the certificate of `vesper-labs.org`, do step 1 of [Checks after the certificate change](#checks-after-the-certificate-change) instead. Until the route change, that name only redirects, so its headers show a `307`.
 
 ## Problems
 
@@ -636,5 +806,6 @@ Expected result: a `200` with no certificate error.
 | The runner log shows `race detector not available: test runs go without -race`, and the IDE says that the race detector is not available. | The race probe at start failed on this node. The `reason` field of the log line gives the error. `FATAL: ThreadSanitizer` points to the seccomp profile `RuntimeDefault`, which can block `personality(ADDR_NO_RANDOMIZE)`. | Tests still run without `-race`. A learner can then pass an exercise without `-race`. Read the `reason` field: `kubectl --context yornik-sharkshere -n go-practice-runner logs deploy/go-practice-runner \| grep 'race detector'`. Each new pod tests again, so a pod on another node can have a race detector. A `Localhost` seccomp profile that is `RuntimeDefault` plus `personality(ADDR_NO_RANDOMIZE)` brings `-race` back. Do not change the seccomp profile without a review of the sandbox. |
 | The runner log shows a WARN `sandbox for runs` line, or a `landlock ABI` below 6. | The node kernel does not have Landlock in its active LSM list, or is older than Linux 6.12. | Without Landlock, runs are not confined. Then invite only people that you trust. For what each ABI gives, read [What the runner sandbox does and does not do](#what-the-runner-sandbox-does-and-does-not-do). The fix is a node kernel with Landlock, through a Talos upgrade. |
 | The job `caa-updater-go-learn` fails with `CAA drift`. | Universal SSL is on for the zone. | Do steps 6 and 7 of [step 2](#2-prepare-the-cloudflare-zone). |
+| The job `dane-updater-vesper` fails with `it served no certificate`. | `vesper-labs.org` served no certificate at the time of the run, because its ACME order failed. The job did not change the TLSA record. | Do [If the site has no valid certificate](#if-the-site-has-no-valid-certificate). The next run at 03:43 UTC sets the record. |
 | Mail does not arrive, and the log shows the mail text. | `GPW_SMTP_PASSWORD` is still `REPLACE_ME`. | Do [How to set the Resend API key](#how-to-set-the-resend-api-key). |
 | Mail does not arrive, and the web log shows an error with `auth:` in its `err` field. | Resend refuses the key. Somebody rotated or revoked the key of soiree, and the copy in `secret-web.enc.yaml` is the old key. | Copy the key again: do [How to set the Resend API key](#how-to-set-the-resend-api-key). |

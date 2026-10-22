@@ -1,0 +1,64 @@
+# DANE TLSA for go-practice on vesper-labs.org. The same job as
+# dane-updater-yornik, 10 minutes after dane-updater-passwords. The zone is
+# signed with DNSSEC, so a DANE client can trust the record.
+#
+# The record is 3 1 1: the SHA-256 of the public key of the certificate that
+# the host serves. Traefik keeps the private key when it renews a certificate:
+# v3.7.4 gives the stored key to lego, and lego 4.35.2 signs the new request
+# with it. A renewal therefore does not change the record. A new key comes only
+# with a new certificate, for example after a loss of acme.json. DANE then
+# fails until the next run, at most 1 day plus the TTL of 1 hour.
+#
+# If the host serves no certificate, the script stops and keeps the record.
+# See configmap-dane-updater-script.yaml.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dane-updater-vesper
+  namespace: external-dns
+spec:
+  schedule: "43 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: dane-updater
+              image: alpine:3.24
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  apk add --no-cache curl jq openssl >/dev/null
+                  /scripts/update-tlsa.sh
+              env:
+                - name: CF_ZONE_NAME
+                  value: vesper-labs.org
+                - name: TARGET_HOST
+                  value: vesper-labs.org
+                - name: TLSA_RECORD_NAME
+                  value: _443._tcp.vesper-labs.org
+                - name: TLSA_TTL
+                  value: "3600"
+                - name: CF_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: cloudflare-credentials
+                      key: api-token
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: dane-updater-script
+                defaultMode: 0555
