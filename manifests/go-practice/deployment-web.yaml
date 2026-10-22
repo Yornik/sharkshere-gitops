@@ -51,7 +51,7 @@ spec:
           # copied into the image at /course, so a new course commit needs a
           # new image tag. Do not move this to `latest`: the running version
           # then changes on a restart, and nobody can tell which one it is.
-          image: ghcr.io/yornik/go-practice-web:v0.1.0
+          image: ghcr.io/yornik/go-practice-web:v0.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
