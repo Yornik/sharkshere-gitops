@@ -2,7 +2,7 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 46 ArgoCD Applications that serve 14 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 46 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
@@ -24,7 +24,7 @@ This repo is one of three:
 | CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
-| Workloads | 46 ArgoCD Applications, 14 public HTTPS domains, 5 tailnet-only admin interfaces |
+| Workloads | 46 ArgoCD Applications, 15 public HTTPS domains, 5 tailnet-only admin interfaces |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
@@ -192,7 +192,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `registry.git.yornik.eu` | GitLab Container Registry |
 | `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
 | `go-learn.party` | go-practice — web IDE for the Go practice course. Served from the **apex** of its own zone, with A/AAAA records straight at the jump hosts like `bokings-driessen.party`; no `www.`, because the app accepts 1 origin, its WebAuthn relying party. Sign-up is by invite only. The runner that executes learner code has no public route. The site moves to `vesper-labs.org`; this name then only redirects there. |
-| `vesper-labs.org` | Not served yet. The new home of go-practice, the apex of its own zone like `go-learn.party`. ExternalDNS publishes its A/AAAA and CAA records, and a job publishes the records of Resend, so the site can send its mail from this zone. The site moves here with the release that rebrands it; see [the runbook](../runbooks/go-practice.md#how-to-move-the-site-to-vesper-labsorg). |
+| `vesper-labs.org` | Only a temporary redirect to `go-learn.party`, until the move. Every path goes to the same path and query there: 302 for GET, 307 for every other method, so no browser keeps the redirect. The route exists so that Traefik holds the Let's Encrypt certificate of this name before the site moves here; the app gets no request from it. `/.well-known/security.txt` is served here, not redirected; its `Canonical` lines name this host only from the move on. The new home of go-practice, the apex of its own zone like `go-learn.party`. ExternalDNS publishes its A/AAAA and CAA records, and a job publishes the records of Resend, so the site can send its mail from this zone. DNSSEC-signed, with a DANE TLSA record on `_443._tcp`. The site moves here with the route change; see [the runbook](../runbooks/go-practice.md#how-to-move-the-site-to-vesper-labsorg). |
 
 ### Tailnet only
 

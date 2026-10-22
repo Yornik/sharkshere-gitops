@@ -30,8 +30,13 @@ data:
       | hexdump -v -e '/1 "%02x"'
     )"
 
-    if [ -z "${HASH}" ]; then
-      echo "Failed to compute TLSA hash for ${TARGET_HOST}"
+    # The pipeline has no pipefail. If a step before dgst fails, dgst reads
+    # no input and prints the SHA-256 of nothing. That happens when the host
+    # serves no certificate yet: Traefik refuses an unknown name (sniStrict).
+    # A record with that hash matches no key, so stop and keep the record.
+    EMPTY_SHA256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    if [ -z "${HASH}" ] || [ "${HASH}" = "${EMPTY_SHA256}" ]; then
+      echo "Failed to compute TLSA hash for ${TARGET_HOST}: it served no certificate. The record stays as it is."
       exit 1
     fi
 
