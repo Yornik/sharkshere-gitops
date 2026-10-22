@@ -50,28 +50,21 @@ set `replicas` back to 1 and pinned `image` to that rebuild by digest
 
 ## Prevention
 
-Do not restore by setting `replicas` back to 1 on tag `2.1.0`. Do not revert the
-scale-down commit on its own. Both restart the unpatched PHP runtime.
+The `image` is pinned by digest (`2.1.0@sha256:...`). Keep the pin. It makes the
+patched runtime deterministic on every node. It closes the gap where a node
+reuses a cached pre-fix `2.1.0`.
 
-The Deployment sets no `imagePullPolicy`. A node can reuse a cached `2.1.0` even
-if upstream re-pushes that tag. A bare revert is not a safe restore.
+A re-push of the same tag now arrives as a Renovate digest pull request. No
+automerge rule matches a digest update, so a person reviews it. Treat a digest
+pull request for this image as a runtime change. Check the PHP version before
+you merge it:
 
-To restore:
+```sh
+kubectl --context yornik-sharkshere -n privatebin exec deploy/privatebin -- php -v
+```
 
-1. Find which PHP branch the image runs. Run `php -v` in the container. The
-   expected fixed versions are 8.5.12, 8.4.27, 8.3.36 and 8.2.35.
-2. Open one pull request that sets `image` to a PrivateBin release built on the
-   fixed version of that branch and sets `replicas` to 1.
-
-Do not wait for a Renovate pull request to pair the `replicas` change with. A
-patch or a minor bump of this image automerges on its own (`renovate.json5`). It
-can merge with no pull request left open, and it lands with `replicas` still 0.
-Open your own pull request with both changes.
-
-CAUTION: Renovate opens no pull request at all if upstream re-pushes `2.1.0` in
-place. The image has no digest pin, so a re-push is invisible. In that case, pin
-the new digest (`2.1.0@sha256:...`) and set `replicas` to 1 in the same pull
-request.
+A fixed PHP release is 8.5.12, 8.4.27, 8.3.36 or 8.2.35, or a later version on
+its branch.
 
 ## Evidence
 
@@ -81,7 +74,8 @@ request.
   2026-10-21 at 14:00 UTC for 2 critical flaws rated CVSS v4.0 9.2.
 - CVE-2026-109618 and CVE-2026-109619 (php2shell) are reported by watchTowr,
   Tenable, Sansec and others.
-- `manifests/privatebin/deployment.yaml` pins `image:
-  privatebin/nginx-fpm-alpine:2.1.0` and sets no `imagePullPolicy`.
+- At the time of the incident `manifests/privatebin/deployment.yaml` pinned
+  `image: privatebin/nginx-fpm-alpine:2.1.0` with no `imagePullPolicy` and no
+  digest.
 - The advisory review on pull request 542 (checklist B) found that a bare
   restore to tag `2.1.0` brings the unpatched runtime back.
