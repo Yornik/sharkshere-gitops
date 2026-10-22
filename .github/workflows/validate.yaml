@@ -8,7 +8,7 @@ env:
   # renovate: datasource=github-releases depName=yannh/kubeconform
   KUBECONFORM_VERSION: v0.8.0
   # renovate: datasource=pypi depName=anthropic
-  ANTHROPIC_VERSION: 1.17.0
+  ANTHROPIC_VERSION: 2.1.0
   # renovate: datasource=pypi depName=pyyaml
   PYYAML_VERSION: 6.0.3
   # CRD schemas (IngressRoute, Middleware, CNPG Cluster, Application,
