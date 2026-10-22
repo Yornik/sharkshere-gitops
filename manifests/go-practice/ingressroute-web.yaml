@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`go-learn.party`)
+    - match: Host(`vesper-labs.org`)
       kind: Rule
       middlewares:
         - name: redirect-https

@@ -1,6 +1,7 @@
-# A reject-all SPF and DMARC policy for go-learn.party. go-practice sends its
-# mail from yornik.eu, so no mail comes from this zone. The same job as
-# no-mail-bokings, 10 minutes later.
+# A reject-all SPF and DMARC policy for go-learn.party. The zone only
+# redirects to vesper-labs.org now, and go-practice sends its mail from
+# vesper-labs.org (see cronjob-mail-sender-vesper.yaml), so no mail comes from
+# this zone. The same job as no-mail-bokings, 10 minutes later.
 apiVersion: batch/v1
 kind: CronJob
 metadata:

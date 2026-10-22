@@ -8,8 +8,9 @@ data:
   # sends no mail. Without them, any server can send mail with a From address
   # in the zone, and a receiver has no policy that tells it to refuse the mail.
   #
-  # No service sends from these zones: GoToSocial, soiree, go-practice,
-  # Vaultwarden, GitLab and OpenProject all send from @yornik.eu.
+  # No service sends from these zones. GoToSocial, soiree, Vaultwarden, GitLab
+  # and OpenProject send from @yornik.eu, and go-practice sends from
+  # @vesper-labs.org.
   #
   # The script takes over an existing record of the same kind, whatever its
   # comment. A second SPF or DMARC record makes the policy invalid, so the

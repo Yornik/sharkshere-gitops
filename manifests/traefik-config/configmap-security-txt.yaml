@@ -29,12 +29,13 @@ data:
     Canonical: https://bokings-driessen.party/.well-known/security.txt
     Canonical: https://www.bokings-driessen.party/.well-known/security.txt
     Canonical: https://go-learn.party/.well-known/security.txt
+    Canonical: https://vesper-labs.org/.well-known/security.txt
     -----BEGIN PGP SIGNATURE-----
 
-    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCatihTAAKCRDt+zCFSkKz
-    8MmIAQCmAY3GFwjMD3Iwz0nV9E5KmC0CblPmhQ+kTtFEAr6hUwD+NMLp+8MxFXUm
-    WFEIQrKV5uIr6hfu0SmqNyGo/wWsTwM=
-    =5BF2
+    iHUEARYIAB0WIQQwRaQ5G6gwBtDu5Aft+zCFSkKz8AUCatpYnwAKCRDt+zCFSkKz
+    8DJJAQC8QavL60KGnj5vaH3m1sFmgeGJsFk2VuRjwxhel9u2SwEAy5Wvy1hkT+/U
+    6t9QtIqmGxcFUkIJnzTNRTvhQ1omTww=
+    =SjLe
     -----END PGP SIGNATURE-----
   pgp-key.txt: |
     -----BEGIN PGP PUBLIC KEY BLOCK-----

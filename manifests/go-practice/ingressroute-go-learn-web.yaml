@@ -1,0 +1,25 @@
+# http://go-learn.party. The redirection of the web entry point in
+# apps/values.yaml answers first: its router has priority MaxInt - 1. It sends
+# the request to https://go-learn.party, and ingressroute-go-learn.yaml sends
+# it on. If that redirection goes away, this route sends the request straight
+# to https://vesper-labs.org. The ACME HTTP-01 challenge has a router of its
+# own with a higher priority, so the renewal of the certificate still works.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: go-learn-web
+  namespace: go-practice
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`go-learn.party`)
+      kind: Rule
+      middlewares:
+        - name: redirect-cache
+          namespace: go-practice
+        - name: redirect-vesper-labs
+          namespace: go-practice
+      services:
+        - name: go-practice-web
+          port: 8080
