@@ -48,7 +48,7 @@ spec:
           # the Go toolchain, gcc for -race, staticcheck, the course at
           # /course and a built cache at /opt/gocache-seed. A new course
           # commit needs a new image tag, here and on the web image, together.
-          image: ghcr.io/yornik/go-practice-runner:v0.1.0
+          image: ghcr.io/yornik/go-practice-runner:v0.3.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
