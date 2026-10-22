@@ -7,10 +7,15 @@ spec:
   entryPoints:
     - websecure
   routes:
-    # DNS must resolve before this route exists. Traefik does not retry a
-    # failed ACME order, so a route that comes first uses up the attempt. The
-    # certificate then needs a restart of Traefik. See the first deploy in
-    # docs/runbooks/go-practice.md.
+    # The site is on vesper-labs.org. go-learn.party, the old host, only
+    # redirects here: see ingressroute-go-learn.yaml.
+    #
+    # DNS must resolve before this route exists. Traefik tries a failed ACME
+    # order again only when its dynamic configuration changes, not on a
+    # timer, so a route that comes first can stay without a certificate. The
+    # certificate of vesper-labs.org was ordered before this route, through
+    # the temporary route of the move. See "How to move the site to
+    # vesper-labs.org" in docs/runbooks/go-practice.md.
     #
     # Order of the middlewares, for each route (REVIEW.md B8):
     #   1. security-headers first, so a ban (403) or a rate limit (429) also
@@ -29,7 +34,7 @@ spec:
 
     # The auth API: passkey login, sign-up, recovery and passkey management.
     # fail2ban watches this route only. See middleware-fail2ban.yaml.
-    - match: Host(`go-learn.party`) && PathPrefix(`/api/auth/`)
+    - match: Host(`vesper-labs.org`) && PathPrefix(`/api/auth/`)
       kind: Rule
       priority: 10
       middlewares:
@@ -46,7 +51,7 @@ spec:
           port: 8080
 
     # Everything else: the same chain without fail2ban.
-    - match: Host(`go-learn.party`)
+    - match: Host(`vesper-labs.org`)
       kind: Rule
       priority: 1
       middlewares:

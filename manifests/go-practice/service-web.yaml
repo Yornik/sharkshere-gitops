@@ -10,8 +10,8 @@ metadata:
   # the annotations that the subdomains use publish a CNAME to
   # jump.fedishark.eu. A CNAME at an apex is not valid, and it conflicts with
   # the DANE TLSA records of this estate. The apex A and AAAA records come from
-  # the dummy Service dns-go-learn-party in
-  # manifests/external-dns/dns-records.yaml, the same as for soiree.
+  # the dummy Services dns-vesper-labs-org and dns-go-learn-party (the old
+  # host) in manifests/external-dns/dns-records.yaml, the same as for soiree.
 spec:
   selector:
     app.kubernetes.io/name: go-practice-web

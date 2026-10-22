@@ -33,16 +33,17 @@ spec:
             # ExternalDNS skips the record and the name never resolves. The
             # Cloudflare token in secret.enc.yaml must reach this zone too.
             - --domain-filter=bokings-driessen.party
-            # go-practice publishes its apex from the dummy Service
-            # dns-go-learn-party in dns-records.yaml. go-learn.party is a zone
-            # of its own in the same Cloudflare account, so without this filter
-            # ExternalDNS skips the record and the name does not resolve. The
-            # Cloudflare token in secret.enc.yaml must reach this zone too.
+            # go-learn.party, the old host of go-practice, publishes its apex
+            # from the dummy Service dns-go-learn-party in dns-records.yaml.
+            # It is a zone of its own in the same Cloudflare account, so
+            # without this filter ExternalDNS skips the record and the name
+            # does not resolve. The Cloudflare token in secret.enc.yaml must
+            # reach this zone too. The name stays: it redirects old links and
+            # the verify links of issued certificates to vesper-labs.org.
             - --domain-filter=go-learn.party
-            # go-practice moves to vesper-labs.org, also a zone of its own in the
+            # go-practice is on vesper-labs.org, also a zone of its own in the
             # same account. Its apex comes from the dummy Service
-            # dns-vesper-labs-org in dns-records.yaml. go-learn.party stays: it
-            # redirects old links and the verify links of issued certificates.
+            # dns-vesper-labs-org in dns-records.yaml.
             - --domain-filter=vesper-labs.org
             - --policy=upsert-only
             - --registry=txt

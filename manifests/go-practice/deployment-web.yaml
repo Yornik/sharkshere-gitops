@@ -66,10 +66,21 @@ spec:
             # The canonical origin. The app builds the links in mail and in
             # certificates from it, not from the request Host, which a client
             # sets. It is also the WebAuthn relying party: the RP ID is the
-            # host, go-learn.party. Each passkey holds a hash of the RP ID, so
-            # a change of this host makes every registered passkey fail.
+            # host, vesper-labs.org. Each passkey holds a hash of the RP ID, so
+            # the passkeys made on go-learn.party, the old host, do not work
+            # here. Each learner recovers the account once by email, and the
+            # recovery adds a new passkey. Progress, code and certificates
+            # belong to the account, so they stay. go-learn.party redirects
+            # here: see ingressroute-go-learn.yaml.
             - name: GPW_PUBLIC_URL
-              value: "https://go-learn.party"
+              value: "https://vesper-labs.org"
+            # The sign-in and recovery pages then say that a passkey made on
+            # go-learn.party does not work here, and that recovery adds a new
+            # one. Releases before v0.3.0 refuse this variable and do not
+            # start. Remove it when every learner has a passkey for
+            # vesper-labs.org.
+            - name: GPW_MOVED_FROM
+              value: "go-learn.party"
             - name: GPW_DB_PATH
               value: "/data/go-practice.db"
             # In the image. See the note on the image above.
@@ -95,25 +106,35 @@ spec:
               value: "465"
             - name: GPW_SMTP_USER
               value: "resend"
-            # The Resend API key, a copy of the key of soiree. While the value
-            # is REPLACE_ME, the app writes each mail to the log and sends
-            # nothing. Every new account, the admin included, then waits at
-            # /check-email until someone opens the verification link from the
-            # log. Recovery and the security notices do not work. Set the key
-            # before the first account. See docs/runbooks/go-practice.md.
+            # The Resend API key, a copy of the key of soiree. Resend must allow
+            # it to send from vesper-labs.org, the domain of GPW_MAIL_FROM.
+            # While the value is REPLACE_ME, the app writes each mail to the
+            # log and sends nothing. Every new account, the admin included,
+            # then waits at /check-email until someone opens the verification
+            # link from the log. Recovery and the security notices do not
+            # work. Set the key before the first account. See
+            # docs/runbooks/go-practice.md.
             - name: GPW_SMTP_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: go-practice-web
                   key: GPW_SMTP_PASSWORD
-            # From yornik.eu, not from go-learn.party. Resend already verifies
-            # yornik.eu, and the domain has a history with mail filters. A new
-            # .party domain went to spam with all checks passing. See the mail
-            # note in soiree/deployment.yaml. go-learn.party publishes a
-            # reject-all SPF and DMARC policy, from
-            # external-dns/cronjob-no-mail-go-learn.yaml.
+            # From the zone of the site, so the sender and the links in a mail
+            # name the same host. Resend verifies vesper-labs.org. The job
+            # external-dns/cronjob-mail-sender-vesper.yaml publishes its DKIM
+            # key, the bounce domain send.vesper-labs.org, a DMARC policy and
+            # an MX, so a reply to hush@ reaches Resend. go-learn.party sends
+            # no mail: it publishes a reject-all SPF and DMARC policy, from
+            # external-dns/cronjob-no-mail-go-learn.yaml. The app sends the
+            # middle dot as an RFC 2047 word.
+            #
+            # vesper-labs.org got its mail records on 2026-10-21. A filter can
+            # put mail from a new domain in spam with every check passing, as
+            # the soiree note in soiree/deployment.yaml shows. Each learner
+            # needs the recovery mail after the move, so step 5 of the move in
+            # docs/runbooks/go-practice.md tests a mail before the merge.
             - name: GPW_MAIL_FROM
-              value: "Go Practice <go-practice@yornik.eu>"
+              value: "HUSH · Vesper Labs <hush@vesper-labs.org>"
             # Traefik reaches the pod from the pod CIDR and sets
             # X-Forwarded-For. Without this, the per-address rate limits of
             # the app see the address of Traefik for every client. The same

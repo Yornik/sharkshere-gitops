@@ -165,13 +165,14 @@ spec:
       port: 80
       targetPort: 80
 ---
-# go-practice is served from the apex of its own zone, go-learn.party. An apex
-# takes direct A and AAAA records, not the `target: jump.fedishark.eu` CNAME of
-# the subdomains above. A CNAME at an apex is not valid, and it conflicts with
-# the DANE TLSA records of this estate. The 4 addresses are the same as for the
-# yornik.eu and bokings-driessen.party apexes. They are both jump hosts, v4 and
-# v6, so the name stays up if 1 host is lost. There is no www record: the app
-# accepts 1 origin only, the WebAuthn relying party go-learn.party.
+# go-learn.party is the old host of go-practice, the apex of its own zone. Its
+# route redirects every path to vesper-labs.org, so old links and the verify
+# links of issued certificates keep working. An apex takes direct A and AAAA
+# records, not the `target: jump.fedishark.eu` CNAME of the subdomains above.
+# A CNAME at an apex is not valid, and it conflicts with the DANE TLSA records
+# of this estate. The 4 addresses are the same as for the yornik.eu and
+# bokings-driessen.party apexes. They are both jump hosts, v4 and v6, so the
+# name stays up if 1 host is lost. There is no www record.
 apiVersion: v1
 kind: Service
 metadata:
@@ -188,9 +189,9 @@ spec:
       port: 80
       targetPort: 80
 ---
-# vesper-labs.org is the new home of go-practice, again the apex of its own
-# zone, with the same 4 jump-host addresses as go-learn.party above. There is
-# no www record: the app accepts 1 origin only, the WebAuthn relying party
+# vesper-labs.org is the host of go-practice, again the apex of its own zone,
+# with the same 4 jump-host addresses as go-learn.party above. There is no www
+# record: the app accepts 1 origin only, the WebAuthn relying party
 # vesper-labs.org. go-learn.party keeps its record and redirects here.
 apiVersion: v1
 kind: Service

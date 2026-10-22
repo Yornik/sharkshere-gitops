@@ -1,0 +1,39 @@
+# go-learn.party, the old host of the site. Each request goes to the same path
+# and query on https://vesper-labs.org. Keep this route while an issued
+# certificate can name go-learn.party: its verify link points here. The route
+# uses the certificate that Traefik already holds in acme.json for
+# go-learn.party, so this host needs no new ACME order.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: go-learn
+  namespace: go-practice
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # Order of the middlewares (REVIEW.md B8):
+    #   1. security-headers first, so the redirect keeps HSTS for this host.
+    #   2. rate-limit next. It can end the chain with 429.
+    #   3. redirect-cache after rate-limit, so a 429 gets no cache lifetime.
+    #   4. redirect-vesper-labs last. It answers each request, so the service
+    #      below gets none. An IngressRoute needs a service on each route.
+    # No fail2ban: a redirect does not answer 401 to 403, so it counts
+    # nothing. /.well-known/security.txt does not reach this route: the
+    # security-txt route in traefik-config has priority 9999 on every host.
+    - match: Host(`go-learn.party`)
+      kind: Rule
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: rate-limit
+          namespace: traefik
+        - name: redirect-cache
+          namespace: go-practice
+        - name: redirect-vesper-labs
+          namespace: go-practice
+      services:
+        - name: go-practice-web
+          port: 8080
+  tls:
+    certResolver: letsencrypt

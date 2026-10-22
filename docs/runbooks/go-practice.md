@@ -1,6 +1,6 @@
 # Go practice course
 
-The `go-practice` Application serves a web IDE for the Go practice course on `go-learn.party`. A learner writes Go in the browser, and a runner in the cluster runs `go vet`, `staticcheck` and `go test -race` on that code. This file says how to deploy the Application the first time, how to operate it and what the runner sandbox protects.
+The `go-practice` Application serves a web IDE for the Go practice course on `vesper-labs.org`. `go-learn.party`, the old host, redirects to it. A learner writes Go in the browser, and a runner in the cluster runs `go vet`, `staticcheck` and `go test -race` on that code. This file says how to deploy the Application the first time, how to operate it, how it moved to `vesper-labs.org` and what the runner sandbox protects.
 
 | Item | Value |
 |---|---|
@@ -9,8 +9,9 @@ The `go-practice` Application serves a web IDE for the Go practice course on `go
 | Web server | Deployment `go-practice-web` in namespace `go-practice`. Image `ghcr.io/yornik/go-practice-web`. Site on `:8080`, metrics on `:9090`. |
 | Runner | Deployment `go-practice-runner` in namespace `go-practice-runner`. Image `ghcr.io/yornik/go-practice-runner`. API on `:8081`, cluster-internal only. Metrics on `:9091`. |
 | Database | SQLite at `/data/go-practice.db` on PVC `go-practice-data-ssd` (`truenas-ssd`, NFS, 2Gi). The app writes 1 backup a day to `/data/backups` and keeps 7. ArgoCD does not prune the PVC (`Prune=false`). |
+| Mail | From `HUSH · Vesper Labs <hush@vesper-labs.org>` through Resend. `manifests/external-dns/cronjob-mail-sender-vesper.yaml` publishes the records of Resend. |
 | Secrets | `go-practice-web` from `secret-web.enc.yaml`: the runner token and a copy of the Resend API key of soiree. `go-practice-runner` from `secret-runner.enc.yaml`: the same runner token. |
-| Public host | `go-learn.party`, the apex of its own Cloudflare zone. There is no `www`. |
+| Public host | `vesper-labs.org`, the apex of its own Cloudflare zone. There is no `www`. `go-learn.party`, the old host and also a zone apex, redirects each path to it. |
 | Sign-up | Invite only. The first account comes from a setup link in the log. Login is by passkey only. |
 
 | Document | Content |
@@ -26,6 +27,8 @@ WARNING: The runner runs code that any learner with an account sends. The isolat
 ## How to deploy the first time
 
 Do the steps in this order. Each step needs the step before it.
+
+NOTE: The first deploy put the site on `go-learn.party`. Steps 2, 3 and 6 record how that name was set up. The site moved to `vesper-labs.org` later, see [How to move the site to vesper-labs.org](#how-to-move-the-site-to-vesper-labsorg). The checks of the other steps use `vesper-labs.org`.
 
 ### 1. Release the images
 
@@ -129,7 +132,7 @@ NOTE: Copy the Resend API key on the branch of this change before you merge it. 
 6. Read the headers of the site:
 
    ```sh
-   curl -sSI https://go-learn.party/ | grep -i -e '^HTTP' -e strict-transport-security
+   curl -sSI https://vesper-labs.org/ | grep -i -e '^HTTP' -e strict-transport-security
    ```
 
 Expected result: each pod is `1/1 Running`. `curl` shows a `200` and the `strict-transport-security` header. If `curl` reports a certificate error, see [If the site has no valid certificate](#if-the-site-has-no-valid-certificate).
@@ -143,9 +146,9 @@ Every account must verify its email address before the course opens. Set the key
 
 ### 6. Add the host to security.txt
 
-The `security-txt` route in `manifests/traefik-config/` serves `/.well-known/security.txt` on every host, so it also serves `go-learn.party`. The signed file does not name `go-learn.party` in a `Canonical` line yet.
+The `security-txt` route in `manifests/traefik-config/` serves `/.well-known/security.txt` on every host, so it also serves `go-learn.party`. At the first deploy, the signed file did not name `go-learn.party` in a `Canonical` line. It does now.
 
-NOTE: The check in step 3 fails on a file that you change without a new signature.
+NOTE: The check in step 3 fails on a file that you change without a new signature. For `vesper-labs.org`, see [Sign security.txt with the new host](#sign-securitytxt-with-the-new-host).
 
 1. Add `Canonical: https://go-learn.party/.well-known/security.txt` to `manifests/traefik-config/configmap-security-txt.yaml`.
 2. Sign the file again with the security.txt key.
@@ -175,19 +178,19 @@ NOTE: While no account exists, each start of the web server writes a new setup l
 3. Create the account and the passkey. Use an email address that you can read.
 4. Open the link in the verification mail.
 
-Expected result: the verification mail arrives from `go-practice@yornik.eu`. The course opens, and the account page shows 1 passkey and a verified address.
+Expected result: the verification mail arrives from `HUSH · Vesper Labs <hush@vesper-labs.org>`. The course opens, and the account page shows 1 passkey and a verified address.
 
 If the Resend key is not set yet, the mail is in the log of the web server. Read the link from the log:
 
 ```sh
-kubectl --context yornik-sharkshere -n go-practice logs deploy/go-practice-web | grep 'mail not sent' | grep -o 'https://go-learn.party/verify-email?token=[A-Za-z0-9_-]*'
+kubectl --context yornik-sharkshere -n go-practice logs deploy/go-practice-web | grep 'mail not sent' | grep -o 'https://vesper-labs.org/verify-email?token=[A-Za-z0-9_-]*'
 ```
 
 ## How to set the Resend API key
 
 While `GPW_SMTP_PASSWORD` is `REPLACE_ME`, the app writes each mail to the log and sends nothing. The setup link works without mail. Learners cannot verify their address, so the course stays closed to them. Recovery by mail and the security notices do not work. Set the key before you send the first invite.
 
-go-practice uses the Resend API key of soiree. soiree sends from `yornik.eu` too, so the key can send for that domain. The key is in 2 files: `SMTP_PASSWORD` in `manifests/soiree/soiree-app.enc.yaml` and `GPW_SMTP_PASSWORD` in `manifests/go-practice/secret-web.enc.yaml`. If you rotate the key, change both files in 1 pull request, and restart both web servers.
+go-practice uses the Resend API key of soiree. go-practice sends from `vesper-labs.org` and soiree from `yornik.eu`, so Resend must allow the key to send from both. A key with Full access, or with Sending access for all domains, can do that. The key is in 2 files: `SMTP_PASSWORD` in `manifests/soiree/soiree-app.enc.yaml` and `GPW_SMTP_PASSWORD` in `manifests/go-practice/secret-web.enc.yaml`. If you rotate the key, change both files in 1 pull request, and restart both web servers.
 
 NOTE: The steps give the key to `sops` on stdin, as in [How to rotate the runner token](#how-to-rotate-the-runner-token). The key does not show on the screen or in the process list. You need the age private key of this repository.
 
@@ -234,9 +237,9 @@ CAUTION: The web Deployment uses `Recreate`. The restart in the next step stops 
 
 9. If an admin account exists, send an invite by mail to your own address from the admin page. Then revoke the invite on the admin page. If no account exists yet, the verification mail in step 4 of [How to get the setup link](#how-to-get-the-setup-link) is the test.
 
-Expected result: the mail arrives from `go-practice@yornik.eu`.
+Expected result: the mail arrives from `HUSH · Vesper Labs <hush@vesper-labs.org>`.
 
-NOTE: To give go-practice a key of its own later, create a key in Resend with sending access for `yornik.eu`. Put it in `KEY` without printing it, and do steps 2 to 9. A key of its own lets you revoke it without an effect on soiree. Then update the notes in both `secret-generator.yaml` files.
+NOTE: To give go-practice a key of its own later, create a key in Resend with sending access for `vesper-labs.org`. Put it in `KEY` without printing it, and do steps 2 to 9. A key of its own lets you revoke it without an effect on soiree. Then update the notes in both `secret-generator.yaml` files.
 
 ## How to release a new version
 
@@ -271,13 +274,13 @@ Some releases change the database schema. 0.2.0 does: migration 0003 moves the s
 
 The site moves from `go-learn.party` to `vesper-labs.org`. `go-learn.party` stays, and redirects every path to the new name. Old links and the verify links in issued certificates keep working.
 
-The move has 3 changes, in this order. The DNS change goes first, because Traefik does not try a failed ACME order again on a timer (see [step 3 of the first deploy](#3-publish-the-dns-record-before-the-route)). The certificate change goes before the route change. If its ACME order fails, `go-learn.party` still serves the site.
+The move has 3 changes, in this order. The DNS change goes first, because Traefik does not try a failed ACME order again on a timer (see [step 3 of the first deploy](#3-publish-the-dns-record-before-the-route)). The certificate change goes before the route change. If its ACME order fails, `go-learn.party` still serves the site. The route change needs the images of go-practice-web v0.3.0 or later, from their own Renovate pull request, merged before it.
 
 | Change | What it does |
 |---|---|
 | DNS | `manifests/external-dns/`: the dummy Service `dns-vesper-labs-org`, `--domain-filter=vesper-labs.org`, and the jobs `caa-updater-vesper` and `mail-sender-vesper`. Nothing serves the name yet, and nothing sends from it yet. |
 | Certificate | `manifests/go-practice/`: a temporary route for `vesper-labs.org` that redirects to `go-learn.party`, so that Traefik gets the certificate of the new name. `manifests/external-dns/`: the job `dane-updater-vesper`, and a guard in the DANE script. The site stays on `go-learn.party`. |
-| Route | `manifests/go-practice/`: the route for `vesper-labs.org`, the redirect from `go-learn.party`, `GPW_PUBLIC_URL=https://vesper-labs.org`, and `GPW_MAIL_FROM` on `vesper-labs.org`. It removes the temporary route of the certificate change. It ships with the release that rebrands the site. |
+| Route | `manifests/go-practice/`: the routes for `vesper-labs.org`, the redirect from `go-learn.party`, `GPW_PUBLIC_URL=https://vesper-labs.org`, `GPW_MOVED_FROM=go-learn.party` and `GPW_MAIL_FROM` on `vesper-labs.org`. It removes the temporary route of the certificate change. |
 
 CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys made on `go-learn.party` do not work on `vesper-labs.org`. Each person signs in once with account recovery by email, and makes a new passkey. Progress, code and certificates stay, because they belong to the account, not to the passkey. Tell the learners before you merge the route change.
 
@@ -295,7 +298,7 @@ CAUTION: A passkey belongs to 1 domain. After the route change, the passkeys mad
 10. Open `vesper-labs.org` and compare its records with the job in `manifests/external-dns/cronjob-mail-sender-vesper.yaml`. The table below lists them.
 11. If a value differs, change it in the job.
 12. Open API Keys.
-13. If the key in `manifests/go-practice/secret.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`.
+13. If the key in `manifests/go-practice/secret-web.enc.yaml` can send only from `yornik.eu`, make a key that can send from `vesper-labs.org`.
 14. If you made a new key, do [How to set the Resend API key](#how-to-set-the-resend-api-key) with it.
 
 | Record in Resend | Variable in the job | Value on 21 October 2026 |
@@ -512,9 +515,338 @@ WARNING: Do not merge the route change while `vesper-labs.org` has no certificat
 
 ### 5. Merge the route change
 
-CAUTION: Merge the route change only when Resend shows `vesper-labs.org` as Verified. After the route change, everyone recovers their account by email, so the mail must work from the start.
+The route change does these things:
 
-This step comes with the release that rebrands the site. Its pull request describes the last steps: the new `Canonical` line in security.txt, which you sign again with the security.txt key, and the checks after the deploy.
+- `vesper-labs.org` serves the site on `websecure`, with the certificate of [step 4](#4-get-the-certificate-of-vesper-labsorg) and the middlewares of the old host. Its `web` route redirects to https.
+- The temporary route of step 4 goes away, with its redirect to `go-learn.party`.
+- `go-learn.party` keeps its routes on `web` and `websecure`, and its certificate. Each request goes to the same path and query on `https://vesper-labs.org`. Traefik answers 301 to GET and 308 to every other method, so a POST keeps its method and its body. The redirect has `Cache-Control: max-age=3600`.
+- The web server gets `GPW_PUBLIC_URL=https://vesper-labs.org`, `GPW_MOVED_FROM=go-learn.party` and `GPW_MAIL_FROM="HUSH · Vesper Labs <hush@vesper-labs.org>"`. The sign-in and recovery pages then say that the site moved, and that a passkey made on `go-learn.party` does not work here.
+
+WARNING: Do not merge the route change before the images run v0.3.0 or later. An older release refuses `GPW_MOVED_FROM`, and the web server does not start.
+
+WARNING: Do not put the image bump and the route change in 1 pull request. A revert of that pull request also sets the images back. v0.2.0 migrates the database one way, so an older image refuses the database, and the web server does not start. See [A release that migrates the database](#a-release-that-migrates-the-database).
+
+#### Before the merge
+
+1. Make sure that both Deployments run v0.3.0 or later:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n go-practice get deploy go-practice-web -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+   kubectl --context yornik-sharkshere -n go-practice-runner get deploy go-practice-runner -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+   ```
+
+   Expected result: both tags are `v0.3.0` or later. If a tag is older, do [How to release a new version](#how-to-release-a-new-version) with the Renovate pull request `go-practice images` first.
+
+2. Make sure that the web pod is `1/1 Running`:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n go-practice get pods
+   ```
+
+NOTE: The route change uses the certificate that Traefik got in [step 4](#4-get-the-certificate-of-vesper-labsorg). Traefik starts no ACME order for it.
+
+3. Make sure that `vesper-labs.org` serves its certificate:
+
+   ```sh
+   echo | openssl s_client -connect vesper-labs.org:443 -servername vesper-labs.org 2>/dev/null | openssl x509 -noout -text | grep -e 'Issuer:' -e 'DNS:' -e 'Not After'
+   ```
+
+   Expected result: an issuer with `O=Let's Encrypt`, `DNS:vesper-labs.org` and a `Not After` date in the future. If `openssl` cannot load a certificate, do not merge. Do [step 4](#4-get-the-certificate-of-vesper-labsorg) first.
+
+4. Make sure that steps 9 to 11 of [Checks after the certificate change](#checks-after-the-certificate-change) passed. They check the TLSA record of `vesper-labs.org`.
+
+   If you did not do them, do them now. They need a run of the job after the certificate change: steps 6 to 8 there, or the run at 03:43 UTC. If the record is missing or does not match, do not merge.
+
+5. In Resend, open Domains. Make sure that `vesper-labs.org` shows Verified.
+6. Open API Keys. Make sure that the key of go-practice has Full access, or Sending access for all domains or for `vesper-labs.org`.
+
+NOTE: Step 7 sends a real mail with the key of go-practice. The header goes to `curl` on stdin, so the key does not show in the process list.
+
+7. Send a test mail from the new sender to an address that you read. Replace `you@example.com`:
+
+   ```sh
+   KEY="$(sops decrypt --extract '["stringData"]["GPW_SMTP_PASSWORD"]' manifests/go-practice/secret-web.enc.yaml)"
+   printf 'Authorization: Bearer %s\n' "$KEY" | curl -sS https://api.resend.com/emails -H @- -H 'Content-Type: application/json' \
+     --data '{"from":"HUSH · Vesper Labs <hush@vesper-labs.org>","to":["you@example.com"],"subject":"Recover your account","text":"A test of the new sender. https://vesper-labs.org/recover"}'
+   unset KEY
+   ```
+
+   Expected result: `{"id":"…"}`. If Resend answers with an error that names the domain, do steps 5 and 6 again.
+
+8. Open the mail. Make sure that it is in the inbox, not in the spam folder.
+9. Open the headers of the mail. In Gmail, select "Show original".
+
+   Expected result: SPF, DKIM and DMARC show `PASS`. DKIM signs for `vesper-labs.org`.
+
+   If the mail is in the spam folder, do not merge yet. A new domain gets a reputation over days. Do steps 7 to 9 again later. Each learner needs the recovery mail after the move.
+
+10. Do [Sign security.txt with the new host](#sign-securitytxt-with-the-new-host) on the branch of the route change.
+11. Make sure that the checks of the pull request are green.
+12. Tell the learners. Send the text below on the channel that they read:
+
+    ```text
+    Go Practice moves to https://vesper-labs.org on <date>.
+    Your account, your progress and your certificates move with it.
+    Close your tabs of go-learn.party before then. After the move, an open tab cannot save your code.
+    Your passkey for go-learn.party does not work on the new site.
+    Sign in once with "Recover your account" on https://vesper-labs.org/recover.
+    The recovery mail comes from hush@vesper-labs.org. If it is not in your inbox, look in your spam folder.
+    Old links and the links in your certificates keep working.
+    ```
+
+#### Sign security.txt with the new host
+
+The `security-txt` route in `manifests/traefik-config/` serves `/.well-known/security.txt` on every host, with priority 9999. It serves `vesper-labs.org` since the certificate change of [step 4](#4-get-the-certificate-of-vesper-labsorg). On `go-learn.party` the file is served too, not redirected. The signed file has no `Canonical` line for `vesper-labs.org` yet. The new line is:
+
+```text
+Canonical: https://vesper-labs.org/.well-known/security.txt
+```
+
+NOTE: You need the private key of `FediShark Security <yornik@yornik.nl>`, fingerprint `3045 A439 1BA8 3006 D0EE E407 EDFB 3085 4A42 B3F0`. CI checks the signature, so a change without a new signature fails the check.
+
+1. Set 2 variables for the next steps:
+
+   ```sh
+   W="$(mktemp -d)"
+   F=manifests/traefik-config/configmap-security-txt.yaml
+   ```
+
+2. Write the signed file to the work directory:
+
+   ```sh
+   awk '$0 == "  security.txt: |" {f=1; next} f && /^  [^ ]/ {exit} f {print substr($0, 5)}' "$F" > "$W/security.txt.asc"
+   ```
+
+3. Check the signature and write the text without it:
+
+   ```sh
+   gpg --decrypt "$W/security.txt.asc" > "$W/security.txt"
+   ```
+
+   Expected result: `Good signature from "FediShark Security <yornik@yornik.nl>"`.
+
+4. Add the line after the last `Canonical` line:
+
+   ```sh
+   printf '%s\n' 'Canonical: https://vesper-labs.org/.well-known/security.txt' >> "$W/security.txt"
+   ```
+
+5. Sign the text:
+
+   ```sh
+   gpg --local-user 3045A4391BA83006D0EEE407EDFB30854A42B3F0 --digest-algo SHA256 --clearsign --output "$W/security.txt.new.asc" "$W/security.txt"
+   ```
+
+6. Put the signed text in the ConfigMap, indented by 4 spaces:
+
+   ```sh
+   awk -v new="$W/security.txt.new.asc" '
+     $0 == "  security.txt: |" { print; while ((getline l < new) > 0) print (l == "" ? "" : "    " l); skip = 1; next }
+     skip && /^  [^ ]/ { skip = 0 }
+     !skip { print }
+   ' "$F" > "$W/configmap.yaml"
+   cp "$W/configmap.yaml" "$F"
+   ```
+
+7. Run the check that CI runs:
+
+   ```sh
+   .github/scripts/validate-security-txt.sh
+   ```
+
+   Expected result: `security.txt signature and required fields are valid`.
+
+8. Read the change:
+
+   ```sh
+   git diff -- "$F"
+   ```
+
+   Expected result: 1 new `Canonical` line and a new signature block. Nothing else changes.
+
+9. Commit the file.
+10. Push the commit to the branch of the route change.
+
+#### Merge
+
+CAUTION: The web Deployment uses `Recreate`. The merge stops the site for some seconds, and each test run in progress ends.
+
+1. Merge the pull request.
+2. Make sure that the Applications `go-practice`, `external-dns` and `traefik-config` report Synced and Healthy in ArgoCD. `traefik-config` changes because of the new signature of security.txt.
+3. Wait until the new web pod is ready:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n go-practice rollout status deploy/go-practice-web
+   ```
+
+4. Read the 3 variables of the web Deployment:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n go-practice get deploy go-practice-web -o jsonpath='{range .spec.template.spec.containers[0].env[*]}{.name}={.value}{"\n"}{end}' | grep -e GPW_PUBLIC_URL -e GPW_MOVED_FROM -e GPW_MAIL_FROM
+   ```
+
+   Expected result: `GPW_PUBLIC_URL=https://vesper-labs.org`, `GPW_MOVED_FROM=go-learn.party` and `GPW_MAIL_FROM=HUSH · Vesper Labs <hush@vesper-labs.org>`.
+
+#### Checks after the deploy
+
+1. Read the certificate of the new host:
+
+   ```sh
+   echo | openssl s_client -connect vesper-labs.org:443 -servername vesper-labs.org 2>/dev/null | openssl x509 -noout -text | grep -e 'Issuer:' -e 'DNS:' -e 'Not After'
+   ```
+
+   Expected result: the issuer and the `Not After` date of step 3 in [Before the merge](#before-the-merge). If `openssl` cannot load a certificate, do [If the site has no valid certificate](#if-the-site-has-no-valid-certificate).
+
+2. Read the certificate of the old host:
+
+   ```sh
+   echo | openssl s_client -connect go-learn.party:443 -servername go-learn.party 2>/dev/null | openssl x509 -noout -text | grep -e 'DNS:' -e 'Not After'
+   ```
+
+   Expected result: `DNS:go-learn.party` and a `Not After` date in the future.
+
+3. Read the headers of the site:
+
+   ```sh
+   curl -sSI https://vesper-labs.org/ | grep -i -e '^HTTP' -e strict-transport-security
+   ```
+
+   Expected result: `HTTP/2 200` and the `strict-transport-security` header.
+
+4. Read the readiness of the web server:
+
+   ```sh
+   curl -sS https://vesper-labs.org/readyz
+   ```
+
+   Expected result: `ok`.
+
+5. Read the redirect of a GET with a path and a query:
+
+   ```sh
+   curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' 'https://go-learn.party/guide?from=move-check'
+   ```
+
+   Expected result: `301 https://vesper-labs.org/guide?from=move-check`.
+
+6. Read the redirect of a POST:
+
+   ```sh
+   curl -sS -o /dev/null -w '%{http_code} %{redirect_url}\n' -X POST --data '{}' 'https://go-learn.party/api/auth/move-check?from=move-check'
+   ```
+
+   Expected result: `308 https://vesper-labs.org/api/auth/move-check?from=move-check`.
+
+7. Follow the redirect from http to the end:
+
+   ```sh
+   curl -sSL -o /dev/null -w '%{http_code} %{num_redirects} %{url_effective}\n' 'http://go-learn.party/guide?from=move-check'
+   ```
+
+   Expected result: `200 2 https://vesper-labs.org/guide?from=move-check`. The redirection of the web entry point answers first and sends the request to `https://go-learn.party`. The second redirect goes to `vesper-labs.org`.
+
+8. Read the headers of the redirect:
+
+   ```sh
+   curl -sSI https://go-learn.party/ | grep -i -e '^HTTP' -e '^location' -e '^cache-control' -e strict-transport-security
+   ```
+
+   Expected result: `HTTP/2 308`, `location: https://vesper-labs.org/`, `cache-control: max-age=3600` and the `strict-transport-security` header. The status is 308 because `curl -I` sends HEAD.
+
+9. Read security.txt on both hosts:
+
+   ```sh
+   curl -sS https://vesper-labs.org/.well-known/security.txt | grep -c '^Canonical: https://vesper-labs.org/'
+   curl -sS -o /dev/null -w '%{http_code}\n' https://go-learn.party/.well-known/security.txt
+   ```
+
+   Expected result: `1`, then `200`. The kubelet updates the file in the `security-txt` pod up to about 1 minute after the sync. If the count is `0`, wait 1 minute and run the first command again.
+
+10. Read the move note on the sign-in page:
+
+    ```sh
+    curl -sS https://vesper-labs.org/login | grep -c 'go-learn.party'
+    ```
+
+    Expected result: a number above `0`.
+
+11. Open `https://vesper-labs.org/login` in a browser. The recovery of your own account in the next steps is the test mail.
+12. Make sure that the page says that Go Practice moved from `go-learn.party`.
+13. Select "Recover your account".
+14. Enter the address of your admin account.
+15. Open the mail.
+
+    Expected result: the mail comes from `HUSH · Vesper Labs <hush@vesper-labs.org>`. It is in the inbox.
+
+16. Open the link in the mail. It starts with `https://vesper-labs.org/recover/confirm`.
+17. Make a new passkey.
+
+    Expected result: the course opens with your progress. The account page shows the new passkey.
+
+NOTE: The TLSA record of `vesper-labs.org` does not change. The certificate and its key stay the same. Step 4 of [Before the merge](#before-the-merge) checked the record.
+
+#### How to roll back the route change
+
+Roll back the route change only. Keep the images. v0.3.0 also runs with the settings of `go-learn.party`. An image before v0.2.0 refuses the migrated database.
+
+Keep the DNS change and the job `dane-updater-vesper`. The rollback brings back the temporary route of [step 4](#4-get-the-certificate-of-vesper-labsorg). `vesper-labs.org` then redirects to `go-learn.party` again, with the same certificate, so the TLSA record stays correct.
+
+CAUTION: After the rollback, the passkeys made on `vesper-labs.org` do not work on `go-learn.party`. The passkeys made on `go-learn.party` work again. A learner who removed the old passkeys during recovery, or who joined after the move, recovers the account again. Tell the learners.
+
+NOTE: A browser keeps the redirect of `go-learn.party` for up to 1 hour (`Cache-Control: max-age=3600`). Until then, such a browser goes to `vesper-labs.org`, gets the temporary redirect back, and shows an error for too many redirects. A browser without the stored redirect goes to `go-learn.party`.
+
+1. Find the merge commit of the route change. It is the oldest commit on `main` that changed `ingressroute-go-learn.yaml`:
+
+   ```sh
+   git fetch origin
+   git log --oneline --first-parent origin/main -- manifests/go-practice/ingressroute-go-learn.yaml | tail -n 1
+   ```
+
+2. Make a branch from `origin/main`:
+
+   ```sh
+   git switch -c rollback-vesper-labs-route origin/main
+   ```
+
+3. Put `manifests/go-practice/` back to the state before the merge. Replace `<merge>` with the commit of step 1:
+
+   ```sh
+   git restore --source='<merge>^1' --staged --worktree -- manifests/go-practice/
+   ```
+
+4. Read the change:
+
+   ```sh
+   git diff --staged --stat
+   ```
+
+   Expected result: the 4 files `ingressroute-go-learn.yaml`, `ingressroute-go-learn-web.yaml`, `middleware-redirect-vesper-labs.yaml` and `middleware-redirect-cache.yaml` are deleted. The 2 files `ingressroute-vesper-labs-temporary.yaml` and `middleware-redirect-go-learn.yaml` come back. `deployment-web.yaml`, `ingressroute.yaml`, `ingressroute-web.yaml`, `kustomization.yaml` and `service-web.yaml` change.
+
+5. Make sure that no image tag changes:
+
+   ```sh
+   git diff --staged -- manifests/go-practice/ | grep 'image:'
+   ```
+
+   Expected result: no output. If a line shows, a later image bump is in the diff. Set that tag back to the tag on `origin/main`.
+
+CAUTION: The web Deployment uses `Recreate`. The merge in the next step stops the site for some seconds.
+
+6. Open a pull request with the change.
+7. Merge the pull request.
+8. Wait until the new web pod is ready:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n go-practice rollout status deploy/go-practice-web
+   ```
+
+9. Read the readiness of the old host:
+
+   ```sh
+   curl -sS https://go-learn.party/readyz
+   ```
+
+Expected result: `ok`. A passkey made on `go-learn.party` signs in there again.
 
 ## How to rotate the runner token
 
@@ -693,7 +1025,7 @@ NOTE: SQLite applies a journal file that it finds next to the database. A journa
    kubectl --context yornik-sharkshere -n go-practice rollout status deploy/go-practice-web
    ```
 
-5. Log in on `https://go-learn.party`.
+5. Log in on `https://vesper-labs.org`.
 
 Expected result: the dashboard shows the progress at the time of the copy.
 
@@ -787,12 +1119,12 @@ NOTE: Let's Encrypt refuses new orders for a host for 1 hour after 5 failed vali
 6. Read the headers of the site:
 
    ```sh
-   curl -sSI https://go-learn.party/ | grep -i '^HTTP'
+   curl -sSI https://vesper-labs.org/ | grep -i '^HTTP'
    ```
 
 Expected result: a `200` with no certificate error.
 
-NOTE: For the certificate of `vesper-labs.org`, do step 1 of [Checks after the certificate change](#checks-after-the-certificate-change) instead. Until the route change, that name only redirects, so its headers show a `307`.
+NOTE: For the certificate of `go-learn.party`, read the headers of `https://go-learn.party/` instead. The expected result is then a `308` to `https://vesper-labs.org/`: `curl -I` sends HEAD, and Traefik answers 308 to each method except GET.
 
 ## Problems
 
@@ -805,7 +1137,10 @@ NOTE: For the certificate of `vesper-labs.org`, do step 1 of [Checks after the c
 | The runner pod is `Evicted`. | `/tmp` or `/cache` went past its `sizeLimit`. | No action for 1 event. The Deployment starts a new pod. If it repeats, find the run in the runner log. If the kubelet evicts the pod every few days, the build cache in `/cache` grows faster than Go removes old entries. Read the comment on the volume in `deployment-runner.yaml`. |
 | The runner log shows `race detector not available: test runs go without -race`, and the IDE says that the race detector is not available. | The race probe at start failed on this node. The `reason` field of the log line gives the error. `FATAL: ThreadSanitizer` points to the seccomp profile `RuntimeDefault`, which can block `personality(ADDR_NO_RANDOMIZE)`. | Tests still run without `-race`. A learner can then pass an exercise without `-race`. Read the `reason` field: `kubectl --context yornik-sharkshere -n go-practice-runner logs deploy/go-practice-runner \| grep 'race detector'`. Each new pod tests again, so a pod on another node can have a race detector. A `Localhost` seccomp profile that is `RuntimeDefault` plus `personality(ADDR_NO_RANDOMIZE)` brings `-race` back. Do not change the seccomp profile without a review of the sandbox. |
 | The runner log shows a WARN `sandbox for runs` line, or a `landlock ABI` below 6. | The node kernel does not have Landlock in its active LSM list, or is older than Linux 6.12. | Without Landlock, runs are not confined. Then invite only people that you trust. For what each ABI gives, read [What the runner sandbox does and does not do](#what-the-runner-sandbox-does-and-does-not-do). The fix is a node kernel with Landlock, through a Talos upgrade. |
-| The job `caa-updater-go-learn` fails with `CAA drift`. | Universal SSL is on for the zone. | Do steps 6 and 7 of [step 2](#2-prepare-the-cloudflare-zone). |
+| The job `caa-updater-go-learn` or `caa-updater-vesper` fails with `CAA drift`. | Universal SSL is on for the zone. | Do steps 6 and 7 of [step 2](#2-prepare-the-cloudflare-zone) for that zone. |
 | The job `dane-updater-vesper` fails with `it served no certificate`. | `vesper-labs.org` served no certificate at the time of the run, because its ACME order failed. The job did not change the TLSA record. | Do [If the site has no valid certificate](#if-the-site-has-no-valid-certificate). The next run at 03:43 UTC sets the record. |
+| A learner reports that the passkey does not work, and the browser offers no passkey for the site. | The passkey was made on `go-learn.party`. It works only on that host. | The learner selects "Recover your account" on `https://vesper-labs.org/login`. The recovery adds a new passkey. |
 | Mail does not arrive, and the log shows the mail text. | `GPW_SMTP_PASSWORD` is still `REPLACE_ME`. | Do [How to set the Resend API key](#how-to-set-the-resend-api-key). |
 | Mail does not arrive, and the web log shows an error with `auth:` in its `err` field. | Resend refuses the key. Somebody rotated or revoked the key of soiree, and the copy in `secret-web.enc.yaml` is the old key. | Copy the key again: do [How to set the Resend API key](#how-to-set-the-resend-api-key). |
+| Mail does not arrive after the move, and the web log shows an SMTP error without `auth:`. | Resend refuses the sender. `vesper-labs.org` is not Verified in Resend, or the key cannot send from that domain. | In Resend, open Domains, then API Keys. Do steps 5 to 7 of [Before the merge](#before-the-merge). |
+| The mail arrives in the spam folder. | `vesper-labs.org` is a new domain, and a filter does not trust it yet. SPF, DKIM and DMARC can all pass. | Tell the learners to look in the spam folder. Mark the mail as not spam. The domain gets a reputation over some weeks. |

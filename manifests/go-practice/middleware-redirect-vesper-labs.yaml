@@ -1,0 +1,24 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-vesper-labs
+  namespace: go-practice
+spec:
+  # go-learn.party is the old host of the site. Old links, bookmarks and the
+  # verify links in issued certificates point there, so each request goes to
+  # the same path and query on vesper-labs.org.
+  #
+  # The router already selects the host, so the regex takes any host and any
+  # port. A request with a port in its Host header, such as
+  # go-learn.party:443, then does not fall through to the app on a host that
+  # the app refuses.
+  #
+  # permanent: true gives 301 to GET and 308 to every other method, HEAD
+  # included. That is the code of Traefik v3.7.4, in
+  # pkg/middlewares/redirect/redirect.go. A client keeps the method on both,
+  # and 308 also keeps the body. The CRD has no field for 308 on GET: the
+  # StatusCode field of RedirectRegex is internal, for NGINX annotations.
+  redirectRegex:
+    regex: ^https?://[^/]+(.*)
+    replacement: https://vesper-labs.org${1}
+    permanent: true

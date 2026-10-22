@@ -14,10 +14,11 @@ resources:
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
   - middleware-fail2ban.yaml
-  # Temporary: vesper-labs.org redirects to go-learn.party until the route
-  # change of the move, so Traefik gets its certificate first.
-  - ingressroute-vesper-labs-temporary.yaml
-  - middleware-redirect-go-learn.yaml
+  # The old host, go-learn.party, redirects to vesper-labs.org.
+  - ingressroute-go-learn.yaml
+  - ingressroute-go-learn-web.yaml
+  - middleware-redirect-vesper-labs.yaml
+  - middleware-redirect-cache.yaml
   - servicemonitor-web.yaml
   - networkpolicy-web-default-deny.yaml
   - networkpolicy-web-ingress.yaml

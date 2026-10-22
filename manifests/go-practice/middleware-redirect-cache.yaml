@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-cache
+  namespace: go-practice
+spec:
+  headers:
+    # A browser keeps a 301 or a 308 without a lifetime for as long as its
+    # cache holds it, and does not ask go-learn.party again. With 1 hour, a
+    # rollback of the move reaches every browser within 1 hour. The status
+    # stays permanent, so search engines still move their links.
+    customResponseHeaders:
+      Cache-Control: "max-age=3600"
