@@ -54,17 +54,27 @@ The `image` is pinned by digest (`2.1.0@sha256:...`). Keep the pin. It makes the
 patched runtime deterministic on every node. It closes the gap where a node
 reuses a cached pre-fix `2.1.0`.
 
-A re-push of the same tag now arrives as a Renovate digest pull request. No
-automerge rule matches a digest update, so a person reviews it. Treat a digest
-pull request for this image as a runtime change. Check the PHP version before
-you merge it:
+A re-push of the same tag arrives as a Renovate digest pull request. No automerge
+rule matches a digest update, so a person reviews it. Treat it as a runtime
+change.
+
+Before you merge a digest pull request, check the new digest, not the running
+pod. The pod still carries the old digest, so `php -v` on it reports the current
+runtime. Confirm on the registry that the new digest also carries an
+`-alpine<x>-php<fixed version>` tag, or read its runtime directly:
 
 ```sh
-kubectl --context yornik-sharkshere -n privatebin exec deploy/privatebin -- php -v
+docker run --rm privatebin/nginx-fpm-alpine@<new digest> php -v
 ```
 
 A fixed PHP release is 8.5.12, 8.4.27, 8.3.36 or 8.2.35, or a later version on
 its branch.
+
+After the merge and the ArgoCD sync, confirm the deployed runtime:
+
+```sh
+kubectl --context yornik-sharkshere -n privatebin exec deploy/privatebin -- php -v
+```
 
 ## Evidence
 
