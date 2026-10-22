@@ -6,15 +6,18 @@
 
 ## Effect
 
-PrivateBin is scaled to 0 replicas. `secrets.yornik.eu` returns an error from
-Traefik. The service is offline on purpose.
+PrivateBin was scaled to 0 replicas on 2026-10-21. `secrets.yornik.eu` returned
+an error from Traefik. The service was offline on purpose.
 
 PrivateBin is the only PHP workload in the cluster. It runs on PHP-FPM and
-serves a public domain. It is exposed to the php2shell PHP core remote code
-execution flaws. No patched PHP runtime is published yet.
+serves a public domain. It was exposed to the php2shell PHP core remote code
+execution flaws, and no patched PHP runtime had shipped.
 
-No other workload is affected. No other PHP workload exists in `manifests/` or
+No other workload was affected. No other PHP workload exists in `manifests/` or
 `apps/values.yaml`.
+
+The fix shipped on 2026-10-21. The service was restored on 2026-10-22. See
+Correction.
 
 ## Cause
 
@@ -38,6 +41,12 @@ terminates. See [pull request 542](https://github.com/Yornik/sharkshere-gitops/p
 
 The change edits `spec.replicas` only. The `privatebin-data-ssd` PVC stays. The
 namespace stays. The Service and both IngressRoutes stay. No paste data is lost.
+
+PrivateBin rebuilt `nginx-fpm-alpine` on PHP 8.5.12 and re-pushed the `2.1.0`
+tag in place on 2026-10-21. The service was restored on 2026-10-22. The restore
+set `replicas` back to 1 and pinned `image` to that rebuild by digest
+(`2.1.0@sha256:0f80fb24...`). See
+[pull request 551](https://github.com/Yornik/sharkshere-gitops/pull/551).
 
 ## Prevention
 

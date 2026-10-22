@@ -27,8 +27,10 @@ spec:
           # Pinned by digest on 2026-10-22. PrivateBin re-pushed the 2.1.0
           # tag in place onto the PHP 8.5.12 rebuild, so the tag alone can
           # reuse a cached pre-fix 2.1.0 on a node. This digest is the
-          # 2.1.0 / 2.1.0-alpine3.24-php8.5.12 manifest list. Drop the
-          # digest when a later version tag ships on fixed PHP.
+          # 2.1.0 / 2.1.0-alpine3.24-php8.5.12 manifest list. Keep the
+          # digest. Renovate still bumps the version and updates the tag and
+          # digest together. An in-place re-push arrives as a digest update
+          # that a person reviews.
           image: privatebin/nginx-fpm-alpine:2.1.0@sha256:0f80fb240c3c3073c53a82893da7c7d62f03f4e05403855b720e4371541ba412
           ports:
             - name: http
