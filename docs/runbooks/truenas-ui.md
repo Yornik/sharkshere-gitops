@@ -49,21 +49,26 @@ NOTE: Make sure of the node addresses with `kubectl --context yornik-sharkshere 
 
 3. Read the 4 fields in the table below.
 
-| Field | Needed value | Reason |
-|---|---|---|
-| `ui_address` | Contains `0.0.0.0` or `192.168.1.42` | The relay connects to `192.168.1.42`. If the interface listens on other addresses only, the relay cannot connect. |
-| `ui_httpsport` | `443`, or the port in `proxy_pass` in `manifests/truenas-ui/nginx.conf` | The relay connects to this port. |
-| `ui_allowlist` | Empty. Otherwise it holds the 4 node addresses. | A list that does not hold the node address makes the NAS refuse the websocket. The page loads, but the dashboard stays empty. |
-| `ui_httpsredirect` | Any value | The relay uses the HTTPS port. This setting only changes port 80. |
-
-The 4 fields are in the GUI settings of System, General Settings.
+| Field | Where | Needed value | Reason |
+|---|---|---|---|
+| `ui_address` | System, General Settings, GUI | Contains `0.0.0.0` or `192.168.1.42` | The relay connects to `192.168.1.42`. If the interface listens on other addresses only, the relay cannot connect. |
+| `ui_httpsport` | System, General Settings, GUI | `443`, or the port in `proxy_pass` in `manifests/truenas-ui/nginx.conf` | The relay connects to this port. The default is 443. |
+| `ui_allowlist` | System, Advanced Settings, Allowed IP Addresses | Empty. Otherwise it holds the 4 node addresses. | A list that does not hold the node address makes the NAS refuse the websocket. The page loads, but the dashboard stays empty. The default is empty, which allows every address. |
+| `ui_httpsredirect` | System, General Settings, GUI | Any value | The relay uses the HTTPS port. This setting only changes port 80. The default is off. |
 
 CAUTION: If `ui_allowlist` is not empty, add the 4 node addresses. Then every tailnet device that reaches `nas` passes the list. The list no longer limits your clients. The tailnet is the only limit.
+
+NOTE: When you save the list, TrueNAS restarts the web service and warns that it can lock out your own address. Save it from the LAN address `https://192.168.1.42`, not from `nas.hedgehog-wage.ts.net`.
+
+WARNING: Do not change the HTTPS port or the interface address in the GUI settings while you use `nas.hedgehog-wage.ts.net`. The web interface then sends the browser to `nas.hedgehog-wage.ts.net` on the new port. The relay does not publish that port, so the page is lost. Change the setting from `https://192.168.1.42`. Then change `proxy_pass` in `nginx.conf`.
+
+CAUTION: Keep the relay a plain TCP copy to the HTTPS port of the NAS. From release 25.04, TrueNAS revokes an API key that it receives over an insecure transport. A relay that ends TLS, or that connects to port 80, makes TrueNAS treat each call as insecure.
 
 ### What the NAS sees
 
 - The audit log and the session list show a node address, not the tailnet device.
-- TrueNAS limits unauthenticated calls, such as the login, by client address. All tailnet devices share the node address. Many failed logins from a single device can delay the login of the other devices.
+- TrueNAS allows 20 unauthenticated calls, such as the login, for each method and each client address in 60 seconds. All tailnet devices share the node address. Many failed logins from a single device can delay the login of the other devices.
+- The links to the web portals of apps on the NAS name the port of the app. The relay publishes port 443 only, so those links do not work through `nas.hedgehog-wage.ts.net`. Use `https://192.168.1.42` at home.
 - TrueNAS ties its auth tokens to the client address. If the relay pod moves to another node, the address changes. The web interface can then ask for a login again.
 
 ## How to check the path
@@ -127,6 +132,7 @@ The name of the generated ConfigMap holds a hash of `nginx.conf`. A change to th
 | The proxy returns a 502 error | The relay pod is down, or the NAS is off or unreachable | Read the log of the relay. Look for `connect() failed`. Check the power and the network of the NAS. |
 | The page loads and the dashboard stays empty | `ui_allowlist` does not hold the node address | Add the 4 node addresses, or empty the list. |
 | The login shows `Rate Limit Exceeded` | Many failed logins from the shared node address | Wait a few minutes. |
+| The sign-in page reconnects about once a minute | On 24.10 and 25.04, the NAS closes a silent websocket after 60 seconds | Do nothing. The same happens at `https://192.168.1.42`. |
 | The Ingress has the event `InvalidIngressBackend` | The Service `truenas-ui` has no ClusterIP | Restore `manifests/truenas-ui/service.yaml`. Do not use `ExternalName`. |
 | The Application has the condition `ExcludedResourceWarning` | Someone added an `Endpoints` or an `EndpointSlice` | Remove it from `manifests/truenas-ui/`. |
 
@@ -146,7 +152,7 @@ kubectl --context yornik-sharkshere -n truenas-ui logs deploy/truenas-ui
 
 This path does not carry SMB. A Tailscale Ingress serves HTTPS on port 443 only, so SMB on TCP 445 cannot pass through `nas.hedgehog-wage.ts.net`. The SMB volumes in the cluster connect to `192.168.1.42` directly, and this change does not touch them.
 
-Windows has no limit on a real host name for SMB. Microsoft advises a name over an IP address, because an IP address forces NTLM. The SMB volumes use `192.168.1.42`. The repository does not say why, and the CSI driver also accepts a host name.
+Windows has no general limit on a real host name for SMB. Microsoft advises a name over an IP address, because an IP address forces NTLM. Microsoft documents 1 failure. A name that is an alias of the server can fail with `The target account name is incorrect`. This happens if the server uses Kerberos and has no service name for the alias. In that case, use the IP form. The SMB volumes use `192.168.1.42`. The repository does not say why, and the CSI driver also accepts a host name.
 
 To reach the shares from a Windows PC over the tailnet, make a separate change. There are 2 options:
 
