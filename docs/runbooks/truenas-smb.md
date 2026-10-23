@@ -33,14 +33,26 @@ CAUTION: The proxy sends every port of its tailnet address to the ClusterIP. The
 
 ## What a person sets up
 
+The merge creates the proxy device `nas-smb`, and Tailnet Lock holds it until a trusted key signs it. Until then, nothing reaches the NAS through it. The signature opens the path. Do the steps in this order.
+
+WARNING: Sign the device last. Once it is signed, each device that the tailnet policy already allows to reach `tag:k8s` reaches the SMB login of the NAS. If you signed the device already, do steps 1 to 5 below now.
+
 Before the merge:
 
 1. If a device called `nas-smb` exists in the tailnet, remove it. If you do not, the new device joins as `nas-smb-1`.
 
-After the merge:
+After the merge, and before you sign the device:
+
+1. Read the tailnet policy. It is in the Tailscale admin console, not in this repository. The proxy has the tag `tag:k8s`, the same tag as `gitlab-shell`.
+2. Find each rule that gives access to `tag:k8s`. The jump hosts on the internet reach `gitlab-shell` over the tailnet, so a rule for them probably covers that tag.
+3. If a rule allows port 445 or all ports, narrow it to the ports it needs. For example, 22 for `gitlab-shell`, and 80 and 443 for Traefik.
+4. After you change a rule, check 1 public domain and a `git` clone over SSH on port 2222. The rule for the jump hosts carries their traffic.
+5. Add a rule that allows `tcp:445` from your PC to the device `nas-smb`.
+6. Optional: give the proxy a tag of its own. See [Give the proxy its own tag](#give-the-proxy-its-own-tag).
+
+Then:
 
 1. Sign the new proxy device with Tailnet Lock. See [How to activate a new proxy device](tailnet-only-admin-uis.md#how-to-activate-a-new-proxy-device). The address is unreachable until you sign it.
-2. In the tailnet policy, allow `tcp:445` from your PC to the device `nas-smb`. The policy is in the Tailscale admin console, not in this repository. The proxy has the tag `tag:k8s`.
 
 On the NAS:
 
@@ -48,6 +60,28 @@ On the NAS:
 2. If the share has a Hosts Allow list, add the 4 node addresses `192.168.1.192` to `192.168.1.195`. The NAS sees the node that runs the relay pod, not your PC.
 
 NOTE: Make sure of the node addresses with `kubectl --context yornik-sharkshere get nodes -o wide`.
+
+### Give the proxy its own tag
+
+A tag of its own makes a rule for this device easier to write. The rule does not then cover each other `tag:k8s` proxy. The operator sets the tags when it creates a proxy. It does not change the tags of a proxy that exists. A change after the first signature therefore needs a new proxy and a new signature.
+
+CAUTION: If the tag is not in `tagOwners`, the operator cannot create the proxy. No device appears. Do step 1 first. Read the events of the Service if no device appears.
+
+WARNING: The address is unreachable from step 5 until you sign the new device in step 7.
+
+1. In the tailnet policy, add the new tag, for example `tag:nas-smb`, to `tagOwners`. Give it the same owner as `tag:k8s`.
+2. Add the annotation `tailscale.com/tags: "tag:nas-smb"` to `manifests/truenas-smb/service.yaml`.
+3. Open a pull request and merge it.
+4. If the proxy exists, remove the old `nas-smb` device in the Tailscale admin console. If you do not, the new device joins as `nas-smb-1`.
+5. Delete the Service. ArgoCD creates it again, and the operator creates a new proxy:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n truenas-smb delete service truenas-smb
+   ```
+
+6. Wait until the new device appears in the Tailscale admin console.
+7. Sign the new device.
+8. In the admin console, make sure that the device has the new tag.
 
 ## Connect from Windows
 

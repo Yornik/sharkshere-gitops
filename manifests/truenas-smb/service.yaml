@@ -14,6 +14,11 @@ metadata:
     # NOTE: The proxy sends every port of its tailnet address to the
     # ClusterIP of this Service. Declare port 445 and no other port here.
     # A second port would also be open to the tailnet.
+    #
+    # NOTE: The proxy gets the default tag tag:k8s, as gitlab-shell does. A
+    # rule of the tailnet policy for that tag covers this device too, so read
+    # the policy before the device is signed. A tag of its own is an option.
+    # See docs/runbooks/truenas-smb.md.
     tailscale.com/expose: "true"
     tailscale.com/hostname: nas-smb
 spec:
