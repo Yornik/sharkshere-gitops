@@ -256,7 +256,7 @@ CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Ser
 | Unwanted Formats | -10000 for BR-DISK, LQ groups, upscales and 3D. Neither profile takes them. |
 | Golden Rule UHD | Refuses x265 encodes of 1080p sources. |
 | Release group tiers | Remux, UHD Bluray, anime BD and anime WEB groups ranked by quality. |
-| Anime Dual Audio | +101 in the anime profile. |
+| Dubs Only | -10000 in the anime profile, so a release always has the Japanese audio. Anime Dual Audio stays at 0: an English dub is neither preferred nor refused. |
 
 Recyclarr also applies these TRaSH Guides settings to the whole app, for Sonarr and Radarr:
 
