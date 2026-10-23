@@ -146,7 +146,10 @@ The chart creates 9 ServiceMonitors: Alertmanager, API server, CoreDNS, kubelet,
 | soiree | ServiceMonitor | 30 s | `manifests/soiree/servicemonitor.yaml` |
 | go-practice web | ServiceMonitor | 30 s | `manifests/go-practice/servicemonitor-web.yaml` |
 | go-practice runner | ServiceMonitor | 30 s | `manifests/go-practice/servicemonitor-runner.yaml` |
-| Postgres `shared-pg`, `openproject-pg`, `gitlab-pg`, `soiree-pg` | PodMonitor | default | `manifests/<name>/podmonitor.yaml` |
+| Postgres `shared-pg` | PodMonitor | default | `manifests/shared-pg/podmonitor.yaml` |
+| Postgres `openproject-pg` | PodMonitor | default | `manifests/openproject/podmonitor.yaml` |
+| Postgres `gitlab-pg` | PodMonitor | default | `manifests/gitlab/podmonitor.yaml` |
+| Postgres `soiree-pg` | PodMonitor | default | `manifests/soiree/podmonitor.yaml` |
 | CloudNativePG operator | PodMonitor | default | created by the `cnpg-operator` chart |
 
 The 4 Postgres PodMonitors drop 3 backup metrics that are always 0. The barman plugin exports the real values under other names. The `Cluster` objects set `enablePodMonitor: false`, so that these PodMonitors carry the label that Prometheus needs.
