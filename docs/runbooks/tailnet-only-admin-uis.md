@@ -154,7 +154,7 @@ Each application keeps its own login, except Alertmanager:
 | ArchiSteamFarm | `IPCPassword` |
 | qBittorrent | The WebUI login. It bans an address after repeated failed logins. The Traefik `basicAuth` layer no longer applies. |
 | Seerr | The Jellyfin sign-in. The first visitor to a new Seerr becomes the administrator, so finish the setup wizard first. |
-| Sonarr | The Sonarr login. The deployment sets `SONARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. |
+| Sonarr | The Sonarr login. The deployment sets `SONARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. The first visitor to a new Sonarr creates the login, so create it first. |
 | Vaultwarden admin | The admin token |
 | Alertmanager | None. The tailnet is the only gate. A tailnet device can read alerts and create silences. |
 

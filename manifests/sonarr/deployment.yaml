@@ -47,8 +47,11 @@ spec:
             # Tailscale proxy connects from a pod address, which counts as
             # local, so the default would leave Sonarr open to the whole
             # tailnet. `Enabled` asks for the login on every address.
-            - name: SONARR__AUTH__METHOD
-              value: Forms
+            #
+            # CAUTION: Do not set SONARR__AUTH__METHOD. The UI shows the
+            # dialog that creates the first user only while the method is
+            # `None`. A forced `Forms` on a new volume has no user, so every
+            # login fails.
             - name: SONARR__AUTH__REQUIRED
               value: Enabled
           ports:
@@ -58,7 +61,8 @@ spec:
             - name: config
               mountPath: /config
             # Same path as in the qBittorrent pod. A download needs no
-            # remote path mapping, and the import is a move on 1 share.
+            # remote path mapping. SMB has no hardlinks, so the import copies
+            # a download that still seeds.
             - name: series
               mountPath: /media/series
           # /ping needs no login.

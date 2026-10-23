@@ -33,7 +33,7 @@ NOTE: Seerr has no download client. It sends a request to Sonarr or Radarr, and 
 
 - `manifests/seerr/` and `manifests/sonarr/` run in the `jellyfin` namespace, next to Jellyfin and qBittorrent.
 - Sonarr mounts the `qbittorrent-series-rw` volume at `/media/series`, the same path as qBittorrent. A download needs no remote path mapping.
-- Sonarr forces its login on for every address. Without this setting, Sonarr skips the login for a pod address, and the Tailscale proxy connects from one.
+- Sonarr forces its login on for every address. Without this setting, Sonarr skips the login for a pod address, and the Tailscale proxy connects from one. The repository does not set the login method, so a new Sonarr shows the dialog that creates the first user.
 - Jellyfin is unchanged.
 
 ## How to activate the 2 new tailnet devices
@@ -68,8 +68,10 @@ Expected result: a finished download of category `tv` sits under `/media/series/
 
 ## How to set up Sonarr
 
+WARNING: The first visitor to a new Sonarr creates the login. Do steps 1 and 2 right after you sign the `sonarr` device.
+
 1. Open `https://sonarr.hedgehog-wage.ts.net`.
-2. Create the administrator account.
+2. In the Authentication Required dialog, choose Forms and create the administrator account.
 3. Open Settings, then Media Management, and add the root folder `/media/series`.
 4. Open Settings, then Download Clients, and add qBittorrent.
 5. Enter host `qbittorrent`, port `8080` and the WebUI user and password of qBittorrent.

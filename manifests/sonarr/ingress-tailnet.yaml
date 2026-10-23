@@ -13,8 +13,9 @@ spec:
   # Sonarr. There is no public route.
   #
   # NOTE: Tailnet traffic does not pass through Traefik. The Sonarr login is
-  # the gate. The deployment forces it on for every address. See
-  # docs/runbooks/seerr-sonarr.md.
+  # the gate. The deployment forces it on for every address. The first
+  # visitor to a new Sonarr creates the login, so create it before you share
+  # the address. See docs/runbooks/seerr-sonarr.md.
   ingressClassName: tailscale
   defaultBackend:
     service:

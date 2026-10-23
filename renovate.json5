@@ -271,6 +271,24 @@
         'dependencies',
       ],
     },
+    {
+      matchPackageNames: [
+        'ghcr.io/seerr-team/seerr',
+      ],
+      // Same reason and same split as for Sonarr. Seerr migrates its
+      // database when it starts. The tag has no build counter, so the
+      // default docker versioning reads it.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: false,
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
   ],
   kubernetes: {
     managerFilePatterns: [
