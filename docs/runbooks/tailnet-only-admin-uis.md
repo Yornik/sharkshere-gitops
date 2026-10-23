@@ -1,6 +1,6 @@
 # Tailnet-only admin interfaces
 
-ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, the
+ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the
 Vaultwarden admin panel and the TrueNAS web interface are reachable on the tailnet only, over HTTPS. This file
 says how to reach them, how to activate a new proxy device, what changed, and
 how to undo the change.
@@ -14,6 +14,8 @@ how to undo the change.
 | qBittorrent | `https://qbittorrent.hedgehog-wage.ts.net` | none |
 | Seerr | `https://requests.hedgehog-wage.ts.net` | none |
 | Sonarr | `https://sonarr.hedgehog-wage.ts.net` | none |
+| Radarr | `https://radarr.hedgehog-wage.ts.net` | none |
+| Prowlarr | `https://prowlarr.hedgehog-wage.ts.net` | none |
 | Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
 | TrueNAS | `https://nas.hedgehog-wage.ts.net` | none |
 
@@ -85,7 +87,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|vaultwarden-admin| nas(-[0-9]+)? '
+   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|radarr|prowlarr|vaultwarden-admin| nas(-[0-9]+)? '
    ```
 
 Expected result: each name is as in the table above, without a suffix.
@@ -117,8 +119,9 @@ The proxy follows the new name and gets a certificate for it.
 - ArchiSteamFarm and qBittorrent use `manifests/asf/ingress-tailnet.yaml` and
   `manifests/qbittorrent/ingress-tailnet.yaml`. Their public IngressRoutes
   are removed, and so are the external-dns annotations on their Services.
-- Seerr and Sonarr use `manifests/seerr/ingress-tailnet.yaml` and
-  `manifests/sonarr/ingress-tailnet.yaml`. They have no public route and no
+- Seerr, Sonarr, Radarr and Prowlarr use `manifests/seerr/ingress-tailnet.yaml`,
+  `manifests/sonarr/ingress-tailnet.yaml`, `manifests/radarr/ingress-tailnet.yaml`
+  and `manifests/prowlarr/ingress-tailnet.yaml`. They have no public route and no
   public DNS record. See [`seerr-sonarr.md`](seerr-sonarr.md).
 - The Vaultwarden admin panel uses
   `manifests/vaultwarden/ingress-admin-tailnet.yaml`. The public route for
@@ -164,6 +167,8 @@ Each application keeps its own login, except Alertmanager:
 | qBittorrent | The WebUI login. It bans an address after repeated failed logins. The Traefik `basicAuth` layer no longer applies. |
 | Seerr | The Jellyfin sign-in. The first visitor to a new Seerr becomes the administrator, so finish the setup wizard first. |
 | Sonarr | The Sonarr login. The deployment sets `SONARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. The first visitor to a new Sonarr creates the login, so create it first. |
+| Radarr | The Radarr login. The deployment sets `RADARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. The first visitor to a new Radarr creates the login, so create it first. |
+| Prowlarr | The Prowlarr login. The deployment sets `PROWLARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. The first visitor to a new Prowlarr creates the login, so create it first. |
 | Vaultwarden admin | The admin token |
 | Alertmanager | None. The tailnet is the only gate. A tailnet device can read alerts and create silences. |
 | TrueNAS | The TrueNAS login. See [`truenas-ui.md`](truenas-ui.md) for the settings that keep it safe. |
@@ -299,6 +304,8 @@ curl -sSI https://asf.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://qbittorrent.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://requests.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://sonarr.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://radarr.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://prowlarr.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://nas.hedgehog-wage.ts.net/ | head -1
 ```
 
