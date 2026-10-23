@@ -269,7 +269,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: loki
-      targetRevision: 7.3.0
+      targetRevision: 7.5.0
       values: |
         deploymentMode: SingleBinary
         loki:
@@ -350,7 +350,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: alloy
-      targetRevision: 1.14.0
+      targetRevision: 1.14.3
       values: |
         alloy:
           mounts:
@@ -947,7 +947,7 @@ apps:
     helm:
       repoURL: https://pkgs.tailscale.com/helmcharts
       chart: tailscale-operator
-      targetRevision: 1.104.1
+      targetRevision: 1.104.2
       values: |
         oauth:
           clientId: ""
@@ -1100,7 +1100,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.5.0
+      targetRevision: 10.5.1
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
@@ -1321,7 +1321,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab-runner
-      targetRevision: 0.94.0
+      targetRevision: 0.94.1
       values: |
         gitlabUrl: https://git.yornik.eu/
         # Allow up to 4 concurrent jobs — homelab cluster has plenty of CPU but
