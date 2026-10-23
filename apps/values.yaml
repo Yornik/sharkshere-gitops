@@ -645,6 +645,10 @@ apps:
     namespace: jellyfin
     path: manifests/prowlarr
 
+  flaresolverr:
+    namespace: jellyfin
+    path: manifests/flaresolverr
+
   democratic-csi:
     namespace: democratic-csi
     path: manifests/democratic-csi

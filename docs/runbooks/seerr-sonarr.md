@@ -1,6 +1,6 @@
 # Seerr, Sonarr, Radarr, Prowlarr and Jellyfin Enhanced
 
-Seerr takes media requests from Jellyfin users. Sonarr finds a series and Radarr finds a film, through the indexers in Prowlarr. Both hand the download to qBittorrent. Jellyfin Enhanced adds the request screens to the Jellyfin web UI. This file says how the parts connect, how to set them up and how to check them.
+Seerr takes media requests from Jellyfin users. Sonarr finds a series and Radarr finds a film, through the indexers in Prowlarr. Both hand the download to qBittorrent. FlareSolverr solves the Cloudflare challenge of an indexer for Prowlarr. Jellyfin Enhanced adds the request screens to the Jellyfin web UI. This file says how the parts connect, how to set them up and how to check them.
 
 | Part | Address | Public route |
 |---|---|---|
@@ -9,6 +9,7 @@ Seerr takes media requests from Jellyfin users. Sonarr finds a series and Radarr
 | Radarr | `https://radarr.hedgehog-wage.ts.net` | none |
 | Prowlarr | `https://prowlarr.hedgehog-wage.ts.net` | none |
 | qBittorrent | `https://qbittorrent.hedgehog-wage.ts.net` | none |
+| FlareSolverr | `http://flaresolverr:8191`, in the cluster only | none |
 | Jellyfin | `https://jelly.yornik.eu` | yes, as before |
 
 ## How the parts connect
@@ -17,6 +18,7 @@ Seerr takes media requests from Jellyfin users. Sonarr finds a series and Radarr
 Jellyfin Enhanced (in Jellyfin) -> Seerr -> Sonarr (series) -> qBittorrent (behind Mullvad)
                                          \-> Radarr (films)  -/
 Sonarr and Radarr -> Prowlarr -> indexers (home address)
+                      \-> FlareSolverr -> indexers with a challenge page (home address)
 qBittorrent -> /media/series and /media/movies -> Jellyfin
 ```
 
@@ -32,6 +34,7 @@ All calls between the parts stay in the `jellyfin` namespace.
 | Prowlarr | Sonarr | `http://sonarr:8989` |
 | Prowlarr | Radarr | `http://radarr:7878` |
 | Sonarr, Radarr | Prowlarr | `http://prowlarr:9696` |
+| Prowlarr | FlareSolverr | `http://flaresolverr:8191` |
 
 Jellyfin stays on its public address. Jellyfin Enhanced calls Seerr from the Jellyfin server, not from the browser. A user without the tailnet can request media in the Jellyfin web UI. Only the links that open the Seerr UI need the tailnet.
 
@@ -39,12 +42,14 @@ NOTE: Seerr has no download client. It sends a series request to Sonarr and a fi
 
 ## What the repository sets
 
-- `manifests/seerr/`, `manifests/sonarr/`, `manifests/radarr/` and `manifests/prowlarr/` run in the `jellyfin` namespace, next to Jellyfin and qBittorrent.
+- `manifests/seerr/`, `manifests/sonarr/`, `manifests/radarr/`, `manifests/prowlarr/` and `manifests/flaresolverr/` run in the `jellyfin` namespace, next to Jellyfin and qBittorrent.
 - Sonarr mounts the `qbittorrent-series-rw` volume at `/media/series`, the same path as qBittorrent. A download needs no remote path mapping.
 - Radarr mounts the `qbittorrent-movies-rw` volume at `/media/movies` in the same way.
 - Sonarr forces its login on for every address. Without this setting, Sonarr skips the login for a pod address, and the Tailscale proxy connects from one. The repository does not set the login method, so a new Sonarr shows the dialog that creates the first user.
 - Radarr and Prowlarr force their login on for every address, the same way as Sonarr.
 - Prowlarr has no VPN. Public indexers block the Mullvad exit addresses quickly, so searches leave from the home address. Only qBittorrent downloads, and it stays behind Mullvad.
+- FlareSolverr has a ClusterIP Service and nothing else. It has no tailnet address, no public route and no volume. It has no login, so anyone who reaches it can make it open any address from the home network. Only Prowlarr is set up to use it.
+- FlareSolverr has no VPN, for the same reason as Prowlarr. A solved challenge belongs to the address that solved it. Prowlarr reuses the result, so both must leave from the home address.
 - Jellyfin is unchanged.
 
 ## How to activate the new tailnet devices
@@ -52,6 +57,8 @@ NOTE: Seerr has no download client. It sends a series request to Sonarr and a fi
 Follow [`tailnet-only-admin-uis.md`](tailnet-only-admin-uis.md#after-the-merge). Sign the devices `requests`, `sonarr`, `radarr` and `prowlarr`.
 
 WARNING: Each address is unreachable until you sign its device. The Applications still sync in the meantime.
+
+NOTE: FlareSolverr has no device. It has no tailnet address, so there is nothing to sign.
 
 ## How to set up Seerr
 
@@ -131,7 +138,29 @@ WARNING: The first visitor to a new Prowlarr creates the login. Do steps 1 and 2
 
 Expected result: Settings, then Indexers, in Sonarr and in Radarr lists each indexer from Prowlarr. Prowlarr keeps the lists in sync. A change in Prowlarr reaches both without a step in Sonarr or Radarr.
 
-NOTE: Some public indexers block automated clients behind a challenge page. Prowlarr then reports the indexer as failed. Prowlarr can use FlareSolverr for that. This setup does not run it.
+NOTE: Some public indexers block automated clients behind a challenge page. Prowlarr then reports the indexer as failed. Prowlarr uses FlareSolverr for these indexers. See [How to set up FlareSolverr](#how-to-set-up-flaresolverr).
+
+## How to set up FlareSolverr
+
+FlareSolverr starts a browser, opens the challenge page of an indexer and returns the cookies. Prowlarr then uses the cookies for its own requests. The repository runs FlareSolverr. Prowlarr does not use it until you add it as an indexer proxy.
+
+NOTE: Use FlareSolverr for an indexer that fails its test with a Cloudflare or "challenge" error only. A browser start is slow and uses memory. An indexer without the tag does not use it.
+
+1. Open `https://prowlarr.hedgehog-wage.ts.net`.
+2. Open Settings, then Indexers.
+3. Under Indexer Proxies, press the plus sign and choose FlareSolverr.
+4. Enter the name `flaresolverr`.
+5. Enter the tag `flaresolverr`.
+6. Enter the host `http://flaresolverr:8191`.
+7. Enter the request timeout `60`.
+8. Press Test, then Save.
+9. Open the indexer that fails. Add the tag `flaresolverr` to it. Press Save.
+
+Expected result: the test of the indexer passes. Prowlarr sends only the indexers with the tag through FlareSolverr.
+
+NOTE: The tag in step 5 and the tag in step 9 must be the same. If the tags differ, Prowlarr does not use the proxy for that indexer.
+
+CAUTION: FlareSolverr has no login and no tailnet address. Do not add a Service, an Ingress or a Tailscale annotation for it. Anyone who reaches it can make it open any address from the home network, including the NAS and the cluster. The cluster does not enforce NetworkPolicy, so a pod in any namespace can call it. See the CNI row in [`../tech/README.md`](../tech/README.md).
 
 ## How to connect Seerr to Sonarr and Radarr
 
@@ -219,7 +248,7 @@ If step 1 returns `Permission denied` or `Read-only file system`, give the SMB a
 1. Check that the pods run:
 
    ```sh
-   kubectl -n jellyfin get pods -l 'app in (seerr,sonarr,radarr,prowlarr)'
+   kubectl -n jellyfin get pods -l 'app in (seerr,sonarr,radarr,prowlarr,flaresolverr)'
    ```
 
 2. Check that Seerr answers:
@@ -247,12 +276,32 @@ If step 1 returns `Permission denied` or `Read-only file system`, give the SMB a
    curl -sSI https://prowlarr.hedgehog-wage.ts.net/api/v1/system/status
    ```
 
+7. Check that FlareSolverr answers. The command must print `{"status": "ok"}`:
+
+   ```sh
+   kubectl -n jellyfin exec deploy/flaresolverr -- curl -sS http://localhost:8191/health
+   ```
+
+8. Check that Prowlarr reaches FlareSolverr. The command must print `{"status": "ok"}`:
+
+   ```sh
+   kubectl -n jellyfin exec deploy/prowlarr -- curl -sS http://flaresolverr:8191/health
+   ```
+
+9. Check that FlareSolverr has no address outside the cluster. The command must show the type `ClusterIP` and `<none>` under `EXTERNAL-IP`:
+
+   ```sh
+   kubectl -n jellyfin get service flaresolverr
+   ```
+
 ## How to undo
 
 WARNING: ArgoCD deletes `seerr-config-ssd`, `sonarr-config-ssd`, `radarr-config-ssd` and `prowlarr-config-ssd` with the Applications. They hold the settings and the SQLite database of each program. Copy the files out of the volumes first if you want to keep them.
 
-1. Remove the `seerr`, `sonarr`, `radarr` and `prowlarr` entries from `apps/values.yaml`.
+1. Remove the `seerr`, `sonarr`, `radarr`, `prowlarr` and `flaresolverr` entries from `apps/values.yaml`.
 2. Merge the change. ArgoCD prunes the Applications.
-3. Remove the devices from the Tailscale admin console.
+3. Remove the devices from the Tailscale admin console. FlareSolverr has none.
+
+NOTE: FlareSolverr keeps no data, so its removal loses nothing. Prowlarr keeps the indexer proxy and the tags in its own config. If you remove FlareSolverr alone, delete the proxy in Prowlarr. Until then the indexers with the tag fail their test.
 
 The `qbittorrent-series-rw` and `qbittorrent-movies-rw` volumes stay. The `qbittorrent` Application owns them.

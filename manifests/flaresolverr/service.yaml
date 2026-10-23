@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaresolverr
+  namespace: jellyfin
+  labels:
+    app: flaresolverr
+# ClusterIP only. No external-dns annotation, no Ingress and no Tailscale
+# annotation. FlareSolverr has no login, and anyone who reaches it can make it
+# open any address from the home network. Prowlarr reaches it in the cluster
+# at http://flaresolverr:8191. See docs/runbooks/seerr-sonarr.md.
+spec:
+  type: ClusterIP
+  selector:
+    app: flaresolverr
+  ports:
+    - name: http
+      port: 8191
+      targetPort: http
+      protocol: TCP
