@@ -134,4 +134,10 @@ Seerr cannot send a film request to qBittorrent. To fulfil film requests, add Ra
 
 ## How to undo
 
-Remove the `seerr` and `sonarr` entries from `apps/values.yaml`. ArgoCD prunes both Applications. Remove the 2 devices from the Tailscale admin console.
+WARNING: ArgoCD deletes `seerr-config-ssd` and `sonarr-config-ssd` with the Applications. They hold the settings and the SQLite database of each program. Copy the files out of the volumes first if you want to keep them.
+
+1. Remove the `seerr` and `sonarr` entries from `apps/values.yaml`.
+2. Merge the change. ArgoCD prunes both Applications.
+3. Remove the 2 devices from the Tailscale admin console.
+
+The `qbittorrent-series-rw` volume stays. The `qbittorrent` Application owns it.
