@@ -6,5 +6,6 @@ resources:
   - grafana-datasource-loki.yaml
   - ingress-grafana-tailnet.yaml
   - ingress-alertmanager-tailnet.yaml
+  - prometheusrule-cnpg.yaml
 generators:
   - secret-generator.yaml

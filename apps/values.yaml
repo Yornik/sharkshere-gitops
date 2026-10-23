@@ -1019,8 +1019,10 @@ apps:
             # the old AND new (barman_cloud_*) metric names. Load that
             # instead via grafana.dashboards URL pointer below.
             create: false
-          prometheusRule:
-            enabled: true
+          # No prometheusRule key here. Chart 0.29.1 does not have one, so the
+          # old `prometheusRule.enabled: true` did nothing and no CloudNativePG
+          # rule reached Prometheus. The rules are in
+          # manifests/monitoring/prometheusrule-cnpg.yaml.
 
   cnpg-plugin-barman-cloud:
     namespace: cnpg-system

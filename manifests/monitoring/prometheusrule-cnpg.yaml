@@ -1,0 +1,289 @@
+# Alerts for the 4 CloudNativePG clusters: shared-pg, openproject-pg, gitlab-pg
+# and soiree-pg. Each cluster runs 3 instances.
+#
+# No rule covered CloudNativePG before this file. The cnpg-operator values set
+# monitoring.prometheusRule.enabled, a key that chart 0.29.1 does not have.
+#
+# The release label is required. Prometheus ignores a PrometheusRule without
+# it and gives no error. See
+# docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+#
+# Where the series come from:
+# - cnpg_collector_* and cnpg_pg_*: the instance manager of each pod. The 4
+#   PodMonitors scrape them and set `job` to <namespace>/<PodMonitor name>.
+# - cnpg_pg_stat_archiver_*: only the primary exports them.
+# - barman_cloud_cloudnative_pg_io_*: the barman plugin. Every instance reports
+#   the same backup value, so a rule takes max by (namespace, job).
+# - kube_pod_owner{owner_kind="Cluster"}: marks the pods of a CNPG Cluster.
+#
+# Joins on kube_pod_owner and kube_pod_status_ready reduce both sides with
+# `max by` first. Both metrics carry a `uid` label. CNPG recreates a deleted pod
+# with the same name and a new uid, so for a short time 2 series match. A plain
+# join then fails with "duplicate series" and the rule raises nothing. That is
+# the moment the rule is for. Found on live data 2026-10-23.
+#
+# Every threshold below was run against 30 days of live data on 2026-10-23.
+# The text says what each one would have caught. No rule fires on the healthy
+# state of that day.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cnpg-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: cloudnative-pg
+      rules:
+        # 5 minutes covers a failover or a node restart, where a pod is ready
+        # again in about 30 seconds. 30 days gave 338 minutes, all of them
+        # openproject-pg on 2026-10-12, when 0 of 3 instances were ready.
+        - alert: CNPGClusterNoReadyInstance
+          expr: |-
+            sum by (namespace, owner_name) (
+              max by (namespace, pod) (kube_pod_status_ready{condition="true"})
+              * on (namespace, pod) group_left (owner_name)
+              max by (namespace, pod, owner_name) (kube_pod_owner{owner_kind="Cluster"})
+            ) == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Postgres cluster {{ $labels.namespace }}/{{ $labels.owner_name }} has no ready instance.
+            description: >-
+              No instance of the cluster is ready, so the applications that use it cannot
+              reach their database. List the instances with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get pods -l cnpg.io/cluster={{ $labels.owner_name }}`.
+              Then read the log of each one. If a log says "read-only file system", follow
+              docs/incidents/2026-10-12-truenas-update-readonly-pv-remount.md.
+
+        # The cluster is degraded, not down. 15 minutes lets a rolling update or
+        # a failover finish, which takes a few minutes for one instance. 30 days
+        # gave 393 minutes for gitlab-pg and 952 for soiree-pg (the 2026-10-12
+        # incidents). The `> 0` leaves the case of 0 ready to the rule above.
+        - alert: CNPGClusterInstanceNotReady
+          expr: |-
+            (
+              sum by (namespace, owner_name) (
+                max by (namespace, pod) (kube_pod_status_ready{condition="true"})
+                * on (namespace, pod) group_left (owner_name)
+                max by (namespace, pod, owner_name) (kube_pod_owner{owner_kind="Cluster"})
+              ) < 3
+            ) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Postgres cluster {{ $labels.namespace }}/{{ $labels.owner_name }} has {{ $value }} of 3 instances ready.
+            description: >-
+              The cluster serves queries but has lost redundancy. Find the instance that is not
+              ready with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get pods -l cnpg.io/cluster={{ $labels.owner_name }}`.
+              Then read its log. All 4 clusters are set to 3 instances. Change the 3 in this
+              rule if you change that number.
+
+        # Postgres does not answer the exporter, and the pod can stay Ready. On
+        # 2026-10-12 at 15:02 UTC both replicas of shared-pg reached this state.
+        # They stayed in it until 2026-10-16 11:12 UTC, which is 3.8 days, with
+        # Ready true all the time and no alert. soiree-pg-2, soiree-pg-3 and
+        # gitlab-pg-2 were in it for 7 to 9 hours the same day. These 5 instances
+        # are the only runs of 5 minutes or more in 30 days, so no restart or
+        # start up gap comes close to the 10 minutes below.
+        - alert: CNPGInstanceNotAnswering
+          expr: cnpg_collector_up == 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: Postgres on {{ $labels.pod }} in {{ $labels.namespace }} does not answer.
+            description: >-
+              The exporter cannot query Postgres on this instance. Kubernetes can still report the
+              pod as Ready, because the readiness probe only proves that the process accepts a
+              connection. Read the log with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} logs {{ $labels.pod }} -c postgres --tail=50`.
+              If it says "read-only file system", delete the pod so that kubelet mounts the volume
+              again. See docs/incidents/2026-10-12-truenas-update-readonly-pv-remount.md.
+
+        # Replay delay of a standby, in seconds. Lag is 0 on all 12 instances on
+        # a normal day. In 30 days the highest value was 596 seconds on
+        # gitlab-pg-3, and no instance stayed above 30 seconds for 5 minutes in a
+        # row. 30 seconds for 5 minutes is outside that range. A standby that
+        # stops receiving WAL reads lag 0, so the rule after this one covers it.
+        - alert: CNPGReplicationLagHigh
+          expr: cnpg_pg_replication_lag > 30
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: Postgres replica {{ $labels.pod }} in {{ $labels.namespace }} is {{ $value | humanizeDuration }} behind.
+            description: >-
+              The standby replays WAL slower than the primary writes it. Check if the pod restarted
+              or the volume is slow with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get pod {{ $labels.pod }}`.
+              Then read its log. A failover to a standby that lags loses the writes it has not replayed.
+
+        # The primary counts the standbys that stream from it. Each cluster has 2.
+        # 15 minutes lets a restart finish. 30 days gave 952 minutes for soiree-pg
+        # (2026-10-12) and none for the other clusters. The pod can be Ready and
+        # still not stream, which the readiness rules cannot see.
+        - alert: CNPGReplicaNotStreaming
+          expr: max by (namespace, job) (cnpg_pg_replication_streaming_replicas) < 2
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: The primary of {{ $labels.job }} streams to {{ $value }} of 2 standbys.
+            description: >-
+              A standby is down or is not connected to the primary. List the instances with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get pods -l cnpg.io/podRole=instance`.
+              Then read the log of the instance that is not ready or that restarts. All 4 clusters
+              have 2 standbys. Change the 2 in this rule if you change the instance count.
+
+        # The newest WAL archive attempt failed and no attempt succeeded after it.
+        # The rule does not read the time since the last success. shared-pg and
+        # soiree-pg write no WAL for days, so that time reads 2 days on a healthy
+        # cluster. Failures happen and recover: 30 days had 8 instance series with
+        # 1 to 14 failed attempts, and the failed state held 8 minutes at most.
+        # 15 minutes is longer than any of them. Until the archive works, WAL piles
+        # up in pg_wal and the point-in-time recovery has a gap.
+        - alert: CNPGWalArchiveFailing
+          expr: cnpg_pg_stat_archiver_last_failed_time > cnpg_pg_stat_archiver_last_archived_time
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: WAL archiving fails on {{ $labels.pod }} in {{ $labels.namespace }}.
+            description: >-
+              The primary cannot send WAL to the object store, so the WAL volume fills slowly.
+              Read the error in the log of the barman sidecar with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} logs {{ $labels.pod }} -c plugin-barman-cloud --tail=50`.
+              Hetzner Object Storage has answered 503 and 504 before. If the error is a
+              credential or a bucket error, read the ObjectStore in the same namespace.
+
+        # The newest failed backup is newer than the newest good backup. The state
+        # lasts until the next scheduled backup succeeds, up to 3 hours, so one
+        # mail is the normal result of one failure. `for` is short for that
+        # reason. Live now: no cluster in this state.
+        - alert: CNPGBackupFailed
+          expr: |-
+            max by (namespace, job) (barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp)
+            > max by (namespace, job) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: The last backup of {{ $labels.job }} failed.
+            description: >-
+              No backup has succeeded since the last failure. List the backups with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get backups.postgresql.cnpg.io`.
+              Then run `describe` on the newest failed one to read the error. The ObjectStore
+              in the same namespace names the bucket.
+
+        # Each ScheduledBackup runs every 3 hours. 7 hours is 2 missed runs and
+        # 1 hour of margin. Live now: the newest backup of every cluster is 2.0
+        # hours old. Over 30 days the oldest backup was 93 hours on shared-pg
+        # (the 3.8 days above), 19 on gitlab-pg and 9 on soiree-pg, so this
+        # threshold would have caught all three.
+        - alert: CNPGBackupTooOld
+          expr: time() - max by (namespace, job) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp) > 25200
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: The newest backup of {{ $labels.job }} is {{ $value | humanizeDuration }} old.
+            description: >-
+              The cluster has had no good backup for more than 7 hours, and a backup runs every
+              3 hours. Check that the ScheduledBackup creates Backup objects with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get scheduledbackups,backups.postgresql.cnpg.io`.
+              If the Backup objects fail, read the rule CNPGBackupFailed.
+
+        # Fencing stops Postgres on an instance on purpose, with the annotation
+        # cnpg.io/fencedInstances on the Cluster. An operator uses it for a repair
+        # and can forget to remove it. 15 minutes leaves time for a repair step.
+        # Live now: no instance is fenced.
+        - alert: CNPGInstanceFenced
+          expr: cnpg_collector_fencing_on == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Instance {{ $labels.pod }} in {{ $labels.namespace }} is fenced.
+            description: >-
+              Postgres is stopped on this instance. Check if an operator fenced it on purpose.
+              Read the annotation with
+              `kubectl --context yornik-sharkshere -n {{ $labels.namespace }} get cluster -o jsonpath='{.items[0].metadata.annotations}'`.
+              If nobody is working on the instance, remove `cnpg.io/fencedInstances` from the Cluster.
+
+        # A full volume stops Postgres. No CNPG volume went above 17.4 % in 30
+        # days, so 80 % is far from normal. 80 % leaves 1 GiB on the smallest
+        # volume (5 Gi). The chart rule
+        # KubePersistentVolumeFillingUp acts below 3 % free, which is too late for
+        # a database. The join picks the data volume and the WAL volume of each
+        # instance through the pod owner, so a new cluster is covered at once.
+        - alert: CNPGVolumeFillingUp
+          expr: |-
+            max by (namespace, persistentvolumeclaim) (
+              (1 - kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes)
+              * on (namespace, persistentvolumeclaim) group_left ()
+              max by (namespace, persistentvolumeclaim) (
+                kube_pod_spec_volumes_persistentvolumeclaims_info
+                * on (namespace, pod) group_left ()
+                max by (namespace, pod) (kube_pod_owner{owner_kind="Cluster"})
+              )
+            ) > 0.80
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Postgres volume {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} is {{ $value | humanizePercentage }} full.
+            description: >-
+              If the volume name ends in `-wal`, look for a failing WAL archive first, because
+              unarchived WAL stays on this volume. See the rule CNPGWalArchiveFailing. Otherwise the
+              data grows. The storage class allows expansion, so raise `size` under `storage` or
+              `walStorage` in the Cluster manifest in git.
+
+        # 90 % is the last point to act before Postgres stops. 5 minutes is short
+        # on purpose, because a WAL volume that fills because of a failed archive
+        # grows fast.
+        - alert: CNPGVolumeAlmostFull
+          expr: |-
+            max by (namespace, persistentvolumeclaim) (
+              (1 - kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes)
+              * on (namespace, persistentvolumeclaim) group_left ()
+              max by (namespace, persistentvolumeclaim) (
+                kube_pod_spec_volumes_persistentvolumeclaims_info
+                * on (namespace, pod) group_left ()
+                max by (namespace, pod) (kube_pod_owner{owner_kind="Cluster"})
+              )
+            ) > 0.90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Postgres volume {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} is {{ $value | humanizePercentage }} full.
+            description: >-
+              Postgres stops when the volume is full. Raise `size` under `storage` or `walStorage`
+              in the Cluster manifest in git now. If the name ends in `-wal`, also check the rule
+              CNPGWalArchiveFailing, because the cause is often a WAL archive that fails.
+
+        # These rules read series that can disappear without any error. A
+        # PodMonitor that loses its release label, a drop rule with a wrong regex
+        # or a missing kube-state-metrics gives no data, and then no rule above can
+        # fire. The `metric` label names the missing series. Live now: all 4 exist.
+        - alert: CNPGMetricsAbsent
+          expr: |-
+            label_replace(absent(cnpg_pg_replication_lag), "metric", "cnpg_pg_replication_lag", "", "")
+            or label_replace(absent(cnpg_pg_stat_archiver_last_archived_time), "metric", "cnpg_pg_stat_archiver_last_archived_time", "", "")
+            or label_replace(absent(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp), "metric", "barman_cloud_cloudnative_pg_io_last_available_backup_timestamp", "", "")
+            or label_replace(absent(kube_pod_owner{owner_kind="Cluster"}), "metric", "kube_pod_owner{owner_kind=\"Cluster\"}", "", "")
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: No data for {{ $labels.metric }}. The CloudNativePG alerts cannot fire.
+            description: >-
+              Prometheus has no series for this metric. Check that the PodMonitors still carry the
+              label `release: kube-prometheus-stack` with
+              `kubectl --context yornik-sharkshere get podmonitors -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,RELEASE:.metadata.labels.release'`.
+              Then open /targets in Prometheus and look for the Postgres instances.
