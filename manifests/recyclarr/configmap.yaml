@@ -10,16 +10,26 @@ data:
   # - `Remux 2160p (Alternative)` for films and normal series. It aims for a
   #   2160p remux and falls back to 2160p Bluray or WEB, then 1080p and 720p,
   #   so a title without a 4K release still downloads.
-  # - `[Anime] Remux-1080p` for anime, with a bonus for dual audio. Most
-  #   anime 2160p releases are upscales, so it stops at 1080p.
+  # - `[Anime] Remux-1080p` for anime. Most anime 2160p releases are
+  #   upscales, so it stops at 1080p. `Dubs Only` gets -10000, so a release
+  #   always has the Japanese audio. `Anime Dual Audio` keeps the TRaSH
+  #   score of 0: a release with an English dub is not preferred.
   #
   # The `Unwanted Formats` group gives -10000 to BR-DISK, LQ groups,
   # upscales and 3D, so neither profile takes them. `Golden Rule UHD` refuses
   # x265 encodes of 1080p sources.
   #
-  # NOTE: There is no `quality_definition`. It sets the size limits of every
-  # quality in the app, for all series and films. The limits are unlimited on
-  # purpose.
+  # Recyclarr also applies these TRaSH Guides settings to the whole app:
+  #
+  # - `quality_definition` sets the size limits of every quality. The maximum
+  #   is unlimited for all of them. The minimum refuses fake releases that
+  #   are too small for their quality. Sonarr uses the `anime` sizes, because
+  #   the `series` minimums refuse small anime WEB episodes.
+  # - `propers_and_repacks: do_not_prefer` lets the Repack custom formats
+  #   decide, instead of a proper that always wins.
+  # - `media_naming` adds the TMDB or TVDB ID to the folder names, so Jellyfin
+  #   matches new titles without guessing. It changes the names of new
+  #   imports only. To rename existing files, use Rename Files in the app.
   #
   # NOTE: The anime profile sets a minimum custom format score of 100. A
   # release from a group that the TRaSH tiers do not know is refused.
@@ -37,17 +47,23 @@ data:
           - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
             reset_unmatched_scores:
               enabled: true
+        quality_definition:
+          type: anime
+        media_management:
+          propers_and_repacks: do_not_prefer
+        media_naming:
+          series: jellyfin-tvdb
+          season: default
+          episodes:
+            rename: true
+            standard: default
+            daily: default
+            anime: default
         custom_format_groups:
           add:
             - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
             - trash_id: 85fae4a2294965b75710ef2989c850eb # [Streaming Services] HD/UHD boost
             - trash_id: 59c3af66780d08332fdc64e68297098f # [Unwanted] Unwanted Formats
-        custom_formats:
-          - trash_ids:
-              - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
-            assign_scores_to:
-              - trash_id: 20e0fc959f1f1704bed501f23bdae76f
-                score: 101
 
     radarr:
       radarr-main:
@@ -60,13 +76,16 @@ data:
           - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
             reset_unmatched_scores:
               enabled: true
+        quality_definition:
+          type: movie
+        media_management:
+          propers_and_repacks: do_not_prefer
+        media_naming:
+          folder: jellyfin-tmdb
+          movie:
+            rename: true
+            standard: jellyfin-tmdb
         custom_format_groups:
           add:
             - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
             - trash_id: a3ac6af01d78e4f21fcb75f601ac96df # [Unwanted] Unwanted Formats
-        custom_formats:
-          - trash_ids:
-              - 4a3b087eea2ce012fcc1ce319259a3be # Anime Dual Audio
-            assign_scores_to:
-              - trash_id: 722b624f9af1e492284c4bc842153a38
-                score: 101

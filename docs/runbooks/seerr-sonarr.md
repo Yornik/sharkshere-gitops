@@ -256,7 +256,15 @@ CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Ser
 | Unwanted Formats | -10000 for BR-DISK, LQ groups, upscales and 3D. Neither profile takes them. |
 | Golden Rule UHD | Refuses x265 encodes of 1080p sources. |
 | Release group tiers | Remux, UHD Bluray, anime BD and anime WEB groups ranked by quality. |
-| Anime Dual Audio | +101 in the anime profile. |
+| Dubs Only | -10000 in the anime profile, so a release always has the Japanese audio. Anime Dual Audio stays at 0: an English dub is neither preferred nor refused. |
+
+Recyclarr also applies these TRaSH Guides settings to the whole app, for Sonarr and Radarr:
+
+| Setting | Value | Effect |
+|---|---|---|
+| Quality sizes | TRaSH `movie` sizes in Radarr, `anime` sizes in Sonarr | No maximum size. A minimum size per quality refuses fake releases. |
+| Propers and repacks | Do not Prefer | The Repack custom formats decide. |
+| Naming | TRaSH Jellyfin formats with `[tmdbid-…]` and `[tvdbid-…]` | Jellyfin matches new titles by ID. Only new imports get the new names. To rename existing files, select the titles, then click Rename Files. |
 
 NOTE: The anime profile sets a minimum custom format score of 100. A release from a group that the anime tiers do not know is refused.
 
@@ -285,6 +293,8 @@ NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr
 kubectl -n jellyfin create job --from=cronjob/recyclarr recyclarr-manual
 kubectl -n jellyfin logs -f job/recyclarr-manual
 ```
+
+NOTE: A job made with `create job --from` does not obey `concurrencyPolicy: Forbid`. Do not start it near minute 17 of the hour, when the scheduled run starts. Delete the job when it is done: `kubectl -n jellyfin delete job recyclarr-manual`.
 
 ## How to connect Seerr to Sonarr and Radarr
 
