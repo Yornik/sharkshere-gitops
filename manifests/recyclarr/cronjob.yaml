@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: recyclarr
+  namespace: jellyfin
+  labels:
+    app: recyclarr
+spec:
+  # Once a day is enough. The TRaSH Guides change a few times a month.
+  schedule: "17 4 * * *"
+  timeZone: "Europe/Amsterdam"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: recyclarr
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            # The image user. The state volume must belong to it.
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: recyclarr
+              image: ghcr.io/recyclarr/recyclarr:8.8.0
+              # The image entrypoint runs its own cron loop. The CronJob is the
+              # schedule here, so run 1 sync and exit.
+              command: ["recyclarr", "sync", "--config", "/etc/recyclarr/recyclarr.yml"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: SONARR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: recyclarr-secrets
+                      key: SONARR_API_KEY
+                - name: RADARR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: recyclarr-secrets
+                      key: RADARR_API_KEY
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: recyclarr-yml
+                  mountPath: /etc/recyclarr
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: config
+              persistentVolumeClaim:
+                claimName: recyclarr-config-ssd
+            - name: recyclarr-yml
+              configMap:
+                name: recyclarr-config

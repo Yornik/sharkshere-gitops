@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: recyclarr-config
+  namespace: jellyfin
+data:
+  # The TRaSH Guides anime profile for Sonarr and Radarr, with a bonus for
+  # dual audio. Recyclarr creates the profile `[Anime] Remux-1080p` and its
+  # custom formats. It does not change the other profiles.
+  #
+  # NOTE: There is no `quality_definition`. It sets the size limits of every
+  # quality in the app, for all series and films, not only for anime. The
+  # limits are unlimited on purpose.
+  #
+  # NOTE: The profile sets a minimum custom format score of 100. A release
+  # from a group that the TRaSH tiers do not know is refused.
+  recyclarr.yml: |
+    sonarr:
+      sonarr-anime:
+        base_url: http://sonarr:8989
+        api_key: !env_var SONARR_API_KEY
+        quality_profiles:
+          - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
+            reset_unmatched_scores:
+              enabled: true
+        custom_formats:
+          - trash_ids:
+              - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
+            assign_scores_to:
+              - trash_id: 20e0fc959f1f1704bed501f23bdae76f
+                score: 101
+
+    radarr:
+      radarr-anime:
+        base_url: http://radarr:7878
+        api_key: !env_var RADARR_API_KEY
+        quality_profiles:
+          - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
+            reset_unmatched_scores:
+              enabled: true
+        custom_formats:
+          - trash_ids:
+              - 4a3b087eea2ce012fcc1ce319259a3be # Anime Dual Audio
+            assign_scores_to:
+              - trash_id: 722b624f9af1e492284c4bc842153a38
+                score: 101

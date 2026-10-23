@@ -242,6 +242,38 @@ NOTE: The tag in step 5 and the tag in step 9 must be the same. If the tags diff
 
 CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Service type. Do not add an Ingress or a Tailscale annotation for it. Anyone who reaches it can make it open any address from the home network, including the NAS and the cluster. The cluster does not enforce NetworkPolicy, so a pod in any namespace can call it. See the CNI row in [`../tech/README.md`](../tech/README.md).
 
+## Recyclarr
+
+`manifests/recyclarr/` runs Recyclarr once a day, at 04:17 Europe/Amsterdam, as a CronJob. It syncs the TRaSH Guides profile `[Anime] Remux-1080p` into Sonarr and Radarr. It does not change the other profiles.
+
+| What it sets | Effect |
+|---|---|
+| Qualities | BD and WEB 1080p first, then 720p. No 2160p, because most anime 2160p releases are upscales. |
+| Custom formats | Release groups ranked in BD and WEB tiers. Minus points for raws, low quality groups, VOSTFR and dubs only. |
+| Anime Dual Audio | A bonus of 101 points. |
+| Minimum custom format score | 100. A release from a group that the tiers do not know is refused. |
+
+With the quality equal, Sonarr prefers a season pack over single episodes. Before this profile, a single 2160p episode won over a 1080p BD season pack.
+
+The API keys are in `manifests/recyclarr/secret.enc.yaml`. If you create a new API key in Sonarr or Radarr, update that file.
+
+NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr-config-ssd` volume. Without that volume it cannot update them.
+
+### How to use the anime profile
+
+1. In Seerr, open Settings, then Services, and edit Sonarr.
+2. Set Anime Series Type to Anime.
+3. Set Anime Quality Profile to `[Anime] Remux-1080p`.
+4. Do the same for Radarr.
+5. In Sonarr, edit each anime series and set Quality Profile to `[Anime] Remux-1080p`.
+
+### How to run it now
+
+```sh
+kubectl -n jellyfin create job --from=cronjob/recyclarr recyclarr-manual
+kubectl -n jellyfin logs -f job/recyclarr-manual
+```
+
 ## How to connect Seerr to Sonarr and Radarr
 
 1. In Seerr, open Settings, then Services, and add a Sonarr server.
