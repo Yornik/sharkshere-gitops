@@ -294,6 +294,8 @@ kubectl -n jellyfin create job --from=cronjob/recyclarr recyclarr-manual
 kubectl -n jellyfin logs -f job/recyclarr-manual
 ```
 
+NOTE: A job made with `create job --from` does not obey `concurrencyPolicy: Forbid`. Do not start it near minute 17 of the hour, when the scheduled run starts. Delete the job when it is done: `kubectl -n jellyfin delete job recyclarr-manual`.
+
 ## How to connect Seerr to Sonarr and Radarr
 
 1. In Seerr, open Settings, then Services, and add a Sonarr server.
