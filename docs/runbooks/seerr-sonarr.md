@@ -258,6 +258,14 @@ CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Ser
 | Release group tiers | Remux, UHD Bluray, anime BD and anime WEB groups ranked by quality. |
 | Anime Dual Audio | +101 in the anime profile. |
 
+Recyclarr also applies these TRaSH Guides settings to the whole app, for Sonarr and Radarr:
+
+| Setting | Value | Effect |
+|---|---|---|
+| Quality sizes | TRaSH `movie` sizes in Radarr, `anime` sizes in Sonarr | No maximum size. A minimum size per quality refuses fake releases. |
+| Propers and repacks | Do not Prefer | The Repack custom formats decide. |
+| Naming | TRaSH Jellyfin formats with `[tmdbid-…]` and `[tvdbid-…]` | Jellyfin matches new titles by ID. Only new imports get the new names. To rename existing files, select the titles, then click Rename Files. |
+
 NOTE: The anime profile sets a minimum custom format score of 100. A release from a group that the anime tiers do not know is refused.
 
 With the quality equal, Sonarr prefers a season pack over single episodes. Before these profiles, a single 2160p anime episode won over a 1080p BD season pack.
