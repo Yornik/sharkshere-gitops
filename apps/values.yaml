@@ -539,7 +539,7 @@ apps:
                 // stage.match selector reads labels only, not extracted values.
                 // With this block after them, level!~"..." matched every line
                 // and dropped all logs of ArgoCD and democratic-csi (found
-                // 2026-10-23). See docs/monitoring.md, gap G4.
+                // 2026-10-23). See docs/tech/monitoring.md, gap G4.
                 stage.labels {
                   values = {
                     level = "",
