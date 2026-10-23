@@ -85,7 +85,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|vaultwarden-admin|\bnas\b'
+   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|vaultwarden-admin| nas(-[0-9]+)? '
    ```
 
 Expected result: each name is as in the table above, without a suffix.
@@ -188,9 +188,21 @@ its next poll.
 
 ### Undo the TrueNAS change
 
-Revert `feat(truenas): publish the web interface on the tailnet`. The revert
-removes the `truenas-ui` Application, its namespace and the proxy device.
-Nothing else depended on it. The NAS settings in
+Do not revert one commit. Later commits edit the same files, so a revert
+stops with conflicts. Remove the Application in 1 pull request:
+
+1. Delete the entry `truenas-ui` from `apps/values.yaml`.
+2. Delete the directory `manifests/truenas-ui/`.
+3. Delete `manifests/truenas-ui/**` from the Renovate rule `nas relay nginx`
+   in `renovate.json5`.
+4. Delete the rows and the diagram edge for `truenas-ui` from
+   `docs/tech/README.md`. Set the counts in `README.md` and
+   `docs/tech/README.md` back.
+5. Merge the pull request.
+
+ArgoCD removes the Application and its namespace, and the operator removes the
+proxy device. If the device `nas` stays in the Tailscale admin console, remove
+it. Nothing else depended on it. The NAS settings in
 [`truenas-ui.md`](truenas-ui.md) can stay.
 
 ### Undo the ArchiSteamFarm and qBittorrent change

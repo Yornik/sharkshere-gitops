@@ -65,6 +65,30 @@
         'dependencies',
       ],
     },
+    // The relays of the NAS, manifests/truenas-ui and manifests/truenas-smb,
+    // run the nginx image. A minor bump of that image merges itself, with no
+    // review, and CI has no step that runs nginx. A bump that nginx accepts
+    // but that breaks `stream` would cut the access to the NAS, and a bump
+    // can reach both relays in 1 pull request. This rule turns automerge off
+    // for the 2 relays only. Its labels leave out `automerge`, as for the
+    // rule above, so the review runs. It comes before the major rule, so a
+    // major bump still gets the `major` label. The other nginx Deployments
+    // keep the automerge of the minor rule.
+    {
+      matchPackageNames: [
+        'nginx',
+      ],
+      matchFileNames: [
+        'manifests/truenas-ui/**',
+        'manifests/truenas-smb/**',
+      ],
+      groupName: 'nas relay nginx',
+      automerge: false,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
     {
       matchUpdateTypes: [
         'major',

@@ -65,11 +65,11 @@ flowchart LR
   HAProxy -->|"PROXY v2"| Mesh
   Mesh -->|443| Traefik
   Mesh -->|22| GitlabShell
+  Mesh -->|"445 (TCP relay pod)"| NAS
   Admin -->|"HTTPS over WireGuard"| Mesh
   Mesh -->|admin UIs| TSProxy
   TSProxy --> Apps
   TSProxy -->|"TrueNAS web interface<br/>(TCP relay pod)"| NAS
-  TSProxy -->|"TrueNAS SMB<br/>(TCP relay pod)"| NAS
   Traefik --> Apps
   Apps --> HDD
   Apps --> SSD_NFS
@@ -202,7 +202,7 @@ manifests/      per-app manifests and Kustomize overlays
 
 ### Tailnet only
 
-These are reachable from a tailnet device only, through Tailscale Ingresses.
+These are reachable from a tailnet device only, through Tailscale proxy devices.
 See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 
 | Address | Service |

@@ -7,7 +7,7 @@ The `truenas-ui` Application publishes the TrueNAS web interface at `https://nas
 | Address | `https://nas.hedgehog-wage.ts.net` |
 | Manifests | `manifests/truenas-ui/` |
 | Namespace | `truenas-ui` |
-| Image | `nginx:1.31-alpine` |
+| Image | `nginx`, with an `alpine` tag. See `deployment.yaml`. |
 | NAS | `192.168.1.42`, HTTPS port 443 |
 | Public route | none |
 
@@ -36,7 +36,11 @@ The new hostname needs no change on the NAS. The facts below come from the TrueN
 
 What can break is the client address. The NAS sees the address of the cluster node that runs the relay pod, not the address of your device. The nodes are `192.168.1.192` to `192.168.1.195`.
 
-NOTE: Make sure of the node addresses with `kubectl --context yornik-sharkshere get nodes -o wide`.
+To make sure of the node addresses:
+
+```sh
+kubectl --context yornik-sharkshere get nodes -o wide
+```
 
 ### Read the settings
 
@@ -162,11 +166,7 @@ kubectl --context yornik-sharkshere -n truenas-ui logs deploy/truenas-ui
 
 - Tailnet traffic does not pass through Traefik. The shared `security-headers`, `fail2ban` and `rate-limit` middleware do not apply. The TrueNAS login is the gate.
 - The proxy does not check the certificate of the NAS. A device on the home network that answers for `192.168.1.42` can read the traffic from the proxy, including the login. WireGuard encrypts the tailnet hop only.
-- The path carries the web interface only. It does not carry SMB. See [SMB shares](#smb-shares).
-
-## SMB shares
-
-This path does not carry SMB. A Tailscale Ingress serves HTTPS on port 443 only. SMB has its own path and its own device, `nas-smb`. See [`truenas-smb.md`](truenas-smb.md).
+- The path carries the web interface only. It does not carry SMB. A Tailscale Ingress serves HTTPS on port 443 only. SMB has its own path and its own device, `nas-smb`. See [`truenas-smb.md`](truenas-smb.md).
 
 ## How to undo the change
 
