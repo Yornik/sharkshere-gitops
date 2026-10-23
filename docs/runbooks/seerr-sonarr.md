@@ -73,38 +73,38 @@ NOTE: Seerr has no download client. It sends a series request to Sonarr and a fi
 
 ```mermaid
 flowchart LR
-  subgraph NS["Namespace jellyfin"]
+  subgraph Apps["Apps in namespace jellyfin"]
+    direction TB
+    JE["Jellyfin Enhanced"]
     Seerr["Seerr"]
-    JE["Jellyfin Enhanced<br/>(in Jellyfin)"]
     Radarr["Radarr"]
+    JFM["Jellyfin<br/>Movies library"]
+    JFS["Jellyfin<br/>Shows library"]
     Sonarr["Sonarr"]
-    Jellyfin["Jellyfin library scan"]
-    Intro["Intro Skipper<br/>(audio fingerprints, local)"]
   end
 
-  subgraph Ext["Metadata providers on the internet"]
-    Ratings[("Rotten Tomatoes<br/>and IMDb ratings")]
-    TMDB[("TMDB<br/>themoviedb.org")]
-    RadarrMeta[("Radarr metadata server<br/>api.radarr.video, TMDB data")]
-    SkyHook[("Sonarr SkyHook<br/>skyhook.sonarr.tv, TVDB data")]
-    TVDB[("TVDB<br/>thetvdb.com")]
-    OMDb[("OMDb<br/>IMDb data")]
+  subgraph Ext["Metadata providers"]
+    direction TB
+    Ratings[("Rotten Tomatoes<br/>IMDb ratings")]
+    RadarrMeta[("Radarr metadata server<br/>TMDB data")]
+    TMDB[("TMDB")]
+    OMDb[("OMDb")]
+    TVDB[("TVDB")]
+    SkyHook[("Sonarr SkyHook<br/>TVDB data")]
   end
 
-  JE -->|"search, details, requests"| Seerr
-  Seerr -->|"search, titles, seasons, posters"| TMDB
-  Seerr -->|"ratings on the detail page"| Ratings
-  Seerr -->|"film: TMDB id"| Radarr
-  Seerr -->|"series: TVDB id from TMDB"| Sonarr
-  Radarr -->|"titles, years, release dates"| RadarrMeta
+  JE -->|"everything through Seerr"| Seerr
+  Seerr -->|ratings| Ratings
+  Radarr -->|"titles, release dates"| RadarrMeta
+  Seerr -->|"search, seasons, posters"| TMDB
   Radarr -->|images| TMDB
-  Sonarr -->|"seasons, episode numbers, air dates"| SkyHook
+  JFM -->|"1st choice"| TMDB
+  JFM -->|"2nd choice"| OMDb
+  JFS -->|"1st choice"| TVDB
+  JFS -->|"fallback"| TMDB
+  JFS -->|"fallback"| OMDb
   Sonarr -->|images| TVDB
-  Jellyfin -->|"films: 1st"| TMDB
-  Jellyfin -->|"films: 2nd, series: 2nd"| OMDb
-  Jellyfin -->|"series, seasons, episodes: 1st"| TVDB
-  Jellyfin -->|"seasons, episodes: fallback"| TMDB
-  Jellyfin -->|"intro and credit segments"| Intro
+  Sonarr -->|"seasons, episode numbers"| SkyHook
 ```
 
 | App | Provider | What it fetches |
