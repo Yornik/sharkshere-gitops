@@ -78,6 +78,47 @@ flowchart LR
   SSD_iSCSI -.barman-cloud plugin.-> WAL
 ```
 
+## Media request flow
+
+A request for a series or a film runs through these steps. All calls between the apps stay in the `jellyfin` namespace. Only qBittorrent goes through Mullvad. Setup and checks are in [`../runbooks/seerr-sonarr.md`](../runbooks/seerr-sonarr.md).
+
+```mermaid
+flowchart TB
+  User([Jellyfin user, web UI])
+  TailUser([Tailnet device])
+
+  subgraph NS["Namespace jellyfin"]
+    Jellyfin["Jellyfin + Jellyfin Enhanced<br/>jelly.yornik.eu"]
+    Seerr["Seerr<br/>requests.hedgehog-wage.ts.net"]
+    Sonarr["Sonarr<br/>series, category tv"]
+    Radarr["Radarr<br/>films, category movies"]
+    Prowlarr["Prowlarr<br/>syncs indexers to Sonarr and Radarr"]
+    Flare["FlareSolverr<br/>ClusterIP only"]
+    subgraph QB["qBittorrent pod, ndots:1"]
+      QBit["qBittorrent"] --- Gluetun["gluetun<br/>Mullvad WireGuard"]
+    end
+  end
+
+  NAS[("TrueNAS SMB shares<br/>series/ and movies/<br/>downloads/ has .ignore")]
+  Indexers([Indexers])
+  Peers([BitTorrent peers])
+
+  User -->|1. request| Jellyfin
+  TailUser -->|1. request| Seerr
+  Jellyfin -->|"2. API call from the server"| Seerr
+  Seerr -->|3. series| Sonarr
+  Seerr -->|3. film| Radarr
+  Sonarr & Radarr -->|4. search| Prowlarr
+  Prowlarr -->|"home address"| Indexers
+  Prowlarr -.->|"challenge page"| Flare -.->|"home address"| Indexers
+  Sonarr & Radarr -->|5. send torrent| QBit
+  Gluetun <-->|"VPN tunnel"| Peers
+  QBit -->|"6. download into downloads/"| NAS
+  Sonarr & Radarr -->|"7. copy into the library"| NAS
+  Sonarr & Radarr -.->|"8. scan library"| Jellyfin
+  NAS -->|"read-only mount"| Jellyfin
+```
+
 ## Engineering highlights
 
 - **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject, GitLab CE and soiree each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All four ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin.
