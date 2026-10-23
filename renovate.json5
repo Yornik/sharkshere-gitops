@@ -297,6 +297,56 @@
     },
     {
       matchPackageNames: [
+        'lscr.io/linuxserver/radarr',
+      ],
+      // Same 4-part tag with the LinuxServer build counter as Sonarr. The
+      // default docker versioning would keep `ls323` as a suffix and freeze.
+      versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-ls(?<revision>\\d+)$',
+    },
+    {
+      matchPackageNames: [
+        'lscr.io/linuxserver/radarr',
+      ],
+      // Same split as for Sonarr. Radarr also migrates its database when it
+      // starts.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: false,
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
+    {
+      matchPackageNames: [
+        'lscr.io/linuxserver/prowlarr',
+      ],
+      // Same 4-part tag with the LinuxServer build counter as Sonarr. The
+      // default docker versioning would keep `ls165` as a suffix and freeze.
+      versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-ls(?<revision>\\d+)$',
+    },
+    {
+      matchPackageNames: [
+        'lscr.io/linuxserver/prowlarr',
+      ],
+      // Same split as for Sonarr. Prowlarr also migrates its database when
+      // it starts.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: false,
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
+    {
+      matchPackageNames: [
         'ghcr.io/seerr-team/seerr',
       ],
       // Same reason and same split as for Sonarr. Seerr migrates its

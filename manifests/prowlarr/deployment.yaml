@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  namespace: jellyfin
+  labels:
+    app: prowlarr
+spec:
+  replicas: 1
+  # The config volume is RWO and holds a SQLite database. A second pod
+  # must not start while the first pod still has the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+    spec:
+      # No gluetun sidecar, unlike qBittorrent. Public indexers block the
+      # Mullvad exit addresses quickly, so searches leave from the home
+      # address. Prowlarr only searches. qBittorrent still downloads through
+      # the VPN.
+      containers:
+        - name: prowlarr
+          image: lscr.io/linuxserver/prowlarr:2.6.5.5623-ls165
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            # Prowlarr skips the login for local addresses by default. The
+            # Tailscale proxy connects from a pod address, which counts as
+            # local. `Enabled` asks for the login on every address.
+            #
+            # CAUTION: Do not set PROWLARR__AUTH__METHOD. The UI shows the
+            # dialog that creates the first user only while the method is
+            # `None`. A forced `Forms` on a new volume has no user, so every
+            # login fails.
+            - name: PROWLARR__AUTH__REQUIRED
+              value: Enabled
+          ports:
+            - containerPort: 9696
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          # /ping needs no login.
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: prowlarr-config-ssd

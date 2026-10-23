@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr
+  namespace: jellyfin
+  labels:
+    app: prowlarr
+# No external-dns annotation. Prowlarr is on the tailnet only, through
+# ingress-tailnet.yaml. Sonarr and Radarr reach it in the cluster at
+# http://prowlarr:9696.
+spec:
+  selector:
+    app: prowlarr
+  ports:
+    - name: http
+      port: 9696
+      targetPort: http
+      protocol: TCP

@@ -637,6 +637,14 @@ apps:
     namespace: jellyfin
     path: manifests/sonarr
 
+  radarr:
+    namespace: jellyfin
+    path: manifests/radarr
+
+  prowlarr:
+    namespace: jellyfin
+    path: manifests/prowlarr
+
   democratic-csi:
     namespace: democratic-csi
     path: manifests/democratic-csi
