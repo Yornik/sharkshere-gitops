@@ -160,7 +160,7 @@ Expected result: the test of the indexer passes. Prowlarr sends only the indexer
 
 NOTE: The tag in step 5 and the tag in step 9 must be the same. If the tags differ, Prowlarr does not use the proxy for that indexer.
 
-CAUTION: FlareSolverr has no login and no tailnet address. Do not add a Service, an Ingress or a Tailscale annotation for it. Anyone who reaches it can make it open any address from the home network, including the NAS and the cluster. The cluster does not enforce NetworkPolicy, so a pod in any namespace can call it. See the CNI row in [`../tech/README.md`](../tech/README.md).
+CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Service type. Do not add an Ingress or a Tailscale annotation for it. Anyone who reaches it can make it open any address from the home network, including the NAS and the cluster. The cluster does not enforce NetworkPolicy, so a pod in any namespace can call it. See the CNI row in [`../tech/README.md`](../tech/README.md).
 
 ## How to connect Seerr to Sonarr and Radarr
 
