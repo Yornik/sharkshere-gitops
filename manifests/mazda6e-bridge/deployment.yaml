@@ -28,7 +28,7 @@ spec:
         - name: mazda6e-bridge
           # Read-only exporter for the Mazda 6e cloud API.
           # Source + CI: github.com/Yornik/mazda6e-grafana-bridge
-          image: ghcr.io/yornik/mazda6e-grafana-bridge:v1.0.0
+          image: ghcr.io/yornik/mazda6e-grafana-bridge:v1.1.0
           imagePullPolicy: IfNotPresent
           # MAZDA_EMAIL, MAZDA_PASSWORD and MAZDA_DEVICE_ID. Together they are a
           # full login to the Mazda account. Keep them only in the SOPS file.
