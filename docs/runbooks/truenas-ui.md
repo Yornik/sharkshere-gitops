@@ -71,6 +71,22 @@ CAUTION: Keep the relay a plain TCP copy to the HTTPS port of the NAS. From rele
 - The links to the web portals of apps on the NAS name the port of the app. The relay publishes port 443 only, so those links do not work through `nas.hedgehog-wage.ts.net`. Use `https://192.168.1.42` at home.
 - TrueNAS ties its auth tokens to the client address. If the relay pod moves to another node, the address changes. The web interface can then ask for a login again.
 
+### Hostname of the NAS
+
+The web interface has no hostname setting. The GUI form has fields for the address and the ports only. The name comes from the address bar of the browser, and TrueNAS accepts any name. So the web interface works under `nas.hedgehog-wage.ts.net` with the hostname that the NAS has now.
+
+The hostname of the NAS is a separate setting, in System, Network, Hostname and Domain. It names the NAS to its own clients and in its metrics. No rename is needed for this change.
+
+If you rename the NAS anyway, check these items first:
+
+1. Open each file `manifests/democratic-csi/*.enc.yaml` with `sops -d`. Look for the old name. The repository cannot show it, because the files are encrypted.
+2. Look at `manifests/truenas-monitoring/configmap-mapping.yaml`. It maps the host part of each Graphite metric name to the label `instance`. The host part is probably the hostname of the NAS, so a rename gives new series. Nothing in this repository selects on the value. A dashboard that you made in the Grafana UI can.
+3. Update each DNS or DHCP entry for the old name, and each SMB or NFS client that uses it.
+
+CAUTION: If a CSI file names the NAS by its old hostname, a rename breaks the storage mounts. A storage fault took databases offline on 2026-10-12. See [`2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md).
+
+NOTE: Alloy sets `instance = "nas"` for the TrueNAS logs in `apps/values.yaml`. A rename does not change that label. The SMB volumes use `192.168.1.42`, so a rename does not change them.
+
 ## How to check the path
 
 1. Check the pod:
