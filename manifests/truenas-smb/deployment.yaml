@@ -3,8 +3,8 @@
 # The Tailscale operator reaches a Service through its ClusterIP. The NAS is
 # not a pod, so no selector reaches it, and ArgoCD does not apply an
 # EndpointSlice from git. This pod is the cluster-side address of the NAS.
-# It is a copy of manifests/truenas-ui, not a share of it: a fault in the
-# SMB relay cannot touch the web interface.
+# It is a copy of manifests/truenas-ui, not a share of it: a fault at run
+# time in the SMB relay cannot touch the web interface.
 # See docs/incidents/2026-10-23-argocd-drops-endpointslice-from-git.md.
 apiVersion: apps/v1
 kind: Deployment
@@ -31,7 +31,7 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        # The nginx user of the image.
+        # runAsNonRoot needs a numeric user. 101 is the nginx user of the image.
         runAsUser: 101
         runAsGroup: 101
         seccompProfile:
@@ -87,5 +87,6 @@ spec:
             name: truenas-smb-nginx
         - name: tmp
           emptyDir:
+            # The pid file is the only file. Memory keeps it off the node disk.
             medium: Memory
             sizeLimit: 1Mi

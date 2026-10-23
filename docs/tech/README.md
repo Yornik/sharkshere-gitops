@@ -202,7 +202,7 @@ manifests/      per-app manifests and Kustomize overlays
 
 ### Tailnet only
 
-These are reachable from a tailnet device only, through Tailscale Ingresses.
+These are reachable from a tailnet device only, through Tailscale proxy devices.
 See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 
 | Address | Service |

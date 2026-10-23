@@ -1,7 +1,7 @@
 # ArgoCD does not apply an EndpointSlice from git
 
 **Date:** 2026-10-23
-**Component:** `argocd` (`resource.exclusions`), `truenas-ui` Application
+**Component:** `argocd` (`resource.exclusions`), `truenas-ui` and `truenas-smb` Applications
 **Severity:** none. A design fault found before the merge
 
 ## Effect
@@ -33,4 +33,4 @@ To manage an excluded kind from git, remove it from `resource.exclusions` in `bo
 - `bootstrap/argocd/install.yaml`, the `resource.exclusions` key of `argocd-cm`.
 - ArgoCD v3.5.6, `controller/state.go`, the loop that calls `IsExcludedResource` and appends `ApplicationConditionExcludedResourceWarning`.
 - Tailscale operator v1.104.1, `cmd/k8s-operator/ingress.go`, the check on `svc.Spec.ClusterIP`, and the choice of `https+insecure://` for port 443.
-- `manifests/truenas-ui/`, the relay that replaces the `EndpointSlice`.
+- `manifests/truenas-ui/` and `manifests/truenas-smb/`, the relays that replace the `EndpointSlice`.

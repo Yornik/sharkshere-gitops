@@ -4,7 +4,7 @@ The `truenas-smb` Application publishes the SMB service of the NAS at `nas-smb.h
 
 | Item | Value |
 |---|---|
-| Address | `\\nas-smb.hedgehog-wage.ts.net\<share>` |
+| Name | `\\nas-smb.hedgehog-wage.ts.net\<share>` |
 | Manifests | `manifests/truenas-smb/` |
 | Namespace | `truenas-smb` |
 | Image | `nginx`, with an `alpine` tag. See `deployment.yaml`. |
@@ -29,22 +29,29 @@ NOTE: The NAS is not a pod, so a Service cannot select it. ArgoCD drops an `Endp
 
 NOTE: The device is not called `nas`. The Ingress of the web interface holds that name, and 1 proxy cannot serve an Ingress and an exposed Service.
 
-CAUTION: The proxy sends every port of its tailnet address to the ClusterIP. The Service declares port 445 and no other port. Do not add a port to it. Do not add port 445 to the Service of the web interface.
+CAUTION: The proxy sends every port of its tailnet address to the ClusterIP. The Service declares port 445 and no other port. Do not add a port to it. A second port would also be open to the tailnet.
 
 ## What a person sets up
 
-The merge creates the proxy device `nas-smb`. Tailnet Lock holds it until a trusted key signs it. Until then, nothing reaches the NAS through it. The signature opens the path.
+The first merge of this Application created the proxy device `nas-smb` with the tag `tag:k8s`, because the manifest set no tag. Tailnet Lock holds the device until a trusted key signs it. The signature opens the path. See [`2026-10-23-truenas-smb-proxy-default-tag.md`](../incidents/2026-10-23-truenas-smb-proxy-default-tag.md).
 
-The proxy has a tag of its own, `tag:nas-smb`. The tag keeps the device out of each rule for `tag:k8s`. The jump hosts on the internet reach `gitlab-shell`, which has that tag, so a rule for them probably covers it. After the signature, the path stays closed until a rule names `tag:nas-smb`.
+The manifest now gives the proxy a tag of its own, `tag:nas-smb`. The tag keeps the device out of each rule for `tag:k8s`. The jump hosts on the internet reach `gitlab-shell`, which has that tag, so a rule for them probably covers it.
 
-WARNING: Do not sign a device that has the tag `tag:k8s`. Each rule for that tag then covers the SMB login of the NAS. The first device of this Application has that tag, because the manifest set no tag when it first merged. See [Replace a proxy that has the wrong tag](#replace-a-proxy-that-has-the-wrong-tag).
+WARNING: Do not sign a device that has the tag `tag:k8s`. Each rule for that tag then covers the SMB login of the NAS. See [Replace a proxy that has the wrong tag](#replace-a-proxy-that-has-the-wrong-tag).
 
-CAUTION: If the tag is not in `tagOwners`, the operator cannot create a proxy with it. No device appears. Do step 1 before the merge.
+CAUTION: If the tag is not in `tagOwners`, the operator cannot create a proxy with it. No device appears. Do step 1 of [1. The tailnet policy](#1-the-tailnet-policy) first.
 
-In the tailnet policy. It is in the Tailscale admin console, not in this repository:
+Do the 3 parts in this order. Sign the device last.
+
+### 1. The tailnet policy
+
+The policy is in the Tailscale admin console, not in this repository.
 
 1. Add `tag:nas-smb` to `tagOwners`. Give it the same owner as `tag:k8s`.
-2. Add a rule that allows `tcp:445` from your PC to `tag:nas-smb`.
+2. Find each rule whose destination is `*` or all tagged devices. Narrow it. A rule like that also covers `tag:nas-smb`. The default policy of a tailnet is such a rule.
+3. Add a rule that allows `tcp:445` from your PC to `tag:nas-smb`.
+
+After these steps, the path stays closed unless another rule matches.
 
 For example, in the format `grants`:
 
@@ -65,38 +72,48 @@ For example, in the format `grants`:
 
 NOTE: Copy the owner of `tag:k8s` from your policy. The owner above is the owner in the standard operator setup. If your policy uses the format `acls`, write the destination as `tag:nas-smb:445`.
 
-After the merge:
+### 2. The NAS
 
-1. In the Tailscale admin console, find the device `nas-smb`.
-2. Make sure that it has the tag `tag:nas-smb`. If it has `tag:k8s`, do [Replace a proxy that has the wrong tag](#replace-a-proxy-that-has-the-wrong-tag) first.
-3. Sign the device with Tailnet Lock. See [How to activate a new proxy device](tailnet-only-admin-uis.md#how-to-activate-a-new-proxy-device). The address is unreachable until you sign it.
-
-On the NAS:
+The NAS user limits the damage if another device reaches the login. Do this part before the signature.
 
 1. Make an SMB user with rights to the share only. Do not use the account of the cluster volumes.
 2. If the share has a Hosts Allow list, add the 4 node addresses `192.168.1.192` to `192.168.1.195`. The NAS sees the node that runs the relay pod, not your PC.
 
-NOTE: Make sure of the node addresses with `kubectl --context yornik-sharkshere get nodes -o wide`.
+To make sure of the node addresses:
+
+```sh
+kubectl --context yornik-sharkshere get nodes -o wide
+```
+
+### 3. The device
+
+1. In the Tailscale admin console, find the device `nas-smb`.
+2. Make sure that it has the tag `tag:nas-smb`. If it has `tag:k8s`, do [Replace a proxy that has the wrong tag](#replace-a-proxy-that-has-the-wrong-tag) first.
+3. Sign the device with Tailnet Lock. See [How to activate a new proxy device](tailnet-only-admin-uis.md#how-to-activate-a-new-proxy-device). The name is unreachable until you sign it.
 
 ### Replace a proxy that has the wrong tag
 
 The operator sets the tags when it creates a proxy. It does not change the tags of a proxy that exists. A proxy with the wrong tag therefore needs a new proxy and a new signature.
 
-WARNING: The address is unreachable from step 2 until you sign the new device in step 6.
+WARNING: The name is unreachable from step 3 until you sign the new device in step 6.
 
 1. Make sure that `tag:nas-smb` is in `tagOwners`.
-2. Remove the old `nas-smb` device in the Tailscale admin console. If you do not, the new device joins as `nas-smb-1`.
-3. Delete the Service. ArgoCD creates it again, and the operator creates a new proxy:
+2. Make sure that the manifest holds the annotation `tailscale.com/tags: "tag:nas-smb"`.
+3. Remove the old `nas-smb` device in the Tailscale admin console. If you do not, the new device joins as `nas-smb-1`.
+4. Delete the Service. ArgoCD creates it again, and the operator creates a new proxy:
 
    ```sh
    kubectl --context yornik-sharkshere -n truenas-smb delete service truenas-smb
    ```
 
-4. Wait until the new device appears in the admin console.
-5. Make sure that the new device has the tag `tag:nas-smb`.
+5. Wait until the new device appears in the admin console. Make sure that it has the tag `tag:nas-smb`.
 6. Sign the new device.
 
 ## Connect from Windows
+
+NOTE: Windows 11 24H2 Pro, Enterprise and Education require SMB signing, and they block guest logons. Use a named NAS user. This path is not tested against the NAS.
+
+NOTE: At home, use `\\192.168.1.42\lilnasx`. It skips the tailnet, the proxy and the relay.
 
 1. Make sure Tailscale runs on the PC. Make sure the option "Use Tailscale DNS settings" is on.
 2. Check that the port answers:
@@ -105,7 +122,7 @@ WARNING: The address is unreachable from step 2 until you sign the new device in
    Test-NetConnection nas-smb.hedgehog-wage.ts.net -Port 445
    ```
 
-   Expected result: `TcpTestSucceeded : True`.
+   Expected result: `TcpTestSucceeded : True`. This check also passes while the NAS is off, because the relay pod answers first.
 
 3. Map the share:
 
@@ -115,16 +132,22 @@ WARNING: The address is unreachable from step 2 until you sign the new device in
 
 4. Enter the password of the NAS user.
 
-If Windows says `The target account name is incorrect`, use the tailnet address of the proxy. Windows then uses NTLM.
+   Expected result: the drive `Z:` shows the share.
+
+To require SMB encryption, map the share with this command instead of step 3:
+
+```powershell
+New-SmbMapping -LocalPath Z: -RemotePath \\nas-smb.hedgehog-wage.ts.net\lilnasx -UserName <NAS user> -RequirePrivacy $true
+```
+
+If Windows says `The target account name is incorrect`, use the IP address of the proxy:
 
 ```powershell
 tailscale ip -4 nas-smb
-net use Z: \\<tailnet address>\lilnasx /user:<NAS user>
+net use Z: \\<IP address>\lilnasx /user:<NAS user>
 ```
 
-NOTE: At home, use `\\192.168.1.42\lilnasx`. It skips the tailnet, the proxy and the relay.
-
-NOTE: Windows 11 24H2 Pro, Enterprise and Education require SMB signing, and they block guest logons. Use a named NAS user. This path is not tested against the NAS.
+NOTE: Microsoft advises a name over an IP address, because an IP address forces NTLM. SMB signing still applies.
 
 CAUTION: Keep `192.168.1.42` in the SMB volumes of the cluster. Do not use the tailnet name there. The volumes would then depend on a pod of the same cluster.
 
@@ -165,8 +188,8 @@ CAUTION: Keep `192.168.1.42` in the SMB volumes of the cluster. Do not use the t
 | The name does not resolve | The device waits for a Tailnet Lock signature, or the PC does not use Tailscale DNS | Sign the device. Turn on "Use Tailscale DNS settings". |
 | The device is called `nas-smb-1` | An old device still holds `nas-smb` | Remove the old device. Rename the new one to `nas-smb`. |
 | `TcpTestSucceeded : False` | The tailnet policy blocks `tcp:445`, or the relay pod is down | Read the policy. Check the pod. |
-| The port answers, and the login fails | The NAS user, the password or a Hosts Allow list is wrong | Check the user. Add the node addresses to Hosts Allow. |
-| `The target account name is incorrect` | Windows uses Kerberos for the name | Use the tailnet address of the proxy. |
+| The port answers, and the connection or the login fails | The NAS is off, a Hosts Allow list refuses the node address, or the NAS user or the password is wrong | Read the log of the relay. Check the NAS. Check the user. |
+| `The target account name is incorrect` | Windows tries Kerberos for the name, for example on a domain-joined PC | Use the IP address of the proxy. |
 | An open file fails after a pause in work | The relay pod restarted, or the connection dropped | Close the file and open it again. |
 
 To read the log of the relay:
@@ -175,7 +198,7 @@ To read the log of the relay:
 kubectl --context yornik-sharkshere -n truenas-smb logs deploy/truenas-smb
 ```
 
-A line with `connect() failed` means that the relay cannot reach the NAS.
+A line with `connect() failed` or `upstream timed out` means that the relay cannot reach the NAS.
 
 To read why the operator did not create the proxy:
 
@@ -190,10 +213,26 @@ The operator raises no event when the Tailscale API refuses the tag. It sets the
 - Tailnet traffic does not pass through Traefik. The login of the NAS is the only gate, with the tailnet policy in front of it.
 - The NAS sees the same client address for every tailnet device: the node that runs the relay pod. Its audit log does not show which device connected.
 - The relay is 1 pod. A drain of its node, a change to `nginx.conf` or a new image tag from Renovate restarts it. Windows reconnects, and a file that is open at that moment fails.
-- The NAS does not ban an address or lock an account after failed logins. Stock Samba does not, and a test of 40 wrong passwords through the relay showed no lockout. This was not checked on the NAS. Use a long password. A directory account could be locked by the directory policy, and the cluster volumes would then fail. A local account cannot. Check which kind the account of the cluster volumes is.
-- WireGuard encrypts the tailnet hop only. The hops through the cluster and the home network carry SMB as the client negotiates it. To require SMB encryption, map the share with `New-SmbMapping -RequirePrivacy $true`.
+- The NAS does not ban an address or lock an account after failed logins. Stock Samba does not lock a local account. This was not checked on the NAS.
+- A directory account can be locked by the directory policy. A lock would then break the SMB volumes of the cluster, if they use such an account.
+- WireGuard encrypts the tailnet hop only. The hops through the cluster and the home network carry SMB as the client negotiates it.
 - The throughput through the tailnet depends on WireGuard and on the node. It was not measured.
+
+CAUTION: Use a long password for the NAS user, because nothing limits guesses. Check which kind of account the SMB volumes of the cluster use.
 
 ## How to undo the change
 
-Revert `feat(truenas): forward SMB to the NAS over the tailnet`. The revert removes the `truenas-smb` Application, its namespace and the proxy device. If the device stays in the Tailscale admin console, remove it by hand. Nothing else depends on it.
+Do not revert a single commit. Later commits edit the same files, so a revert stops with conflicts. Remove the Application in 1 pull request:
+
+1. Delete the entry `truenas-smb` from `apps/values.yaml`.
+2. Delete the directory `manifests/truenas-smb/`.
+3. Delete `manifests/truenas-smb/**` from the Renovate rule `nas relay nginx` in `renovate.json5`.
+4. Delete the rows for `truenas-smb` and `nas-smb` from `docs/tech/README.md`. Delete the SMB edge from the diagram. Set the counts in `README.md` and `docs/tech/README.md` back.
+5. Merge the pull request. ArgoCD removes the Application and its namespace.
+
+Then do the steps that git cannot express:
+
+1. If the device `nas-smb` stays in the Tailscale admin console, remove it.
+2. In the tailnet policy, delete the rule for `tcp:445` and the entry `tag:nas-smb` in `tagOwners`.
+
+Nothing else depends on the Application.
