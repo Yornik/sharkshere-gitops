@@ -26,6 +26,7 @@ This repository is one of three:
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 | [`docs/runbooks/`](docs/runbooks/) | Procedures for one application each: how to activate, check, restore or repair it. |
+| [`docs/monitoring.md`](docs/monitoring.md) | How metrics, logs, dashboards and alerts work, and the gaps in them. |
 
 ## Repository layout
 
