@@ -440,6 +440,13 @@ apps:
                   stage.drop {
                     expression = "NodeGetVolumeStats|request headers map\\["
                   }
+                  stage.drop {
+                    // klog info lines of the CSI sidecars, like "I1023 20:56:30.2 ...".
+                    // They go to stderr and have no level word, so the stderr rule
+                    // below would label them error. About 109000 lines a day
+                    // (2026-10-23, after the lease drop). W and E lines stay.
+                    expression = "^I[0-9]{4} "
+                  }
                 }
 
                 stage.match {
