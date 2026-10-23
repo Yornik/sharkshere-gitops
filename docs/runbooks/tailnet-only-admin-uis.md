@@ -153,6 +153,8 @@ Each application keeps its own login, except Alertmanager:
 |---|---|
 | ArchiSteamFarm | `IPCPassword` |
 | qBittorrent | The WebUI login. It bans an address after repeated failed logins. The Traefik `basicAuth` layer no longer applies. |
+| Seerr | The Jellyfin sign-in. The first visitor to a new Seerr becomes the administrator, so finish the setup wizard first. |
+| Sonarr | The Sonarr login. The deployment sets `SONARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. |
 | Vaultwarden admin | The admin token |
 | Alertmanager | None. The tailnet is the only gate. A tailnet device can read alerts and create silences. |
 
@@ -262,6 +264,8 @@ curl -sSI https://argocd.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://grafana.hedgehog-wage.ts.net/login | head -1
 curl -sSI https://asf.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://qbittorrent.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://requests.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://sonarr.hedgehog-wage.ts.net/ | head -1
 ```
 
 Each command returns `200`, or a redirect to a login page. The first request after a new device can take

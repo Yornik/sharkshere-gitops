@@ -173,7 +173,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `truenas-ssd-iscsi` | iSCSI | `ssd_pool` mirror | CNPG Postgres Clusters — ext4 on zvol with `sync=standard` for real per-commit durability |
 | `truenas-iscsi` | iSCSI | `Big_Pool` | Block storage (HDD-backed, rarely used) |
 | `smb` | SMB | `Big_Pool/Share` | Jellyfin media read-only |
-| `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write |
+| `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write; Sonarr imports into the series share |
 | `local-path` | hostPath | Node-local | Jellyfin config (node-pinned) |
 
 ## Public surface
