@@ -154,6 +154,7 @@ flowchart LR
     TMDB[("TMDB")]
     OMDb[("OMDb")]
     TVDB[("TVDB")]
+    AniList[("AniList")]
     SkyHook[("Sonarr SkyHook<br/>TVDB data")]
     Trash[("TRaSH Guides<br/>GitHub")]
   end
@@ -166,7 +167,8 @@ flowchart LR
   JFM -->|"1st choice"| TMDB
   JFM -->|"2nd choice"| OMDb
   JFS -->|"1st choice"| TVDB
-  JFS -->|"fallback"| TMDB
+  JFS -->|"2nd choice, anime posters"| AniList
+  JFS -->|"seasons fallback"| TMDB
   JFS -->|"fallback"| OMDb
   Sonarr -->|images| TVDB
   Sonarr -->|"seasons, episode numbers"| SkyHook
@@ -181,11 +183,13 @@ flowchart LR
 | Radarr | Radarr metadata server (TMDB data), TMDB | Film titles, years and release dates; images from `image.tmdb.org`. |
 | Sonarr | Sonarr SkyHook (TVDB data), TVDB | Seasons, episode numbers and air dates; images from `artworks.thetvdb.com`. |
 | Jellyfin, Movies library | TMDB, then OMDb | Film metadata and images. |
-| Jellyfin, Shows library | TheTVDB plugin, then TMDB and OMDb | Series, season and episode metadata and images. TVDB comes first, so the season numbers match Sonarr. |
+| Jellyfin, Shows library | TheTVDB plugin, AniList plugin, TMDB, OMDb | Series metadata from TVDB, then AniList, then OMDb. Season metadata from TVDB, then TMDB. Episode metadata from AniList, then TVDB, TMDB and OMDb. Posters from AniList first. TVDB comes first for series and seasons, so the season numbers match Sonarr. AniList only answers for anime. |
 | Recyclarr | TRaSH Guides on GitHub | Quality profiles, custom formats and release group tiers. It writes them into Sonarr and Radarr, which then score the releases from Prowlarr. No title metadata. |
 | Intro Skipper | none | Finds intros and credits from the audio of the local files. |
 
 NOTE: Seerr counts seasons as TMDB does, and Sonarr counts them as TVDB does. For an anime with a long break, TMDB can list a later season as more episodes of season 1. A request for "season 1" in Seerr then monitors only TVDB season 1 in Sonarr. Monitor the other seasons in Sonarr.
+
+NOTE: AniList has a separate entry for each anime season. It gives the anime posters and fills in series data that TVDB does not have. It does not decide the season numbers, because TVDB comes first.
 
 NOTE: Sonarr numbers anime episodes by absolute number only when the series type is Anime. Set the Anime Series Type to Anime in the Sonarr settings of Seerr, so new anime requests get it.
 
