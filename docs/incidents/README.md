@@ -22,6 +22,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-10-21 | [gitlab-backup-object-storage-504.md](2026-10-21-gitlab-backup-object-storage-504.md) | The GitLab backup Job failed while it copied object storage buckets, so the repository dump never reached the bucket |
 | 2026-10-21 | [privatebin-disabled-php2shell-rce.md](2026-10-21-privatebin-disabled-php2shell-rce.md) | PrivateBin, the only public PHP service, taken offline during the unpatched php2shell PHP core RCE |
 | 2026-10-23 | [argocd-drops-endpointslice-from-git.md](2026-10-23-argocd-drops-endpointslice-from-git.md) | ArgoCD skips an `EndpointSlice` from git, so the first design for the TrueNAS web interface on the tailnet would have shown nothing |
+| 2026-10-23 | [qbittorrent-dns-search-domain.md](2026-10-23-qbittorrent-dns-search-domain.md) | qBittorrent resolved no host names, so DHT had 0 nodes and magnet links never got their metadata |
 | 2026-10-23 | [truenas-smb-proxy-default-tag.md](2026-10-23-truenas-smb-proxy-default-tag.md) | The SMB proxy device joined the tailnet with the shared tag `tag:k8s`, so each rule for that tag would cover the NAS login after a signature |
 
 ## How to add an incident
