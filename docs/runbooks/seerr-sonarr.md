@@ -271,8 +271,13 @@ NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr
 1. In Seerr, open Settings, then Services, and edit Radarr.
 2. Set Quality Profile to `Remux 2160p (Alternative)`.
 3. Set Anime Quality Profile to `[Anime] Remux-1080p`.
-4. Do the same for Sonarr. Also set Anime Series Type to Anime.
-5. In Radarr and Sonarr, give existing titles the new profile: select them, then Edit, then Quality Profile.
+4. Save, and edit Sonarr.
+5. Set Quality Profile to `Remux 2160p (Alternative)`.
+6. Set Anime Quality Profile to `[Anime] Remux-1080p`.
+7. Set Anime Series Type to Anime, and save.
+8. In Radarr, open Movies and click Select Movies.
+9. Select the films, click Edit, and set Quality Profile.
+10. In Sonarr, do step 8 and step 9 for the series. Give anime `[Anime] Remux-1080p`.
 
 ### How to run it now
 
