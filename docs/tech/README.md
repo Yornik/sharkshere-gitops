@@ -94,6 +94,7 @@ flowchart TB
     Radarr["Radarr<br/>films, category movies"]
     Prowlarr["Prowlarr<br/>syncs indexers to Sonarr and Radarr"]
     Flare["FlareSolverr<br/>ClusterIP only"]
+    Recyclarr["Recyclarr CronJob<br/>daily 04:17"]
     subgraph QB["qBittorrent pod, ndots:1"]
       QBit["qBittorrent"] --- Gluetun["gluetun<br/>Mullvad WireGuard"]
     end
@@ -102,13 +103,14 @@ flowchart TB
   NAS[("TrueNAS SMB shares<br/>series/ and movies/<br/>downloads/ has .ignore")]
   Indexers([Indexers])
   Peers([BitTorrent peers])
+  Trash([TRaSH Guides on GitHub])
 
   User -->|1. request| Jellyfin
   TailUser -->|1. request| Seerr
   Jellyfin -->|"2. API call from the server"| Seerr
   Seerr -->|3. series| Sonarr
   Seerr -->|3. film| Radarr
-  Sonarr & Radarr -->|4. search| Prowlarr
+  Sonarr & Radarr -->|"4. search, pick the best release"| Prowlarr
   Prowlarr -->|"home address"| Indexers
   Prowlarr -.->|"challenge page"| Flare -.->|"home address"| Indexers
   Sonarr & Radarr -->|5. send torrent| QBit
@@ -117,7 +119,16 @@ flowchart TB
   Sonarr & Radarr -->|"7. copy into the library"| NAS
   Sonarr & Radarr -.->|"8. scan library"| Jellyfin
   NAS -->|"read-only mount"| Jellyfin
+  Trash -.->|"profiles, custom formats"| Recyclarr
+  Recyclarr -.->|"quality profiles"| Sonarr & Radarr
 ```
+
+In step 4, Sonarr and Radarr score each release with the quality profile of the title. Recyclarr syncs these profiles from the TRaSH Guides every night:
+
+- `Remux 2160p (Alternative)` for films and normal series.
+- `[Anime] Remux-1080p` for anime.
+
+Both profiles refuse BR-DISK, LQ groups, upscales and 3D. Details are in [`../runbooks/seerr-sonarr.md`](../runbooks/seerr-sonarr.md#recyclarr).
 
 ### Where the metadata comes from
 
@@ -133,6 +144,7 @@ flowchart LR
     JFM["Jellyfin<br/>Movies library"]
     JFS["Jellyfin<br/>Shows library"]
     Sonarr["Sonarr"]
+    Recyclarr["Recyclarr"]
   end
 
   subgraph Ext["Metadata providers"]
@@ -143,6 +155,7 @@ flowchart LR
     OMDb[("OMDb")]
     TVDB[("TVDB")]
     SkyHook[("Sonarr SkyHook<br/>TVDB data")]
+    Trash[("TRaSH Guides<br/>GitHub")]
   end
 
   JE -->|"everything through Seerr"| Seerr
@@ -157,6 +170,7 @@ flowchart LR
   JFS -->|"fallback"| OMDb
   Sonarr -->|images| TVDB
   Sonarr -->|"seasons, episode numbers"| SkyHook
+  Recyclarr -->|"quality profiles, custom formats"| Trash
 ```
 
 | App | Provider | What it fetches |
@@ -168,9 +182,12 @@ flowchart LR
 | Sonarr | Sonarr SkyHook (TVDB data), TVDB | Seasons, episode numbers and air dates; images from `artworks.thetvdb.com`. |
 | Jellyfin, Movies library | TMDB, then OMDb | Film metadata and images. |
 | Jellyfin, Shows library | TheTVDB plugin, then TMDB and OMDb | Series, season and episode metadata and images. TVDB comes first, so the season numbers match Sonarr. |
+| Recyclarr | TRaSH Guides on GitHub | Quality profiles, custom formats and release group tiers. It writes them into Sonarr and Radarr, which then score the releases from Prowlarr. No title metadata. |
 | Intro Skipper | none | Finds intros and credits from the audio of the local files. |
 
 NOTE: Seerr counts seasons as TMDB does, and Sonarr counts them as TVDB does. For an anime with a long break, TMDB can list a later season as more episodes of season 1. A request for "season 1" in Seerr then monitors only TVDB season 1 in Sonarr. Monitor the other seasons in Sonarr.
+
+NOTE: Sonarr numbers anime episodes by absolute number only when the series type is Anime. Set the Anime Series Type to Anime in the Sonarr settings of Seerr, so new anime requests get it.
 
 ## Engineering highlights
 
@@ -221,7 +238,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `sonarr` | `jellyfin` | TV series manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `radarr` | `jellyfin` | film manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `prowlarr` | `jellyfin` | indexer manager; syncs indexers to Sonarr and Radarr; no VPN, so searches leave from the home address; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
-| `recyclarr` | `jellyfin` | daily CronJob that syncs the TRaSH Guides anime profile and custom formats into Sonarr and Radarr — see [runbook](../runbooks/seerr-sonarr.md#recyclarr) |
+| `recyclarr` | `jellyfin` | daily CronJob that syncs the TRaSH Guides profiles `Remux 2160p (Alternative)` and `[Anime] Remux-1080p` and their custom formats into Sonarr and Radarr — see [runbook](../runbooks/seerr-sonarr.md#recyclarr) |
 | `flaresolverr` | `jellyfin` | browser that solves the Cloudflare challenge of an indexer for Prowlarr; ClusterIP Service only, no login, no tailnet address and no public route — see [runbook](../runbooks/seerr-sonarr.md) |
 | `democratic-csi` | `democratic-csi` | CSI config bootstrap |
 | `muse` | `muse` | app workload |

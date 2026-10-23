@@ -244,28 +244,35 @@ CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Ser
 
 ## Recyclarr
 
-`manifests/recyclarr/` runs Recyclarr once a day, at 04:17 Europe/Amsterdam, as a CronJob. It syncs the TRaSH Guides profile `[Anime] Remux-1080p` into Sonarr and Radarr. It does not change the other profiles.
+`manifests/recyclarr/` runs Recyclarr once a day, at 04:17 Europe/Amsterdam, as a CronJob. It syncs 2 TRaSH Guides profiles into Sonarr and into Radarr. It does not change the other profiles.
 
-| What it sets | Effect |
+| Profile | Use it for | Qualities |
+|---|---|---|
+| `Remux 2160p (Alternative)` | Films and normal series | 2160p remux first, then 2160p Bluray and WEB, then 1080p and 720p. A title without a 4K release still downloads. |
+| `[Anime] Remux-1080p` | Anime | BD and WEB 1080p first, then 720p. No 2160p, because most anime 2160p releases are upscales. |
+
+| Custom formats | Effect |
 |---|---|
-| Qualities | BD and WEB 1080p first, then 720p. No 2160p, because most anime 2160p releases are upscales. |
-| Custom formats | Release groups ranked in BD and WEB tiers. Minus points for raws, low quality groups, VOSTFR and dubs only. |
-| Anime Dual Audio | A bonus of 101 points. |
-| Minimum custom format score | 100. A release from a group that the tiers do not know is refused. |
+| Unwanted Formats | -10000 for BR-DISK, LQ groups, upscales and 3D. Neither profile takes them. |
+| Golden Rule UHD | Refuses x265 encodes of 1080p sources. |
+| Release group tiers | Remux, UHD Bluray, anime BD and anime WEB groups ranked by quality. |
+| Anime Dual Audio | +101 in the anime profile. |
 
-With the quality equal, Sonarr prefers a season pack over single episodes. Before this profile, a single 2160p episode won over a 1080p BD season pack.
+NOTE: The anime profile sets a minimum custom format score of 100. A release from a group that the anime tiers do not know is refused.
+
+With the quality equal, Sonarr prefers a season pack over single episodes. Before these profiles, a single 2160p anime episode won over a 1080p BD season pack.
 
 The API keys are in `manifests/recyclarr/secret.enc.yaml`. If you create a new API key in Sonarr or Radarr, update that file.
 
 NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr-config-ssd` volume. Without that volume it cannot update them.
 
-### How to use the anime profile
+### How to use the profiles
 
-1. In Seerr, open Settings, then Services, and edit Sonarr.
-2. Set Anime Series Type to Anime.
+1. In Seerr, open Settings, then Services, and edit Radarr.
+2. Set Quality Profile to `Remux 2160p (Alternative)`.
 3. Set Anime Quality Profile to `[Anime] Remux-1080p`.
-4. Do the same for Radarr.
-5. In Sonarr, edit each anime series and set Quality Profile to `[Anime] Remux-1080p`.
+4. Do the same for Sonarr. Also set Anime Series Type to Anime.
+5. In Radarr and Sonarr, give existing titles the new profile: select them, then Edit, then Quality Profile.
 
 ### How to run it now
 

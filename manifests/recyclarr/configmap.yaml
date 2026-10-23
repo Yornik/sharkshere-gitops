@@ -4,25 +4,44 @@ metadata:
   name: recyclarr-config
   namespace: jellyfin
 data:
-  # The TRaSH Guides anime profile for Sonarr and Radarr, with a bonus for
-  # dual audio. Recyclarr creates the profile `[Anime] Remux-1080p` and its
-  # custom formats. It does not change the other profiles.
+  # Two TRaSH Guides profiles in Sonarr and in Radarr. Recyclarr creates them
+  # and their custom formats, and does not change the other profiles.
+  #
+  # - `Remux 2160p (Alternative)` for films and normal series. It aims for a
+  #   2160p remux and falls back to 2160p Bluray or WEB, then 1080p and 720p,
+  #   so a title without a 4K release still downloads.
+  # - `[Anime] Remux-1080p` for anime, with a bonus for dual audio. Most
+  #   anime 2160p releases are upscales, so it stops at 1080p.
+  #
+  # The `Unwanted Formats` group gives -10000 to BR-DISK, LQ groups,
+  # upscales and 3D, so neither profile takes them. `Golden Rule UHD` refuses
+  # x265 encodes of 1080p sources.
   #
   # NOTE: There is no `quality_definition`. It sets the size limits of every
-  # quality in the app, for all series and films, not only for anime. The
-  # limits are unlimited on purpose.
+  # quality in the app, for all series and films. The limits are unlimited on
+  # purpose.
   #
-  # NOTE: The profile sets a minimum custom format score of 100. A release
-  # from a group that the TRaSH tiers do not know is refused.
+  # NOTE: The anime profile sets a minimum custom format score of 100. A
+  # release from a group that the TRaSH tiers do not know is refused.
+  #
+  # NOTE: Instance names must be unique across Sonarr and Radarr.
   recyclarr.yml: |
     sonarr:
-      sonarr-anime:
+      sonarr-main:
         base_url: http://sonarr:8989
         api_key: !env_var SONARR_API_KEY
         quality_profiles:
+          - trash_id: 361717d531db5a6002e0f547ace46551 # Remux 2160p (Alternative)
+            reset_unmatched_scores:
+              enabled: true
           - trash_id: 20e0fc959f1f1704bed501f23bdae76f # [Anime] Remux-1080p
             reset_unmatched_scores:
               enabled: true
+        custom_format_groups:
+          add:
+            - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
+            - trash_id: 85fae4a2294965b75710ef2989c850eb # [Streaming Services] HD/UHD boost
+            - trash_id: 59c3af66780d08332fdc64e68297098f # [Unwanted] Unwanted Formats
         custom_formats:
           - trash_ids:
               - 418f50b10f1907201b6cfdf881f467b7 # Anime Dual Audio
@@ -31,13 +50,20 @@ data:
                 score: 101
 
     radarr:
-      radarr-anime:
+      radarr-main:
         base_url: http://radarr:7878
         api_key: !env_var RADARR_API_KEY
         quality_profiles:
+          - trash_id: dd3cd75deb9645bae838d1c5da6388d5 # Remux 2160p (Alternative)
+            reset_unmatched_scores:
+              enabled: true
           - trash_id: 722b624f9af1e492284c4bc842153a38 # [Anime] Remux-1080p
             reset_unmatched_scores:
               enabled: true
+        custom_format_groups:
+          add:
+            - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
+            - trash_id: a3ac6af01d78e4f21fcb75f601ac96df # [Unwanted] Unwanted Formats
         custom_formats:
           - trash_ids:
               - 4a3b087eea2ce012fcc1ce319259a3be # Anime Dual Audio
