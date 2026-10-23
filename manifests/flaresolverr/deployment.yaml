@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaresolverr
+  namespace: jellyfin
+  labels:
+    app: flaresolverr
+spec:
+  # 1 replica, and no volume, so the default rolling update is safe.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flaresolverr
+  template:
+    metadata:
+      labels:
+        app: flaresolverr
+    spec:
+      # No gluetun sidecar, as for Prowlarr. A solved Cloudflare challenge
+      # belongs to the address that solved it. Prowlarr reuses the result for
+      # its own requests, so both must leave from the home address.
+      #
+      # FlareSolverr does not call the Kubernetes API. It opens pages from the
+      # internet in a browser. A token in the pod would help a browser exploit.
+      automountServiceAccountToken: false
+      containers:
+        - name: flaresolverr
+          image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
+          # The image sets `USER flaresolverr` by name. Do not add
+          # `runAsNonRoot` without a numeric `runAsUser`: the kubelet cannot
+          # check a name and refuses to start the container. The image already
+          # runs as a user that is not root.
+          #
+          # No `readOnlyRootFilesystem`: Chromium and undetected-chromedriver
+          # write to the home directory and to /tmp.
+          #
+          # The image starts Chromium with --no-sandbox and
+          # --disable-dev-shm-usage, so the pod needs no capability and no
+          # /dev/shm volume.
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: LOG_LEVEL
+              value: info
+          ports:
+            - containerPort: 8191
+              name: http
+          # /health returns a constant. Do not probe `/`: it starts a
+          # Chromium to read the user agent.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            # The server starts to listen after a test start of Chromium.
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the
+            # full reasoning. A solve is a burst of cpu in Chromium. A quota
+            # stretches it past the 60 s timeout that the runbook sets in
+            # Prowlarr.
+            #
+            # Each request starts a Chromium of its own, so memory grows with
+            # the number of requests in parallel. The memory limit is a
+            # ceiling, not a measurement. It keeps a runaway browser from
+            # using the memory of the node.
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
