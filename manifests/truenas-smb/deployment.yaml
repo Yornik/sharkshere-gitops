@@ -1,0 +1,89 @@
+# Relays TCP from the cluster to the SMB service of the NAS at 192.168.1.42.
+#
+# The Tailscale operator reaches a Service through its ClusterIP. The NAS is
+# not a pod, so no selector reaches it, and ArgoCD does not apply an
+# EndpointSlice from git. This pod is the cluster-side address of the NAS.
+# It is a copy of manifests/truenas-ui, not a share of it: a fault in the
+# SMB relay cannot touch the web interface.
+# See docs/incidents/2026-10-23-argocd-drops-endpointslice-from-git.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: truenas-smb
+  namespace: truenas-smb
+  labels:
+    app: truenas-smb
+spec:
+  # 1 replica, and no volume, so the default rolling update is safe. A new pod
+  # must be Ready before the old one stops, so a bad config keeps the old pod.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: truenas-smb
+  template:
+    metadata:
+      labels:
+        app: truenas-smb
+    spec:
+      # The relay does not call the Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        # The nginx user of the image.
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: relay
+          image: nginx:1.31-alpine
+          # Skips the entrypoint of the image. Its scripts edit files under
+          # /etc/nginx and need root. "-e stderr" replaces the log path that
+          # nginx opens before it reads the configuration.
+          command: ["nginx", "-e", "stderr", "-c", "/etc/nginx/relay/nginx.conf", "-g", "daemon off;"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: smb
+              containerPort: 8445
+              protocol: TCP
+            - name: health
+              containerPort: 8081
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: health
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the
+            # full reasoning. The memory limit stays. It is higher than for
+            # the web interface relay: SMB moves file data through the buffers
+            # of the relay. Not measured.
+            requests:
+              cpu: 10m
+              memory: 8Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/relay
+              readOnly: true
+            # nginx writes its pid file here. The root file system is read-only.
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: truenas-smb-nginx
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Mi

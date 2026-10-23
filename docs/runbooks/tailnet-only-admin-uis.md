@@ -1,7 +1,7 @@
 # Tailnet-only admin interfaces
 
-ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr and the
-Vaultwarden admin panel are reachable on the tailnet only, over HTTPS. This file
+ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, the
+Vaultwarden admin panel and the TrueNAS web interface are reachable on the tailnet only, over HTTPS. This file
 says how to reach them, how to activate a new proxy device, what changed, and
 how to undo the change.
 
@@ -15,6 +15,7 @@ how to undo the change.
 | Seerr | `https://requests.hedgehog-wage.ts.net` | none |
 | Sonarr | `https://sonarr.hedgehog-wage.ts.net` | none |
 | Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
+| TrueNAS | `https://nas.hedgehog-wage.ts.net` | none |
 
 ## How to reach them
 
@@ -43,6 +44,10 @@ argocd login argocd.hedgehog-wage.ts.net --grpc-web
 Each address is a proxy device that the Tailscale operator runs. Each new or
 replaced Ingress gets a new device from the operator. Tailnet Lock blocks a
 new device until a trusted key signs it.
+
+NOTE: The same rule holds for a new name. If a device called `nas` already
+exists, remove it before you merge. If you do not, the new device joins as
+`nas-1`.
 
 ### Before you merge a change that replaces a proxy
 
@@ -80,7 +85,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|vaultwarden-admin'
+   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|vaultwarden-admin|\bnas\b'
    ```
 
 Expected result: each name is as in the table above, without a suffix.
@@ -118,6 +123,10 @@ The proxy follows the new name and gets a certificate for it.
 - The Vaultwarden admin panel uses
   `manifests/vaultwarden/ingress-admin-tailnet.yaml`. The public route for
   `passwords.yornik.eu` excludes `/admin`.
+- The TrueNAS web interface uses `manifests/truenas-ui/`. The NAS is not in
+  the cluster, so the Ingress points at a small nginx pod that relays TCP to
+  `192.168.1.42:443`. It has no public route and no public DNS record. See
+  [`truenas-ui.md`](truenas-ui.md).
 
 The public DNS records for `grafana.`, `asf.` and `qbittorrent.fedishark.eu`
 still exist. ExternalDNS runs with `--policy=upsert-only`: it never deletes a
@@ -157,6 +166,7 @@ Each application keeps its own login, except Alertmanager:
 | Sonarr | The Sonarr login. The deployment sets `SONARR__AUTH__REQUIRED=Enabled`, so the login also applies to pod addresses. The first visitor to a new Sonarr creates the login, so create it first. |
 | Vaultwarden admin | The admin token |
 | Alertmanager | None. The tailnet is the only gate. A tailnet device can read alerts and create silences. |
+| TrueNAS | The TrueNAS login. See [`truenas-ui.md`](truenas-ui.md) for the settings that keep it safe. |
 
 CAUTION: Alertmanager has no login. A device on the tailnet can silence every
 alert. Keep the tailnet limited to your own devices. To add a gate, use
@@ -176,6 +186,13 @@ ArgoCD keeps reconciling while its UI is unreachable. The UI is not needed to
 apply a revert. If the webhook is also broken, ArgoCD picks the change up on
 its next poll.
 
+### Undo the TrueNAS change
+
+Revert `feat(truenas): publish the web interface on the tailnet`. The revert
+removes the `truenas-ui` Application, its namespace and the proxy device.
+Nothing else depended on it. The NAS settings in
+[`truenas-ui.md`](truenas-ui.md) can stay.
+
 ### Undo the ArchiSteamFarm and qBittorrent change
 
 Revert `feat(security): move ArchiSteamFarm and qBittorrent to the tailnet`.
@@ -194,12 +211,16 @@ Use this to get in at once, before or instead of a revert.
    kubectl --context yornik-sharkshere -n monitoring port-forward svc/kube-prometheus-stack-alertmanager 9093:9093
    kubectl --context yornik-sharkshere -n asf port-forward svc/asf 1242:1242
    kubectl --context yornik-sharkshere -n jellyfin port-forward svc/qbittorrent 8081:8080
+   kubectl --context yornik-sharkshere -n truenas-ui port-forward svc/truenas-ui 8443:443
    ```
 
 2. Open the local address: `http://localhost:8080` for ArgoCD,
    `http://localhost:3000` for Grafana, `http://localhost:9093` for
    Alertmanager, `http://localhost:1242` for
-   ArchiSteamFarm or `http://localhost:8081` for qBittorrent.
+   ArchiSteamFarm, `http://localhost:8081` for qBittorrent or
+   `https://localhost:8443` for TrueNAS. The browser warns about the
+   self-signed certificate of the NAS. At home, open `https://192.168.1.42`
+   without the port-forward.
 
 ### If a Tailscale Ingress does not publish its address
 
@@ -266,6 +287,7 @@ curl -sSI https://asf.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://qbittorrent.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://requests.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://sonarr.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://nas.hedgehog-wage.ts.net/ | head -1
 ```
 
 Each command returns `200`, or a redirect to a login page. The first request after a new device can take

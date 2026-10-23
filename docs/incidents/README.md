@@ -21,6 +21,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-10-21 | [renovate-frozen-by-tag-suffix.md](2026-10-21-renovate-frozen-by-tag-suffix.md) | Renovate opened no bump for a pinned image for 8 months, and nothing reported the gap |
 | 2026-10-21 | [gitlab-backup-object-storage-504.md](2026-10-21-gitlab-backup-object-storage-504.md) | The GitLab backup Job failed while it copied object storage buckets, so the repository dump never reached the bucket |
 | 2026-10-21 | [privatebin-disabled-php2shell-rce.md](2026-10-21-privatebin-disabled-php2shell-rce.md) | PrivateBin, the only public PHP service, taken offline during the unpatched php2shell PHP core RCE |
+| 2026-10-23 | [argocd-drops-endpointslice-from-git.md](2026-10-23-argocd-drops-endpointslice-from-git.md) | ArgoCD skips an `EndpointSlice` from git, so the first design for the TrueNAS web interface on the tailnet would have shown nothing |
 
 ## How to add an incident
 

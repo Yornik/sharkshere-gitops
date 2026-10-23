@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: truenas-ui
+  namespace: truenas-ui
+  labels:
+    app: truenas-ui
+spec:
+  selector:
+    app: truenas-ui
+  ports:
+    # Port 443, named https, makes the Tailscale operator open TLS to this
+    # backend and skip the certificate check. The NAS serves a self-signed
+    # certificate on its HTTPS port, and the relay passes it through. The
+    # operator picks plain HTTP for any other port, which the relay does not
+    # serve.
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP
