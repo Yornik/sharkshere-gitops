@@ -21,12 +21,12 @@ This repository is one of three:
 | Document | Content |
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
+| [`docs/tech/monitoring.md`](docs/tech/monitoring.md) | How metrics, logs, dashboards and alerts work, and the gaps in them. |
 | [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
 | [`REVIEW.md`](REVIEW.md) | 2 checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
 | [`docs/incidents/`](docs/incidents/README.md) | One write-up for each incident or significant finding. Each has a cause, a correction and a prevention. |
 | [`docs/runbooks/`](docs/runbooks/) | Procedures for one application each: how to activate, check, restore or repair it. |
-| [`docs/monitoring.md`](docs/monitoring.md) | How metrics, logs, dashboards and alerts work, and the gaps in them. |
 
 ## Repository layout
 
