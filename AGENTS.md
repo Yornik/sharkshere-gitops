@@ -13,6 +13,7 @@ ArgoCD reads this repository and makes the cluster agree with it. A change that 
 | [`REVIEW.md`](REVIEW.md) | You review a pull request. |
 | [`docs/styleguide.md`](docs/styleguide.md) | You write or edit a document, a README or a comment. |
 | [`docs/incidents/`](docs/incidents/README.md) | You touch a component. Read the write-up for that component first. |
+| [`docs/monitoring.md`](docs/monitoring.md) | You touch Prometheus, Grafana, Loki, Alloy, an exporter, a dashboard or an alert. |
 
 ## Rules
 
