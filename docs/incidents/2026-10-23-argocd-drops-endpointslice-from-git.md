@@ -26,7 +26,7 @@ Put a pod in front of the NAS. The `truenas-ui` Application runs an nginx pod th
 2. Do not use an `ExternalName` Service as the backend of a Tailscale Ingress.
 3. After a sync, read the Application conditions. A warning that names an excluded kind means that ArgoCD skipped a manifest.
 
-To manage an excluded kind from git, remove it from `resource.exclusions` in `bootstrap/argocd/argocd-cm-patch.yaml`. That change needs the manual bootstrap apply in [`AGENTS.md`](../../AGENTS.md), and ArgoCD then watches every `EndpointSlice` in the cluster. The exclusion exists to avoid that load. The relay pod costs less.
+To manage an excluded kind from git, remove it from `resource.exclusions` in `bootstrap/argocd/argocd-cm-patch.yaml`. That change needs the manual bootstrap apply in [`AGENTS.md`](../../AGENTS.md), and ArgoCD then watches every `EndpointSlice` in the cluster. The exclusion exists to reduce that load. The relay pod costs less.
 
 ## Evidence
 

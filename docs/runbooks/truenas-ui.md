@@ -28,7 +28,8 @@ NOTE: The NAS is not a pod, so a Service cannot select it. ArgoCD drops an `Endp
 
 The new hostname needs no change on the NAS. The facts below come from the TrueNAS source of the releases 24.10.2.4, 25.04.2.6, 25.10.7, 26 and 27.0.0-RC.1.
 
-- TrueNAS does not check the `Host` header or the `Origin` header.
+- TrueNAS does not check the `Host` header or the `Origin` header. It only copies `Host` into a redirect and into the server URL of the API docs page.
+- An unknown `Host` reaches the default server block of the NAS, which serves the web interface.
 - The Tailscale proxy passes `Host: nas.hedgehog-wage.ts.net` to the NAS unchanged.
 - The redirect from `/` to `/ui/` copies the `Host` header of the request. The browser stays on `nas.hedgehog-wage.ts.net`.
 - In the TrueNAS middleware, the word "origin" means the IP address of the client. It does not mean the `Origin` header.
@@ -62,7 +63,7 @@ CAUTION: If `ui_allowlist` is not empty, add the 4 node addresses. Then every ta
 ### What the NAS sees
 
 - The audit log and the session list show a node address, not the tailnet device.
-- TrueNAS limits unauthenticated calls, such as the login, by client address. All tailnet devices share the node address. Many failed logins from one device can delay the login of the others.
+- TrueNAS limits unauthenticated calls, such as the login, by client address. All tailnet devices share the node address. Many failed logins from a single device can delay the login of the other devices.
 - TrueNAS ties its auth tokens to the client address. If the relay pod moves to another node, the address changes. The web interface can then ask for a login again.
 
 ## How to check the path

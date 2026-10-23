@@ -1,9 +1,9 @@
 # Relays TCP from the cluster to the TrueNAS web interface at 192.168.1.42.
 #
-# The Tailscale operator can publish a Service only if it has a ClusterIP and
-# endpoints that the cluster owns. The NAS is neither, and ArgoCD does not
-# apply an EndpointSlice from git. This pod is the cluster-side address of the
-# NAS. See docs/incidents/2026-10-23-argocd-drops-endpointslice-from-git.md.
+# The Tailscale operator needs a backend Service with a ClusterIP. The NAS is
+# not a pod, so no selector reaches it, and ArgoCD does not apply an
+# EndpointSlice from git. This pod is the cluster-side address of the NAS.
+# See docs/incidents/2026-10-23-argocd-drops-endpointslice-from-git.md.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
