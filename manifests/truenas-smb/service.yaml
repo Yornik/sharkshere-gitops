@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: truenas-smb
+  namespace: truenas-smb
+  labels:
+    app: truenas-smb
+  annotations:
+    # The Tailscale operator runs 1 proxy device for this Service, at
+    # nas-smb.hedgehog-wage.ts.net. Same pattern as manifests/gitlab/
+    # service-ssh.yaml. The name is not "nas": that device belongs to the
+    # Ingress of the web interface, and 1 proxy cannot be both.
+    #
+    # NOTE: The proxy sends every port of its tailnet address to the
+    # ClusterIP of this Service. Declare port 445 and no other port here.
+    # A second port would also be open to the tailnet.
+    tailscale.com/expose: "true"
+    tailscale.com/hostname: nas-smb
+spec:
+  type: ClusterIP
+  selector:
+    app: truenas-smb
+  ports:
+    - name: smb
+      port: 445
+      targetPort: smb
+      protocol: TCP

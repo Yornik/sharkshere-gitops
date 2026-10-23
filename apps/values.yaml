@@ -337,6 +337,14 @@ apps:
     namespace: truenas-ui
     path: manifests/truenas-ui
 
+  # The SMB service of the TrueNAS on the tailnet, at
+  # nas-smb.hedgehog-wage.ts.net. A separate Application from truenas-ui, so
+  # that a fault in one relay cannot touch the other. See
+  # docs/runbooks/truenas-smb.md.
+  truenas-smb:
+    namespace: truenas-smb
+    path: manifests/truenas-smb
+
   alloy:
     namespace: monitoring
     helm:
