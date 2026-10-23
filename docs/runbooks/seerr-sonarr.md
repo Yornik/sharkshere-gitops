@@ -242,6 +242,50 @@ NOTE: The tag in step 5 and the tag in step 9 must be the same. If the tags diff
 
 CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Service type. Do not add an Ingress or a Tailscale annotation for it. Anyone who reaches it can make it open any address from the home network, including the NAS and the cluster. The cluster does not enforce NetworkPolicy, so a pod in any namespace can call it. See the CNI row in [`../tech/README.md`](../tech/README.md).
 
+## Recyclarr
+
+`manifests/recyclarr/` runs Recyclarr every hour, at minute 17, as a CronJob. It syncs 2 TRaSH Guides profiles into Sonarr and into Radarr. It does not change the other profiles.
+
+| Profile | Use it for | Qualities |
+|---|---|---|
+| `Remux 2160p (Alternative)` | Films and normal series | 2160p remux first, then 2160p Bluray and WEB, then 1080p and 720p. A title without a 4K release still downloads. |
+| `[Anime] Remux-1080p` | Anime | BD and WEB 1080p first, then 720p. No 2160p, because most anime 2160p releases are upscales. |
+
+| Custom formats | Effect |
+|---|---|
+| Unwanted Formats | -10000 for BR-DISK, LQ groups, upscales and 3D. Neither profile takes them. |
+| Golden Rule UHD | Refuses x265 encodes of 1080p sources. |
+| Release group tiers | Remux, UHD Bluray, anime BD and anime WEB groups ranked by quality. |
+| Anime Dual Audio | +101 in the anime profile. |
+
+NOTE: The anime profile sets a minimum custom format score of 100. A release from a group that the anime tiers do not know is refused.
+
+With the quality equal, Sonarr prefers a season pack over single episodes. Before these profiles, a single 2160p anime episode won over a 1080p BD season pack.
+
+The API keys are in `manifests/recyclarr/secret.enc.yaml`. If you create a new API key in Sonarr or Radarr, update that file.
+
+NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr-config-ssd` volume. Without that volume it cannot update them.
+
+### How to use the profiles
+
+1. In Seerr, open Settings, then Services, and edit Radarr.
+2. Set Quality Profile to `Remux 2160p (Alternative)`.
+3. Set Anime Quality Profile to `[Anime] Remux-1080p`.
+4. Save, and edit Sonarr.
+5. Set Quality Profile to `Remux 2160p (Alternative)`.
+6. Set Anime Quality Profile to `[Anime] Remux-1080p`.
+7. Set Anime Series Type to Anime, and save.
+8. In Radarr, open Movies and click Select Movies.
+9. Select the films, click Edit, and set Quality Profile.
+10. In Sonarr, do step 8 and step 9 for the series. Give anime `[Anime] Remux-1080p`.
+
+### How to run it now
+
+```sh
+kubectl -n jellyfin create job --from=cronjob/recyclarr recyclarr-manual
+kubectl -n jellyfin logs -f job/recyclarr-manual
+```
+
 ## How to connect Seerr to Sonarr and Radarr
 
 1. In Seerr, open Settings, then Services, and add a Sonarr server.

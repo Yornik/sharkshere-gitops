@@ -2,7 +2,7 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 53 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 54 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
@@ -24,7 +24,7 @@ This repo is one of three:
 | CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
-| Workloads | 53 ArgoCD Applications, 15 public HTTPS domains, 11 tailnet-only web interfaces, 1 tailnet-only SMB service |
+| Workloads | 54 ArgoCD Applications, 15 public HTTPS domains, 11 tailnet-only web interfaces, 1 tailnet-only SMB service |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
@@ -94,6 +94,7 @@ flowchart TB
     Radarr["Radarr<br/>films, category movies"]
     Prowlarr["Prowlarr<br/>syncs indexers to Sonarr and Radarr"]
     Flare["FlareSolverr<br/>ClusterIP only"]
+    Recyclarr["Recyclarr CronJob<br/>hourly"]
     subgraph QB["qBittorrent pod, ndots:1"]
       QBit["qBittorrent"] --- Gluetun["gluetun<br/>Mullvad WireGuard"]
     end
@@ -102,13 +103,14 @@ flowchart TB
   NAS[("TrueNAS SMB shares<br/>series/ and movies/<br/>downloads/ has .ignore")]
   Indexers([Indexers])
   Peers([BitTorrent peers])
+  Trash([TRaSH Guides on GitHub])
 
   User -->|1. request| Jellyfin
   TailUser -->|1. request| Seerr
   Jellyfin -->|"2. API call from the server"| Seerr
   Seerr -->|3. series| Sonarr
   Seerr -->|3. film| Radarr
-  Sonarr & Radarr -->|4. search| Prowlarr
+  Sonarr & Radarr -->|"4. search, pick the best release"| Prowlarr
   Prowlarr -->|"home address"| Indexers
   Prowlarr -.->|"challenge page"| Flare -.->|"home address"| Indexers
   Sonarr & Radarr -->|5. send torrent| QBit
@@ -117,7 +119,16 @@ flowchart TB
   Sonarr & Radarr -->|"7. copy into the library"| NAS
   Sonarr & Radarr -.->|"8. scan library"| Jellyfin
   NAS -->|"read-only mount"| Jellyfin
+  Trash -.->|"profiles, custom formats"| Recyclarr
+  Recyclarr -.->|"quality profiles"| Sonarr & Radarr
 ```
+
+In step 4, Sonarr and Radarr score each release with the quality profile of the title. Recyclarr syncs these profiles from the TRaSH Guides every hour:
+
+- `Remux 2160p (Alternative)` for films and normal series.
+- `[Anime] Remux-1080p` for anime.
+
+Both profiles refuse BR-DISK, LQ groups, upscales and 3D. Details are in [`../runbooks/seerr-sonarr.md`](../runbooks/seerr-sonarr.md#recyclarr).
 
 ### Where the metadata comes from
 
@@ -133,6 +144,7 @@ flowchart LR
     JFM["Jellyfin<br/>Movies library"]
     JFS["Jellyfin<br/>Shows library"]
     Sonarr["Sonarr"]
+    Recyclarr["Recyclarr"]
   end
 
   subgraph Ext["Metadata providers"]
@@ -142,7 +154,9 @@ flowchart LR
     TMDB[("TMDB")]
     OMDb[("OMDb")]
     TVDB[("TVDB")]
+    AniList[("AniList")]
     SkyHook[("Sonarr SkyHook<br/>TVDB data")]
+    Trash[("TRaSH Guides<br/>GitHub")]
   end
 
   JE -->|"everything through Seerr"| Seerr
@@ -153,10 +167,12 @@ flowchart LR
   JFM -->|"1st choice"| TMDB
   JFM -->|"2nd choice"| OMDb
   JFS -->|"1st choice"| TVDB
-  JFS -->|"fallback"| TMDB
+  JFS -->|"2nd choice, anime posters"| AniList
+  JFS -->|"seasons fallback"| TMDB
   JFS -->|"fallback"| OMDb
   Sonarr -->|images| TVDB
   Sonarr -->|"seasons, episode numbers"| SkyHook
+  Recyclarr -->|"quality profiles, custom formats"| Trash
 ```
 
 | App | Provider | What it fetches |
@@ -167,10 +183,15 @@ flowchart LR
 | Radarr | Radarr metadata server (TMDB data), TMDB | Film titles, years and release dates; images from `image.tmdb.org`. |
 | Sonarr | Sonarr SkyHook (TVDB data), TVDB | Seasons, episode numbers and air dates; images from `artworks.thetvdb.com`. |
 | Jellyfin, Movies library | TMDB, then OMDb | Film metadata and images. |
-| Jellyfin, Shows library | TheTVDB plugin, then TMDB and OMDb | Series, season and episode metadata and images. TVDB comes first, so the season numbers match Sonarr. |
+| Jellyfin, Shows library | TheTVDB plugin, AniList plugin, TMDB, OMDb | Series metadata from TVDB, then AniList, then OMDb. Season metadata from TVDB, then TMDB. Episode metadata from AniList, then TVDB, TMDB and OMDb. Posters from AniList first. TVDB comes first for series and seasons, so the season numbers match Sonarr. AniList only answers for anime. |
+| Recyclarr | TRaSH Guides on GitHub | Quality profiles, custom formats and release group tiers. It writes them into Sonarr and Radarr, which then score the releases from Prowlarr. No title metadata. |
 | Intro Skipper | none | Finds intros and credits from the audio of the local files. |
 
 NOTE: Seerr counts seasons as TMDB does, and Sonarr counts them as TVDB does. For an anime with a long break, TMDB can list a later season as more episodes of season 1. A request for "season 1" in Seerr then monitors only TVDB season 1 in Sonarr. Monitor the other seasons in Sonarr.
+
+NOTE: AniList has a separate entry for each anime season. It gives the anime posters and fills in series data that TVDB does not have. It does not decide the season numbers, because TVDB comes first.
+
+NOTE: Sonarr numbers anime episodes by absolute number only when the series type is Anime. Set the Anime Series Type to Anime in the Sonarr settings of Seerr, so new anime requests get it.
 
 ## Engineering highlights
 
@@ -221,6 +242,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `sonarr` | `jellyfin` | TV series manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `radarr` | `jellyfin` | film manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `prowlarr` | `jellyfin` | indexer manager; syncs indexers to Sonarr and Radarr; no VPN, so searches leave from the home address; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
+| `recyclarr` | `jellyfin` | hourly CronJob that syncs the TRaSH Guides profiles `Remux 2160p (Alternative)` and `[Anime] Remux-1080p` and their custom formats into Sonarr and Radarr — see [runbook](../runbooks/seerr-sonarr.md#recyclarr) |
 | `flaresolverr` | `jellyfin` | browser that solves the Cloudflare challenge of an indexer for Prowlarr; ClusterIP Service only, no login, no tailnet address and no public route — see [runbook](../runbooks/seerr-sonarr.md) |
 | `democratic-csi` | `democratic-csi` | CSI config bootstrap |
 | `muse` | `muse` | app workload |

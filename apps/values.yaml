@@ -645,6 +645,10 @@ apps:
     namespace: jellyfin
     path: manifests/prowlarr
 
+  recyclarr:
+    namespace: jellyfin
+    path: manifests/recyclarr
+
   flaresolverr:
     namespace: jellyfin
     path: manifests/flaresolverr
