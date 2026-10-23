@@ -7,7 +7,7 @@ The `truenas-ui` Application publishes the TrueNAS web interface at `https://nas
 | Address | `https://nas.hedgehog-wage.ts.net` |
 | Manifests | `manifests/truenas-ui/` |
 | Namespace | `truenas-ui` |
-| Image | `nginx:1.31-alpine` |
+| Image | `nginx`, with an `alpine` tag. See `deployment.yaml`. |
 | NAS | `192.168.1.42`, HTTPS port 443 |
 | Public route | none |
 

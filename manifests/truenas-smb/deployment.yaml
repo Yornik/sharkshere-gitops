@@ -15,7 +15,9 @@ metadata:
     app: truenas-smb
 spec:
   # 1 replica, and no volume, so the default rolling update is safe. A new pod
-  # must be Ready before the old one stops, so a bad config keeps the old pod.
+  # must be Ready before the old one stops, so a config that nginx rejects
+  # keeps the old pod. A valid config with a wrong address does not: the
+  # probe checks the health port, not the NAS.
   replicas: 1
   selector:
     matchLabels:
