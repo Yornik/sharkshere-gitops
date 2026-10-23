@@ -615,6 +615,14 @@ apps:
     namespace: jellyfin
     path: manifests/qbittorrent
 
+  seerr:
+    namespace: jellyfin
+    path: manifests/seerr
+
+  sonarr:
+    namespace: jellyfin
+    path: manifests/sonarr
+
   democratic-csi:
     namespace: democratic-csi
     path: manifests/democratic-csi

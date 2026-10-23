@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seerr
+  namespace: jellyfin
+  labels:
+    app: seerr
+spec:
+  replicas: 1
+  # The config volume is RWO and holds a SQLite database. A second pod
+  # must not start while the first pod still has the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: seerr
+  template:
+    metadata:
+      labels:
+        app: seerr
+    spec:
+      # Seerr documents `init: true` for Docker. Kubernetes has no such flag.
+      # A shared process namespace makes the pause container PID 1, and it
+      # reaps zombie processes.
+      shareProcessNamespace: true
+      securityContext:
+        # The image runs as the `node` user, UID 1000. The config volume
+        # must belong to that user.
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: seerr
+          image: ghcr.io/seerr-team/seerr:v3.5.1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 5055
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+            - name: LOG_LEVEL
+              value: info
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+          # Needs no login.
+          readinessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: seerr-config-ssd
