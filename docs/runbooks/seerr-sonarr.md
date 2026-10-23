@@ -69,6 +69,57 @@ Jellyfin stays on its public address. Jellyfin Enhanced calls Seerr from the Jel
 
 NOTE: Seerr has no download client. It sends a series request to Sonarr and a film request to Radarr. That program picks the release and hands it to qBittorrent.
 
+### Where the metadata comes from
+
+```mermaid
+flowchart LR
+  subgraph NS["Namespace jellyfin"]
+    Seerr["Seerr"]
+    JE["Jellyfin Enhanced<br/>(in Jellyfin)"]
+    Radarr["Radarr"]
+    Sonarr["Sonarr"]
+    Jellyfin["Jellyfin library scan"]
+    Intro["Intro Skipper<br/>(audio fingerprints, local)"]
+  end
+
+  subgraph Ext["Metadata providers on the internet"]
+    Ratings[("Rotten Tomatoes<br/>and IMDb ratings")]
+    TMDB[("TMDB<br/>themoviedb.org")]
+    RadarrMeta[("Radarr metadata server<br/>api.radarr.video, TMDB data")]
+    SkyHook[("Sonarr SkyHook<br/>skyhook.sonarr.tv, TVDB data")]
+    TVDB[("TVDB<br/>thetvdb.com")]
+    OMDb[("OMDb<br/>IMDb data")]
+  end
+
+  JE -->|"search, details, requests"| Seerr
+  Seerr -->|"search, titles, seasons, posters"| TMDB
+  Seerr -->|"ratings on the detail page"| Ratings
+  Seerr -->|"film: TMDB id"| Radarr
+  Seerr -->|"series: TVDB id from TMDB"| Sonarr
+  Radarr -->|"titles, years, release dates"| RadarrMeta
+  Radarr -->|images| TMDB
+  Sonarr -->|"seasons, episode numbers, air dates"| SkyHook
+  Sonarr -->|images| TVDB
+  Jellyfin -->|"films: 1st"| TMDB
+  Jellyfin -->|"films: 2nd, series: 2nd"| OMDb
+  Jellyfin -->|"series, seasons, episodes: 1st"| TVDB
+  Jellyfin -->|"seasons, episodes: fallback"| TMDB
+  Jellyfin -->|"intro and credit segments"| Intro
+```
+
+| App | Provider | What it fetches |
+|---|---|---|
+| Seerr | TMDB | Search, titles, seasons, posters. It sends the TMDB id to Radarr and the TVDB id, read from TMDB, to Sonarr. |
+| Seerr | Rotten Tomatoes, IMDb | Ratings on the detail page. A title without ratings returns 404, which Jellyfin Enhanced logs as a warning. |
+| Jellyfin Enhanced | Seerr | Everything about requests, through the Jellyfin server. It calls no provider itself. |
+| Radarr | Radarr metadata server (TMDB data), TMDB | Film titles, years and release dates; images from `image.tmdb.org`. |
+| Sonarr | Sonarr SkyHook (TVDB data), TVDB | Seasons, episode numbers and air dates; images from `artworks.thetvdb.com`. |
+| Jellyfin, Movies library | TMDB, then OMDb | Film metadata and images. |
+| Jellyfin, Shows library | TheTVDB plugin, then TMDB and OMDb | Series, season and episode metadata and images. TVDB comes first, so the season numbers match Sonarr. |
+| Intro Skipper | none | Finds intros and credits from the audio of the local files. |
+
+NOTE: Seerr counts seasons as TMDB does, and Sonarr counts them as TVDB does. For an anime with a long break, TMDB can list a later season as more episodes of season 1. A request for "season 1" in Seerr then monitors only TVDB season 1 in Sonarr. Monitor the other seasons in Sonarr.
+
 ## What the repository sets
 
 - `manifests/seerr/`, `manifests/sonarr/`, `manifests/radarr/`, `manifests/prowlarr/` and `manifests/flaresolverr/` run in the `jellyfin` namespace, next to Jellyfin and qBittorrent.
