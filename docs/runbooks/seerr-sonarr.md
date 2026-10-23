@@ -74,10 +74,14 @@ Expected result: a finished download of category `tv` sits under `/media/series/
 4. Open Settings, then Download Clients, and add qBittorrent.
 5. Enter host `qbittorrent`, port `8080` and the WebUI user and password of qBittorrent.
 6. Enter category `tv`.
-7. Open Settings, then Indexers, and add your indexers.
-8. Open Settings, then General, and copy the API key.
+7. Open Settings, then Media Management, and turn off Set Permissions.
+8. In the same page, turn off Use Hardlinks instead of Copy.
+9. Open Settings, then Indexers, and add your indexers.
+10. Open Settings, then General, and copy the API key.
 
 NOTE: Sonarr needs an indexer to find a release. Without one, a request stays open.
+
+NOTE: An SMB share does not allow a permission change or a hardlink. Step 7 stops Sonarr from trying one. Step 8 makes Sonarr copy a finished download, so a download uses space twice until you delete the torrent.
 
 ## How to connect Seerr to Sonarr
 
@@ -108,6 +112,49 @@ NOTE: The plugin stores its settings in the Jellyfin config volume. A restore of
 
 CAUTION: The plugin changes the Jellyfin web UI. If Jellyfin does not start after step 4, remove the Jellyfin Enhanced folder from `/config/plugins` on the Jellyfin config volume and start Jellyfin again.
 
+## How the SMB share permissions work
+
+Sonarr and qBittorrent mount the `qbittorrent-series-rw` volume. Jellyfin mounts the same share as `jellyfin-series`.
+
+| Volume | Mount options | Effect |
+|---|---|---|
+| `qbittorrent-series-rw` | `uid=1000`, `gid=1000`, `dir_mode=0775`, `file_mode=0664` | Every file looks owned by user 1000. This matches `PUID` and `PGID` in the Sonarr and qBittorrent pods. |
+| `jellyfin-series` | `ro`, `dir_mode=0555`, `file_mode=0444` | Jellyfin reads every file and cannot write. The mount is read-only, not the NAS. |
+
+The mount options only change how the files look in the pod. The SMB account in `smb-credentials` decides what can be written. Both volumes use that account.
+
+If a write fails, the cause is the account on the NAS, not the pod user. Give the account write access to the `series` folder.
+
+### How to check the share
+
+Run these commands once after the merge.
+
+1. Write a file from the Sonarr pod:
+
+   ```sh
+   kubectl -n jellyfin exec deploy/sonarr -- sh -c 'touch /media/series/downloads/.write-test && rm /media/series/downloads/.write-test && echo writable'
+   ```
+
+   Expected result: `writable`.
+
+2. List the folder from the Jellyfin pod:
+
+   ```sh
+   kubectl -n jellyfin exec deploy/jellyfin -- ls -a /media/series/downloads
+   ```
+
+   Expected result: the listing shows `.ignore`.
+
+3. Try a write from the Jellyfin pod:
+
+   ```sh
+   kubectl -n jellyfin exec deploy/jellyfin -- touch /media/series/downloads/.write-test
+   ```
+
+   Expected result: the command fails with `Read-only file system`. If it succeeds, the Jellyfin mount is not read-only. Fix `manifests/jellyfin/pv-series.yaml` first.
+
+If step 1 returns `Permission denied` or `Read-only file system`, give the SMB account write access to the `series` folder on the NAS.
+
 ## Films
 
 Seerr cannot send a film request to qBittorrent. To fulfil film requests, add Radarr in the same way as Sonarr. Mount `qbittorrent-movies-rw` at `/media/movies`, give it a tailnet Ingress, and add it to Seerr under Services.
@@ -126,7 +173,8 @@ Seerr cannot send a film request to qBittorrent. To fulfil film requests, add Ra
    curl -sS https://requests.hedgehog-wage.ts.net/api/v1/status
    ```
 
-3. Check that Sonarr asks for a login. The command must return a redirect or a 401, not the Sonarr page:
+3. Check the SMB share. See [How to check the share](#how-to-check-the-share).
+4. Check that Sonarr asks for a login. The command must return a redirect or a 401, not the Sonarr page:
 
    ```sh
    curl -sSI https://sonarr.hedgehog-wage.ts.net/api/v3/system/status
