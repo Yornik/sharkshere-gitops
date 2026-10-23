@@ -125,6 +125,8 @@ The mount options only change how the files look in the pod. The SMB account in 
 
 If a write fails, the cause is the account on the NAS, not the pod user. Give the account write access to the `series` folder.
 
+NOTE: No ZFS ACL change on the NAS is needed. Checked on 2026-10-23 from the qBittorrent pod, as user 1000. A new folder and a new file in `/media/series` were written and removed. Jellyfin read the new file at once and could not write.
+
 ### How to check the share
 
 Run these commands once after the merge.
