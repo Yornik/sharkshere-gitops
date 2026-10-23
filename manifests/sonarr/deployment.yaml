@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr
+  namespace: jellyfin
+  labels:
+    app: sonarr
+spec:
+  replicas: 1
+  # The config volume is RWO and holds a SQLite database. A second pod
+  # must not start while the first pod still has the volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sonarr
+  template:
+    metadata:
+      labels:
+        app: sonarr
+    spec:
+      initContainers:
+        - name: create-downloads-dir
+          image: busybox:1.38
+          command: ["sh", "-c"]
+          args:
+            - |
+              # qBittorrent saves the `tv` category here. The `.ignore` file
+              # keeps Jellyfin from scanning half-finished downloads as
+              # part of the series library.
+              mkdir -p /media/series/downloads
+              touch /media/series/downloads/.ignore
+          volumeMounts:
+            - name: series
+              mountPath: /media/series
+      containers:
+        - name: sonarr
+          image: lscr.io/linuxserver/sonarr:4.0.20.3014-ls329
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Amsterdam
+            # Sonarr skips the login for local addresses by default. The
+            # Tailscale proxy connects from a pod address, which counts as
+            # local, so the default would leave Sonarr open to the whole
+            # tailnet. `Enabled` asks for the login on every address.
+            #
+            # CAUTION: Do not set SONARR__AUTH__METHOD. The UI shows the
+            # dialog that creates the first user only while the method is
+            # `None`. A forced `Forms` on a new volume has no user, so every
+            # login fails.
+            - name: SONARR__AUTH__REQUIRED
+              value: Enabled
+          ports:
+            - containerPort: 8989
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            # Same path as in the qBittorrent pod. A download needs no
+            # remote path mapping. SMB has no hardlinks, so the import copies
+            # a download that still seeds.
+            - name: series
+              mountPath: /media/series
+          # /ping needs no login.
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: sonarr-config-ssd
+        # Owned by the qbittorrent Application. Both pods mount the same
+        # SMB share, which is ReadWriteMany.
+        - name: series
+          persistentVolumeClaim:
+            claimName: qbittorrent-series-rw
