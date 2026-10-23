@@ -184,7 +184,7 @@ CAUTION: Keep `192.168.1.42` in the SMB volumes of the cluster. Do not use the t
 
 | Symptom | Cause | Action |
 |---|---|---|
-| No device `nas-smb` appears | The tag is not in `tagOwners`, or the operator is down | Read the condition `ProxyReady` of the Service, as shown below. Read the log of the operator in the namespace `tailscale`. |
+| No device `nas-smb` appears | The tag is not in `tagOwners`, or the operator is down | Read the condition `TailscaleProxyReady` of the Service, as shown below. Read the log of the operator in the namespace `tailscale`. |
 | The name does not resolve | The device waits for a Tailnet Lock signature, or the PC does not use Tailscale DNS | Sign the device. Turn on "Use Tailscale DNS settings". |
 | The device is called `nas-smb-1` | An old device still holds `nas-smb` | Remove the old device. Rename the new one to `nas-smb`. |
 | `TcpTestSucceeded : False` | The tailnet policy blocks `tcp:445`, or the relay pod is down | Read the policy. Check the pod. |
@@ -206,7 +206,7 @@ To read why the operator did not create the proxy:
 kubectl --context yornik-sharkshere -n truenas-smb get service truenas-smb -o jsonpath='{.status.conditions}'
 ```
 
-The operator raises no event when the Tailscale API refuses the tag. It sets the condition `ProxyReady` to false instead.
+The operator raises no event when the Tailscale API refuses the tag. It sets the condition `TailscaleProxyReady` to false instead.
 
 ## What this path gives up
 
