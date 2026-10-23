@@ -244,7 +244,7 @@ CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Ser
 
 ## Recyclarr
 
-`manifests/recyclarr/` runs Recyclarr once a day, at 04:17 Europe/Amsterdam, as a CronJob. It syncs 2 TRaSH Guides profiles into Sonarr and into Radarr. It does not change the other profiles.
+`manifests/recyclarr/` runs Recyclarr every hour, at minute 17, as a CronJob. It syncs 2 TRaSH Guides profiles into Sonarr and into Radarr. It does not change the other profiles.
 
 | Profile | Use it for | Qualities |
 |---|---|---|

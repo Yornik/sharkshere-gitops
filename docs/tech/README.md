@@ -94,7 +94,7 @@ flowchart TB
     Radarr["Radarr<br/>films, category movies"]
     Prowlarr["Prowlarr<br/>syncs indexers to Sonarr and Radarr"]
     Flare["FlareSolverr<br/>ClusterIP only"]
-    Recyclarr["Recyclarr CronJob<br/>daily 04:17"]
+    Recyclarr["Recyclarr CronJob<br/>hourly"]
     subgraph QB["qBittorrent pod, ndots:1"]
       QBit["qBittorrent"] --- Gluetun["gluetun<br/>Mullvad WireGuard"]
     end
@@ -123,7 +123,7 @@ flowchart TB
   Recyclarr -.->|"quality profiles"| Sonarr & Radarr
 ```
 
-In step 4, Sonarr and Radarr score each release with the quality profile of the title. Recyclarr syncs these profiles from the TRaSH Guides every night:
+In step 4, Sonarr and Radarr score each release with the quality profile of the title. Recyclarr syncs these profiles from the TRaSH Guides every hour:
 
 - `Remux 2160p (Alternative)` for films and normal series.
 - `[Anime] Remux-1080p` for anime.
@@ -242,7 +242,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `sonarr` | `jellyfin` | TV series manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `radarr` | `jellyfin` | film manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `prowlarr` | `jellyfin` | indexer manager; syncs indexers to Sonarr and Radarr; no VPN, so searches leave from the home address; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
-| `recyclarr` | `jellyfin` | daily CronJob that syncs the TRaSH Guides profiles `Remux 2160p (Alternative)` and `[Anime] Remux-1080p` and their custom formats into Sonarr and Radarr — see [runbook](../runbooks/seerr-sonarr.md#recyclarr) |
+| `recyclarr` | `jellyfin` | hourly CronJob that syncs the TRaSH Guides profiles `Remux 2160p (Alternative)` and `[Anime] Remux-1080p` and their custom formats into Sonarr and Radarr — see [runbook](../runbooks/seerr-sonarr.md#recyclarr) |
 | `flaresolverr` | `jellyfin` | browser that solves the Cloudflare challenge of an indexer for Prowlarr; ClusterIP Service only, no login, no tailnet address and no public route — see [runbook](../runbooks/seerr-sonarr.md) |
 | `democratic-csi` | `democratic-csi` | CSI config bootstrap |
 | `muse` | `muse` | app workload |

@@ -6,8 +6,9 @@ metadata:
   labels:
     app: recyclarr
 spec:
-  # Once a day is enough. The TRaSH Guides change a few times a month.
-  schedule: "17 4 * * *"
+  # Every hour, so a change to the TRaSH Guides or to this config reaches
+  # Sonarr and Radarr within an hour. A run with no changes writes nothing.
+  schedule: "17 * * * *"
   timeZone: "Europe/Amsterdam"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
