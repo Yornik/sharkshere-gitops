@@ -166,20 +166,7 @@ kubectl --context yornik-sharkshere -n truenas-ui logs deploy/truenas-ui
 
 ## SMB shares
 
-This path does not carry SMB. A Tailscale Ingress serves HTTPS on port 443 only, so SMB on TCP 445 cannot pass through `nas.hedgehog-wage.ts.net`. The SMB volumes in the cluster connect to `192.168.1.42` directly, and this change does not touch them.
-
-Windows has no general limit on a real host name for SMB. Microsoft advises a name over an IP address, because an IP address forces NTLM. Microsoft documents 1 failure. A name that is an alias of the server can fail with `The target account name is incorrect`. This happens if the server uses Kerberos and has no service name for the alias. In that case, use the IP form. The SMB volumes use `192.168.1.42`. The repository does not say why, and the CSI driver also accepts a host name.
-
-To reach the shares from a Windows PC over the tailnet, make a separate change. There are 2 options:
-
-| Option | Name on the PC | Cost |
-|---|---|---|
-| A second `server` block for port 445 in `nginx.conf`, and a separate Service with the annotations `tailscale.com/expose` and `tailscale.com/hostname: nas-smb` | `\\nas-smb.hedgehog-wage.ts.net\<share>` | A second tailnet device to sign. The name cannot be `nas`, because 1 proxy cannot serve an Ingress and an exposed Service. |
-| A `Connector` that advertises `192.168.1.42/32` | `\\192.168.1.42\<share>` | The route needs approval in the Tailscale admin console. The IP address forces NTLM. |
-
-WARNING: Port 445 on the tailnet puts the SMB login of the NAS in reach of every device that the tailnet policy allows. Limit the policy to the Windows PC. Use a TrueNAS account with limited share rights.
-
-CAUTION: Do not add port 445 to the Service that backs the Ingress. A Service with `tailscale.com/expose` forwards every port. The web interface would then also answer on the SMB name.
+This path does not carry SMB. A Tailscale Ingress serves HTTPS on port 443 only. SMB has its own path and its own device, `nas-smb`. See [`truenas-smb.md`](truenas-smb.md).
 
 ## How to undo the change
 
