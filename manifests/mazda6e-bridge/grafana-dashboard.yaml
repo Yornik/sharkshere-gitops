@@ -10,9 +10,9 @@
 # - The tire panels show bar, not kPa: the query divides by 100 and the
 #   thresholds are 2.2, 2.4 and 3.0 bar.
 # - The 2 "Charging current" queries also read the deprecated
-#   mazda6e_charge_current_amperes (kind "total" and "dc"), so the panel
-#   works on image v1.0.0. Remove this fallback after the image is v1.1.0
-#   or later.
+#   mazda6e_charge_current_amperes (kind "total" and "dc"). Images before
+#   v1.1.0 export only that metric, so the fallback shows the charging
+#   history from before the update.
 apiVersion: v1
 kind: ConfigMap
 metadata:
