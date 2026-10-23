@@ -30,7 +30,7 @@ This repo is one of three:
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
 | Storage backend | TrueNAS SCALE (7-disk raidz1 HDD pool + 2-disk SSD mirror) over NFS + iSCSI + SMB |
 | Logs | Alloy (DaemonSet) → Loki (60-day retention, 30 GiB store) |
-| Metrics | kube-prometheus-stack + Grafana with file-provider dashboards |
+| Metrics | kube-prometheus-stack + Grafana with file-provider dashboards. See [`monitoring.md`](monitoring.md). |
 | Secrets | SOPS + age, decrypted in-cluster by KSOPS in the ArgoCD repo-server |
 
 ## Traffic + state flow
