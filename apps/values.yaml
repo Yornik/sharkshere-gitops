@@ -331,6 +331,12 @@ apps:
     namespace: monitoring
     path: manifests/truenas-monitoring
 
+  # The TrueNAS web interface on the tailnet, at
+  # https://nas.hedgehog-wage.ts.net. See docs/runbooks/truenas-ui.md.
+  truenas-ui:
+    namespace: truenas-ui
+    path: manifests/truenas-ui
+
   alloy:
     namespace: monitoring
     helm:
