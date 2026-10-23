@@ -289,12 +289,20 @@ NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr
 
 ### How to run it now
 
-```sh
-kubectl -n jellyfin create job --from=cronjob/recyclarr recyclarr-manual
-kubectl -n jellyfin logs -f job/recyclarr-manual
-```
+CAUTION: Do not start a manual run near minute 17 of the hour. A job made with `create job --from` does not obey `concurrencyPolicy: Forbid`, so it can run at the same time as the scheduled run. Both jobs mount `recyclarr-config-ssd`, which is `ReadWriteOnce`. On another node the second pod waits with `FailedAttachVolume`. On the same node both pods write the same state in `/config/state`.
 
-NOTE: A job made with `create job --from` does not obey `concurrencyPolicy: Forbid`. Do not start it near minute 17 of the hour, when the scheduled run starts. Delete the job when it is done: `kubectl -n jellyfin delete job recyclarr-manual`.
+1. Start the job and follow its log:
+
+   ```sh
+   kubectl -n jellyfin create job --from=cronjob/recyclarr recyclarr-manual
+   kubectl -n jellyfin logs -f job/recyclarr-manual
+   ```
+
+2. Delete the job when it is done. Until `ttlSecondsAfterFinished` (24 hours) removes it, the name `recyclarr-manual` stays taken and the next `create job` with that name fails.
+
+   ```sh
+   kubectl -n jellyfin delete job recyclarr-manual
+   ```
 
 ## How to connect Seerr to Sonarr and Radarr
 
