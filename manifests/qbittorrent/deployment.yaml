@@ -17,6 +17,17 @@ spec:
       labels:
         app: qbittorrent
     spec:
+      # gluetun's DNS server answers a name that does not exist with an empty
+      # NOERROR, not NXDOMAIN. With ndots:5 the musl resolver first tries the
+      # search domain `yornik.nl`, gets that empty answer and stops. No name
+      # with fewer than 5 dots resolved, so DHT had 0 nodes and magnets never
+      # got their metadata. ndots:1 tries a dotted name as given first. A
+      # single label such as `qbittorrent` still uses the search list. See
+      # docs/incidents/2026-10-23-qbittorrent-dns-search-domain.md.
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
       initContainers:
         - name: patch-config
           image: busybox:1.38
