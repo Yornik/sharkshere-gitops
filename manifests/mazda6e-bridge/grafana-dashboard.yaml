@@ -444,7 +444,7 @@ data:
         {
           "type": "stat",
           "title": "Data age",
-          "description": "How long ago the car last reported to the Mazda cloud. A parked car that is asleep reports rarely; this is expected to grow overnight.",
+          "description": "How long ago the car last reported to the Mazda cloud. A parked car that is asleep reports rarely, up to about 4 hours overnight. Orange after 6 hours, red after 1 day.",
           "id": 7,
           "datasource": {
             "type": "prometheus",
@@ -472,7 +472,7 @@ data:
                   },
                   {
                     "color": "orange",
-                    "value": 3600
+                    "value": 21600
                   },
                   {
                     "color": "red",
@@ -716,8 +716,8 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "Charge current",
-          "description": "AC and DC charge current. The car reports 0 when idle.",
+          "title": "Charging current",
+          "description": "Current from the charger, and the current that goes into the high-voltage battery while a charger supplies the car. At a fast charger the two are about equal. On AC the battery current is lower, because the battery voltage is higher than the grid voltage.",
           "id": 11,
           "datasource": {
             "type": "prometheus",
@@ -783,9 +783,20 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "mazda6e_charge_current_amperes{vin=~\"$vin\",kind!=\"total\"}",
+              "expr": "max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"})",
               "refId": "A",
-              "legendFormat": "{{kind}}",
+              "legendFormat": "Charger",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}) > 0",
+              "refId": "B",
+              "legendFormat": "Into battery",
               "range": true
             }
           ]
@@ -1045,7 +1056,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "increase(mazda6e_odometer_km{vin=~\"$vin\"}[1d])",
+              "expr": "max by (vin) (max_over_time(mazda6e_odometer_km{vin=~\"$vin\"}[1d])) - min by (vin) (min_over_time(mazda6e_odometer_km{vin=~\"$vin\"}[1d]))",
               "refId": "A",
               "legendFormat": "km driven",
               "range": true

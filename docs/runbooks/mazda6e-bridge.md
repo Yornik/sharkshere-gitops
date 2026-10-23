@@ -9,7 +9,7 @@ The `mazda6e-bridge` Application polls the Mazda 6e cloud API and exports the st
 | Image | `ghcr.io/yornik/mazda6e-grafana-bridge` |
 | Source | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) |
 | Secret | `mazda6e-api`, from `manifests/mazda6e-bridge/mazda6e-api-secret.enc.yaml` |
-| Metrics | `:9120/metrics`, scraped every 60 s. The bridge polls Mazda every 120 s. |
+| Metrics | `:9120/metrics`, scraped every 60 s. The bridge polls Mazda every 120 s. The scrape removes the `pod` and `instance` labels, so the series continue after a new pod starts. |
 
 The bridge only reads. It cannot lock, unlock or control the car. CI in the source repository rejects any code that calls a write endpoint.
 
