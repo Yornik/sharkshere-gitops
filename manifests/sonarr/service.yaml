@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarr
+  namespace: jellyfin
+  labels:
+    app: sonarr
+# No external-dns annotation. Sonarr is on the tailnet only, through
+# ingress-tailnet.yaml. Seerr reaches it in the cluster at http://sonarr:8989.
+spec:
+  selector:
+    app: sonarr
+  ports:
+    - name: http
+      port: 8989
+      targetPort: http
+      protocol: TCP

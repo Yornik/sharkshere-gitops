@@ -235,6 +235,60 @@
         'dependencies',
       ],
     },
+    {
+      matchPackageNames: [
+        'lscr.io/linuxserver/sonarr',
+      ],
+      // The tag ends in the LinuxServer build counter, as for qBittorrent.
+      // The default docker versioning keeps `ls329` as a suffix and finds no
+      // later tag. See
+      // docs/incidents/2026-10-21-renovate-frozen-by-tag-suffix.md.
+      //
+      // Sonarr has 4 version segments. The 4th is the Sonarr build. The
+      // LinuxServer counter is the revision, so a rebuild arrives as a bump.
+      // The pattern is anchored. It rejects `latest`, `develop`, the
+      // `version-` tags and the per-arch tags.
+      versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-ls(?<revision>\\d+)$',
+    },
+    {
+      matchPackageNames: [
+        'lscr.io/linuxserver/sonarr',
+      ],
+      // Same split as for qBittorrent. A major keeps the `major` label from
+      // the rule near the top of this list.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      // Sonarr migrates its database when it starts. A person reads the
+      // release notes before the bump reaches the cluster.
+      automerge: false,
+      // `null` keeps this package out of the patch group, so a sibling bump
+      // does not bring the `automerge` label and skip the review.
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/seerr-team/seerr',
+      ],
+      // Same reason and same split as for Sonarr. Seerr migrates its
+      // database when it starts. The tag has no build counter, so the
+      // default docker versioning reads it.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: false,
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
   ],
   kubernetes: {
     managerFilePatterns: [

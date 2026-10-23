@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seerr
+  namespace: jellyfin
+  labels:
+    app: seerr
+# No external-dns annotation. Seerr is on the tailnet only, through
+# ingress-tailnet.yaml. Jellyfin reaches it in the cluster at
+# http://seerr:5055, so users of the public Jellyfin address do not need
+# the tailnet to request media through the Jellyfin Enhanced plugin.
+spec:
+  selector:
+    app: seerr
+  ports:
+    - name: http
+      port: 5055
+      targetPort: http
+      protocol: TCP
