@@ -6,7 +6,7 @@ metadata:
   labels:
     app: prowlarr
 # No external-dns annotation. Prowlarr is on the tailnet only, through
-# ingress-tailnet.yaml. Sonarr reaches it in the cluster at
+# ingress-tailnet.yaml. Sonarr and Radarr reach it in the cluster at
 # http://prowlarr:9696.
 spec:
   selector:

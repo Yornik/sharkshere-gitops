@@ -71,6 +71,8 @@ Each person who requests media needs a Seerr account that links to the Jellyfin 
 
 Do this once. qBittorrent keeps its categories in its own config, not in git.
 
+NOTE: Create the categories before Sonarr and Radarr use them. A category that Sonarr or Radarr creates gets the default save path, `/media/movies/`. Sonarr cannot see that share, and for Radarr it is the root of the film library.
+
 1. Open the qBittorrent WebUI.
 2. In the left sidebar, under Categories, right-click All.
 3. Choose Add category.
@@ -78,8 +80,6 @@ Do this once. qBittorrent keeps its categories in its own config, not in git.
 5. Add a category named `movies` with save path `/media/movies/downloads/`.
 
 Expected result: a finished download of category `tv` sits under `/media/series/downloads/`, and one of category `movies` under `/media/movies/downloads/`. The init containers of Sonarr and Radarr create these folders and put an empty `.ignore` file in each, so Jellyfin does not scan them as library folders.
-
-NOTE: Create the categories before Sonarr and Radarr use them. A category that Sonarr or Radarr creates gets the default save path, `/media/movies/`. Sonarr cannot see that share.
 
 ## How to set up Sonarr
 
@@ -214,7 +214,6 @@ Run these commands once after the merge.
 
 If step 1 returns `Permission denied` or `Read-only file system`, give the SMB account write access to that folder on the NAS.
 
-
 ## How to check
 
 1. Check that the pods run:
@@ -256,4 +255,4 @@ WARNING: ArgoCD deletes `seerr-config-ssd`, `sonarr-config-ssd`, `radarr-config-
 2. Merge the change. ArgoCD prunes the Applications.
 3. Remove the devices from the Tailscale admin console.
 
-The `qbittorrent-series-rw` and `qbittorrent-movies-rw` volumes stay. The `qbittorrent` Application owns it.
+The `qbittorrent-series-rw` and `qbittorrent-movies-rw` volumes stay. The `qbittorrent` Application owns them.
