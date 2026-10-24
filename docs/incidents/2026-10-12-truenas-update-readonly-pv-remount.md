@@ -12,7 +12,10 @@ An operator updated TrueNAS at about 15:16 UTC. Alerts started in the same minut
 |---|---|
 | `openproject-pg` | 0 of 3 instances ready. Each pod restarted about 70 times. |
 | `gitlab-pg` | 1 of 3 instances ready. The 1 ready instance served no query. |
-| `shared-pg`, `soiree-pg` | 3 of 3 ready. No effect. |
+| `shared-pg` | 3 of 3 ready. The primary was not affected. Postgres did not answer on the 2 replicas from 2026-10-12 15:02 UTC until 2026-10-16 11:12 UTC, which is 3.8 days. |
+| `soiree-pg` | 3 of 3 ready. The primary was not affected. Postgres did not answer on `soiree-pg-2` and `soiree-pg-3` from 15:02 UTC until 23:42 UTC. See [the second write-up](2026-10-13-readonly-alert-cleared-while-volume-broken.md). |
+
+Kubernetes reported both `shared-pg` replicas `Ready` for the whole 3.8 days. This file does not record what ended the state on 2026-10-16. See the Evidence section for the measurement.
 
 OpenProject was down. GitLab answered on its port and failed every query. The web service and the runner crash-looped against it.
 
