@@ -9,7 +9,7 @@
 #   is grafana-amazonprometheus-datasource, and every panel shows No data.
 # - The tire panels show bar, not kPa: the query divides by 100 and the
 #   thresholds are 2.2, 2.4 and 3.0 bar.
-# - The 2 "Charging current" queries and the 2 "Battery current while
+# - The 2 "Charging power" queries and the 2 "Battery power while
 #   driving" queries also read the deprecated
 #   mazda6e_charge_current_amperes (kind "total" and "dc"). Images before
 #   v1.1.0 export only that metric, so the fallback shows the history
@@ -721,8 +721,8 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "Charging current",
-          "description": "From charger is the current the charger supplies. Into battery is the current that charges the battery, so read it for charging speed: 100 A is about 40 kW. On AC the battery gets about half the charger's amps, because the battery runs at about 400 V and the grid at 230 V. At a DC fast charger the two are about the same, and many times higher than on AC. Ranges over 12 days skip some readings, so Max can read low.",
+          "title": "Charging power",
+          "description": "From charger is the power the charger supplies. Into battery is the power that charges the battery. The gap between them is the charging loss. The car reports current, not voltage, so power is an estimate with fixed voltages: 230 V for AC and 379 V for the battery (68.8 kWh pack; set the battery_voltage variable to 364 for the 78 kWh pack). Ranges over 12 days skip some readings, so Max can read low.",
           "id": 11,
           "datasource": {
             "type": "prometheus",
@@ -739,7 +739,7 @@ data:
               "color": {
                 "mode": "palette-classic"
               },
-              "unit": "amp",
+              "unit": "kwatt",
               "custom": {
                 "drawStyle": "line",
                 "lineWidth": 2,
@@ -756,7 +756,7 @@ data:
                 "thresholdsStyle": {
                   "mode": "off"
                 },
-                "axisSoftMax": 50
+                "axisSoftMax": 12
               },
               "thresholds": {
                 "mode": "absolute",
@@ -789,6 +789,10 @@ data:
                   },
                   {
                     "id": "custom.lineWidth",
+                    "value": 1
+                  },
+                  {
+                    "id": "decimals",
                     "value": 1
                   }
                 ]
@@ -843,7 +847,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"})",
+              "expr": "((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"})) * $battery_voltage / 1000 and on(vin) max by (vin) (mazda6e_plugged_in{vin=~\"$vin\",connector=\"dc\"}) == 1) or on(vin) (max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"})) * $grid_voltage / 1000",
               "refId": "A",
               "legendFormat": "From charger",
               "range": true
@@ -854,7 +858,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "(-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}) > 0) or on(vin) 0 * ((max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[$__interval:1m] offset 1m) > 0) or on(vin) (max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[$__interval:1m] offset -$__interval) > 0))",
+              "expr": "((-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}) > 0) or on(vin) 0 * ((max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[$__interval:1m] offset 1m) > 0) or on(vin) (max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[$__interval:1m] offset -$__interval) > 0))) * $battery_voltage / 1000",
               "refId": "B",
               "legendFormat": "Into battery",
               "range": true
@@ -1242,8 +1246,8 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "Battery current while driving",
-          "description": "Draw (above 0) is current the car takes from the battery. Regen braking (below 0) is current that braking puts back. Each dot is one reading, sent about every 2 minutes, so short peaks fall between dots. Ranges over 12 days show only some of the readings.",
+          "title": "Battery power while driving",
+          "description": "Draw (above 0) is power the car takes from the battery. Regen braking (below 0) is power that braking puts back. Estimated as battery current x 379 V (the battery_voltage variable). Each dot is one reading, sent about every 2 minutes, so short peaks fall between dots. Ranges over 12 days show only some of the readings.",
           "id": 37,
           "datasource": {
             "type": "prometheus",
@@ -1260,7 +1264,7 @@ data:
               "color": {
                 "mode": "palette-classic"
               },
-              "unit": "amp",
+              "unit": "kwatt",
               "custom": {
                 "drawStyle": "points",
                 "lineWidth": 2,
@@ -1278,8 +1282,8 @@ data:
                   "mode": "line"
                 },
                 "pointSize": 6,
-                "axisSoftMin": -50,
-                "axisSoftMax": 100
+                "axisSoftMin": -20,
+                "axisSoftMax": 40
               },
               "thresholds": {
                 "mode": "absolute",
@@ -1294,7 +1298,7 @@ data:
                   }
                 ]
               },
-              "decimals": 0,
+              "decimals": 1,
               "noValue": "No driving data in this time range"
             },
             "overrides": [
@@ -1364,7 +1368,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) >= 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+              "expr": "(max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"})) * $battery_voltage / 1000 >= 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
               "refId": "A",
               "legendFormat": "Draw",
               "range": true
@@ -1375,7 +1379,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) < 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+              "expr": "(max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"})) * $battery_voltage / 1000 < 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
               "refId": "B",
               "legendFormat": "Regen braking",
               "range": true
@@ -2554,6 +2558,46 @@ data:
             "sort": 1,
             "regex": "",
             "options": []
+          },
+          {
+            "type": "constant",
+            "hide": 2,
+            "skipUrlSync": false,
+            "name": "battery_voltage",
+            "label": "Battery voltage",
+            "query": "379",
+            "description": "Nominal battery voltage in V, to turn current into kW: 379 for the 68.8 kWh pack, 364 for the 78 kWh pack.",
+            "current": {
+              "text": "379",
+              "value": "379"
+            },
+            "options": [
+              {
+                "text": "379",
+                "value": "379",
+                "selected": true
+              }
+            ]
+          },
+          {
+            "type": "constant",
+            "hide": 2,
+            "skipUrlSync": false,
+            "name": "grid_voltage",
+            "label": "Grid voltage",
+            "query": "230",
+            "description": "Grid voltage in V, to turn AC charging current into kW.",
+            "current": {
+              "text": "230",
+              "value": "230"
+            },
+            "options": [
+              {
+                "text": "230",
+                "value": "230",
+                "selected": true
+              }
+            ]
           }
         ]
       },
