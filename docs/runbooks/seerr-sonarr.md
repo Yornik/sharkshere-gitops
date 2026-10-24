@@ -175,6 +175,8 @@ Expected result: a finished download of category `tv` sits under `/media/series/
 
 Expected result: about 2 hours after a download finishes, qBittorrent stops the torrent. Sonarr or Radarr then removes the torrent and its files in `downloads/`.
 
+NOTE: Sonarr and Radarr remove a stopped torrent only when Remove Completed is on for the qBittorrent download client. It is on by default. On 2026-10-24 it was on in both apps.
+
 NOTE: The seeding limits keep a download from using space twice for long. Sonarr and Radarr copy a download into the library, because the SMB share has no hardlinks. Seeding longer brings little: Mullvad has no port forwarding, so other peers cannot connect to qBittorrent. On 2026-10-24 the ratios after 20 hours were 0.00 to 0.46.
 
 NOTE: The seeding time counts only the time that a torrent seeds, not the time since it finished. A torrent that waits in the upload queue does not count. With a limit of 24 hours, about 400 GB of copies stayed in `downloads/` for more than a day.
