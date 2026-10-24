@@ -254,15 +254,17 @@ Alloy keeps its read positions in `/tmp/alloy`, and no volume holds that path. A
 | All lines, NAS syslog included | Lease renewals and readiness probe access lines. | Heartbeat noise. |
 | All lines, NAS syslog included | Lines longer than 16 KiB, after Alloy joins partial lines. | Protects Loki from one huge line. |
 | `tibber-exporter` | Live measurements and the lines `Updating prices`, `Updating HOURLY data` and `Updating DAILY data`. | Noise. |
-| `democratic-csi` | `NodeGetVolumeStats` and request header lines. | Noise. The last row of this table drops the whole app today. |
+| `democratic-csi` | `NodeGetVolumeStats` and request header lines. The klog `I` lines of the sidecars. The `csi-proxy` access lines for `NodeGetCapabilities`. | Noise. klog and `csi-proxy` write to `stderr` without a level word, so the `stderr` rule would label these lines `error`. |
 | `traefik` | Nothing today. The expression looks for a field `UserAgent`. Traefik drops request headers from its access log by default, and names a header field `request_<Name>`. | Meant to drop probe noise. See gap G16. |
 | `grafana` | Its own Loki query lines. | Querying logs would create more logs. |
 | `external-dns` | Webhook access lines. | They stay in the pod log. |
 | `loki` | Its own query statistics. | Same loop as Grafana. |
 | `job="truenas"` | Systemd session lines, notify messages and `Syslog connection` lines. | The SSH lines carry the audit signal. |
-| app `democratic-csi`, namespace `argocd` | Every line. The 2 stages intend to drop only lines below `warn`. | Volume. This is a fault: see gap G4. |
+| app `democratic-csi`, namespace `argocd` | Each line whose level is not `warn`, `warning`, `error`, `fatal` or `panic`. | Volume. These 2 stages select on the label `level`, so `stage.labels` runs before them. |
 
 The pipeline reads the JSON fields `level`, `severity` and `log_level`, but only `level` reaches the label. Then a regex takes the first level keyword in the line, in any case, and replaces that value. The keywords are trace, debug, info, warn, warning, error, fatal and panic. A line on `stderr` without a level becomes `error`. A line on `stdout` without a level becomes `info`. The step that maps `warning` to `warn` does nothing: see gap G16.
+
+NOTE: Keep `stage.labels` before the 2 last drops of the table. A `stage.match` selector reads labels only, not extracted values. Until 2026-10-24 the label came after them, and they dropped every line of ArgoCD and democratic-csi. See gap G4.
 
 ### Loki
 
@@ -407,7 +409,6 @@ flowchart TB
   H2["Partial<br/>data but no alert"]
   B1["Exporter health<br/>no rule on scrape_success<br/>G2"]
   B3["TrueNAS<br/>metrics, no dashboard<br/>G10"]
-  B4["Logs of ArgoCD and<br/>democratic-csi<br/>dropped by Alloy<br/>G4"]
 
   H3["Blind to app metrics<br/>not scraped"]
   C1["Loki, Alloy<br/>G6"]
@@ -418,14 +419,14 @@ flowchart TB
   C6["etcd, scheduler,<br/>controller manager,<br/>kube-proxy<br/>scrape and rules off"]
 
   H1 ~~~ A1 ~~~ A2 ~~~ A3 ~~~ A4 ~~~ A5
-  H2 ~~~ B1 ~~~ B3 ~~~ B4
+  H2 ~~~ B1 ~~~ B3
   H3 ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4 ~~~ C5 ~~~ C6
 
   class H1 okh
   class H2 parth
   class H3 noneh
   class A1,A2,A3,A4,A5 ok
-  class B1,B3,B4 part
+  class B1,B3 part
   class C1,C2,C3,C4,C5,C6 none
 ```
 
@@ -435,13 +436,12 @@ The Blind group is not complete. Other applications have no monitor either, amon
 
 Each gap has evidence. A gap is not always a missing signal. It can also be a lost signal or a comment in the repository that says something untrue. "Live" means a read-only query of the running cluster on 2026-10-23.
 
-NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. The other gaps keep their IDs, because other text refers to them.
+NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is closed, because the logs of ArgoCD and democratic-csi reach Loki since 2026-10-24. The gaps keep their IDs, because other text refers to them.
 
 | ID | Priority | Gap | Evidence | Suggested correction |
 |---|---|---|---|---|
 | G2 | High | A failure of the hub or the Mazda cloud raises no alert. | `up` stays 1. No rule uses `ikea_dirigera_scrape_success` or `mazda6e_scrape_success`. Live: both read 1 today, so a failure would be silent. | Alert on both metrics at 0 for 15 minutes. Use a longer period for Mazda, because it waits 1 hour after a refused login. |
 | G3 | High | The monitoring stack stores its data on the NAS that it monitors. Nothing outside the cluster notices that the stack is down. | All 4 volumes use `truenas-ssd`. Live: the running Alertmanager sends `Watchdog` to the receiver `null`, and e-mail is its only receiver type. | Send `Watchdog` to an external heartbeat service that alerts when the signal stops. |
-| G4 | High | The logs of ArgoCD and democratic-csi are missing from Loki. The 2 drop stages remove every line, not only the lines below `warn`. | Live: Loki holds 0 lines for `{namespace="argocd"}` and for `{namespace="democratic-csi"}` over 7 days. 14 ArgoCD pods run. The democratic-csi NFS node pods show 11 to 20 restarts and have no log to read. In `apps/values.yaml` the `level` label is set by `stage.labels` after the 2 `stage.match` stages that select on it. A selector sees labels only, not extracted values. | Drop on the extracted value inside a `stage.match` for the namespace or the app, with `stage.drop`, `source = "level"` and `expression = "^(trace\|debug\|info)$"`. Or move `stage.labels` before the 2 stages. In both cases fix gap G16 too, or `warning` lines stay dropped. Test with `{namespace="argocd"}` in Explore. |
 | G5 | Medium | Prometheus will trim by size before the 60 days end. | Live: the blocks hold 42.3 GiB against a limit of 45 GiB, and the limit also counts the WAL and head chunks. The oldest data is 52 days old. At about 0.8 GiB for each day, the limit is reached at about 55 days or sooner. The volume holds 29.2 GiB of 50 GiB. The NAS probably compresses the data, but git does not record that. | Grow the volume before you raise `retentionSize`. Prometheus advises a size limit of at most 85 % of the disk, and 45 GiB is 90 % of 50 Gi. Or lower `retention` to match. |
 | G6 | Medium | Alloy and Loki are not scraped. A stopped log shipper on one node raises nothing while its pod stays Ready. | The charts render no ServiceMonitor. The keys `serviceMonitor.enabled` (Alloy) and `monitoring.serviceMonitor.enabled` (Loki) are `false` by default. Live: Prometheus has no target for either. | Enable both. For Alloy, set `serviceMonitor.additionalLabels` to `release: kube-prometheus-stack`. For Loki, set `monitoring.serviceMonitor.labels` to the same value. The Loki chart ignores `additionalLabels`. |
 | G7 | Medium | Traefik, GitLab, OpenProject, Valkey, ArgoCD, cert-manager, the Tailscale operator and democratic-csi have no application monitor. | Rendering every Helm app found 1 monitor, the CloudNativePG PodMonitor. `bootstrap/argocd/install.yaml` has none. The Postgres clusters of GitLab and OpenProject have PodMonitors. `gitlab-runner`, `metrics-server`, `smb-csi-driver`, `external-dns` and the media applications have none either. Live: 49 targets, none for these. | Start with Traefik, which serves the 15 public domains. |
@@ -453,7 +453,7 @@ NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. The other gaps 
 | G13 | Low | CI does not parse dashboard queries. A typo shows as an empty panel. | `.github/workflows/validate.yaml` has no `promtool` step. | Adapt the `promtool` check from the Mazda repository. It reads dashboard JSON, so extract the JSON from each ConfigMap. Replace `$__rate_interval` and `$__range` too, or the Tibber dashboard fails. |
 | G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 3 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
 | G15 | Low | The `tolerations` value for Alloy is ignored. | In `apps/values.yaml` the key sits beside `controller`. The `alloy` chart reads only `controller.tolerations`, and the render has no toleration. All 4 nodes accept pods today, so there is no effect now. | Move `tolerations` under `controller`. A tainted node then keeps a log shipper. |
-| G16 | Low | 2 Alloy stages do nothing: the Traefik probe drop and the `warning` to `warn` replace. | The Traefik expression looks for the field `UserAgent`, and Traefik drops request headers by default. The expression `^warning$` of `stage.replace` has no capture group, and the stage replaces only capture groups. | Match the field that Traefik writes, or remove the stage. Change the expression to `^(warning)$`. |
+| G16 | Low | 2 Alloy stages do nothing: the Traefik probe drop and the `warning` to `warn` replace. | The Traefik expression looks for the field `UserAgent`, and Traefik drops request headers by default. The expression `^warning$` of `stage.replace` has no capture group, and the stage replaces only capture groups. | Match the field that Traefik writes, or remove the stage. Change the expression to `^(warning)$`. The label `level` then reads `warn` instead of `warning` for every app, so check the queries that use `level="warning"` first. The drops of ArgoCD and democratic-csi list both values, so they do not change. |
 
 ## Procedures
 
@@ -512,4 +512,5 @@ Expected result: the rule appears on `/rules` in Prometheus.
 - Exporter facts come from the source of `Yornik/dirigera-exporter` and `Yornik/mazda6e-grafana-bridge`, read on 2026-10-23. They hold for tag `v0.3.0` of the first and for tags `v1.0.0` and `v1.1.0` of the second.
 - Cluster facts come from read-only queries on 2026-10-23, through the Omni Kubernetes endpoint. The queries read Prometheus targets, rules and alerts, Loki counts, the Alertmanager status, and pod and ArgoCD state. 49 targets were up, 174 pods were Running or Succeeded, and 55 ArgoCD Applications existed: the 54 in `apps/values.yaml` and `root`.
 - The Postgres alerts were checked against the live Prometheus on 2026-10-23 and 2026-10-24. Each expression ran without an error, and none returned a series on the healthy state. Each threshold was run against 30 days of history. After the merge of [PR 578](https://github.com/Yornik/sharkshere-gitops/pull/578), `/rules` showed the group `cloudnative-pg` with 12 rules, all `inactive` with health `ok`. `/alerts` held no Postgres alert. Prometheus held 147 alerting rules in 33 rule objects, and every object carried the label `release: kube-prometheus-stack`.
+- The log fix for ArgoCD and democratic-csi was checked on the live cluster on 2026-10-24, after the merge of [PR 577](https://github.com/Yornik/sharkshere-gitops/pull/577). ArgoCD synced `alloy` at 07:33 UTC, and the 4 Alloy pods reloaded by 07:35. In the next 6 minutes Loki held 4 `warning` lines of ArgoCD. For democratic-csi it held only `csi-proxy` access lines for `NodeGetCapabilities`: 189 in 15 minutes, all with `level="error"` on `stderr`. A second change drops these lines.
 - The Alertmanager configuration is a SOPS Secret. The routes in this file come from the running Alertmanager, with secrets left out.
