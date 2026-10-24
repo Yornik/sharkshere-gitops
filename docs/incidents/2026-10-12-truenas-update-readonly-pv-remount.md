@@ -94,7 +94,7 @@ The alert reads the change, not the state. 6 mounts report `node_filesystem_read
 
 A rule on `== 1` alone matches 7 series today and reports all 6 for ever. The rule with `changes(node_filesystem_readonly[2h]) > 0` matched 0 series after the correction, and matches a volume that was read-write and is now read-only.
 
-NOTE: Do not add an alert on `cnpg_collector_up == 0`. The measurement on 2026-10-12 returned 4 series on a healthy cluster.
+NOTE: An alert on `cnpg_collector_up == 0` is valid. An earlier version of this note advised against it, after a query returned 4 series on clusters that looked healthy. Measured 2026-10-23 over 30 days: the metric read 0 for 10 minutes or more on 5 instances only, and all 5 were broken on 2026-10-12. The 2 `shared-pg` replicas stayed in that state until 2026-10-16 11:12 UTC, which is 3.8 days. Kubernetes reported them Ready the whole time. The alert `CNPGInstanceNotAnswering` in `manifests/monitoring/prometheusrule-cnpg.yaml` uses this metric.
 
 ## Open item
 
@@ -119,3 +119,4 @@ These paths are the reason the `VolumeRemountedReadOnly` rule reads the change a
 - `gitlab-pg-2` before the delete: `ready=True`, `restarts=0`, age 17 days.
 - After the correction, all 4 CNPG clusters report `Cluster in healthy state` and every pod in the cluster is ready.
 - Jellyfin ran through the event: 1 of 1 ready, 0 restarts, age 6 days.
+- Prometheus, read 2026-10-23: `cnpg_collector_up` read 0 from 2026-10-12 15:02 UTC on 5 instances. `gitlab-pg-2` recovered at 21:47, `soiree-pg-2` and `soiree-pg-3` at 23:42, and `shared-pg-1` and `shared-pg-3` on 2026-10-16 at 11:12. On 2026-10-14 12:00 UTC the 2 `shared-pg` replicas exported 44 `cnpg_*` series each, against 460 on the healthy primary, and the pods read Ready.
