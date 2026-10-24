@@ -1,7 +1,7 @@
 ---
 # Source: github.com/Yornik/mazda6e-grafana-bridge, dashboards/mazda6e.json.
 # Change the dashboard there first, then copy it here.
-# This copy differs from the source in 3 places. Make all 3 changes again
+# This copy differs from the source in 4 places. Make all 4 changes again
 # after each copy:
 # - It has no Location section, because EXPORT_LOCATION is off.
 # - The datasource variable selects "Prometheus". With no selection,
@@ -9,6 +9,11 @@
 #   is grafana-amazonprometheus-datasource, and every panel shows No data.
 # - The tire panels show bar, not kPa: the query divides by 100 and the
 #   thresholds are 2.2, 2.4 and 3.0 bar.
+# - The 2 "Charging current" queries and the 2 "Battery current while
+#   driving" queries also read the deprecated
+#   mazda6e_charge_current_amperes (kind "total" and "dc"). Images before
+#   v1.1.0 export only that metric, so the fallback shows the history
+#   from before the update.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -444,7 +449,7 @@ data:
         {
           "type": "stat",
           "title": "Data age",
-          "description": "How long ago the car last reported to the Mazda cloud. A parked car that is asleep reports rarely; this is expected to grow overnight.",
+          "description": "How long ago the car last reported to the Mazda cloud. A parked car that is asleep reports rarely, up to about 4 hours overnight. Orange after 6 hours, red after 1 day.",
           "id": 7,
           "datasource": {
             "type": "prometheus",
@@ -472,7 +477,7 @@ data:
                   },
                   {
                     "color": "orange",
-                    "value": 3600
+                    "value": 21600
                   },
                   {
                     "color": "red",
@@ -716,8 +721,8 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "Charge current",
-          "description": "AC and DC charge current. The car reports 0 when idle.",
+          "title": "Charging current",
+          "description": "From charger is the current the charger supplies. Into battery is the current that charges the battery, so read it for charging speed: 100 A is about 40 kW. On AC the battery gets about half the charger's amps, because the battery runs at about 400 V and the grid at 230 V. At a DC fast charger the two are about the same, and many times higher than on AC. Ranges over 12 days skip some readings, so Max can read low.",
           "id": 11,
           "datasource": {
             "type": "prometheus",
@@ -738,10 +743,10 @@ data:
               "custom": {
                 "drawStyle": "line",
                 "lineWidth": 2,
-                "fillOpacity": 10,
+                "fillOpacity": 0,
                 "lineInterpolation": "stepAfter",
                 "showPoints": "never",
-                "spanNulls": 3600000,
+                "spanNulls": false,
                 "axisBorderShow": false,
                 "gradientMode": "none",
                 "stacking": {
@@ -750,7 +755,8 @@ data:
                 },
                 "thresholdsStyle": {
                   "mode": "off"
-                }
+                },
+                "axisSoftMax": 50
               },
               "thresholds": {
                 "mode": "absolute",
@@ -763,13 +769,67 @@ data:
               },
               "min": 0
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#8a8a8a"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 15
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#A352CC"
+                    }
+                  },
+                  {
+                    "id": "custom.showPoints",
+                    "value": "always"
+                  },
+                  {
+                    "id": "custom.pointSize",
+                    "value": 2
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "legend": {
               "displayMode": "list",
               "placement": "bottom",
-              "showLegend": true
+              "showLegend": true,
+              "calcs": [
+                "max"
+              ]
             },
             "tooltip": {
               "mode": "multi",
@@ -783,12 +843,25 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "mazda6e_charge_current_amperes{vin=~\"$vin\",kind!=\"total\"}",
+              "expr": "max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"})",
               "refId": "A",
-              "legendFormat": "{{kind}}",
+              "legendFormat": "From charger",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "(-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}) > 0) or on(vin) 0 * ((max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[$__interval:1m] offset 1m) > 0) or on(vin) (max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[$__interval:1m] offset -$__interval) > 0))",
+              "refId": "B",
+              "legendFormat": "Into battery",
               "range": true
             }
-          ]
+          ],
+          "interval": "1m",
+          "maxDataPoints": 5000
         },
         {
           "type": "state-timeline",
@@ -1045,7 +1118,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "increase(mazda6e_odometer_km{vin=~\"$vin\"}[1d])",
+              "expr": "max by (vin) (max_over_time(mazda6e_odometer_km{vin=~\"$vin\"}[1d])) - min by (vin) (min_over_time(mazda6e_odometer_km{vin=~\"$vin\"}[1d]))",
               "refId": "A",
               "legendFormat": "km driven",
               "range": true
@@ -1168,6 +1241,150 @@ data:
           ]
         },
         {
+          "type": "timeseries",
+          "title": "Battery current while driving",
+          "description": "Draw (above 0) is current the car takes from the battery. Regen braking (below 0) is current that braking puts back. Each dot is one reading, sent about every 2 minutes, so short peaks fall between dots. Ranges over 12 days show only some of the readings.",
+          "id": 37,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "unit": "amp",
+              "custom": {
+                "drawStyle": "points",
+                "lineWidth": 2,
+                "fillOpacity": 0,
+                "lineInterpolation": "stepAfter",
+                "showPoints": "always",
+                "spanNulls": false,
+                "axisBorderShow": false,
+                "gradientMode": "none",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "line"
+                },
+                "pointSize": 6,
+                "axisSoftMin": -50,
+                "axisSoftMax": 100
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  },
+                  {
+                    "color": "text",
+                    "value": 0
+                  }
+                ]
+              },
+              "decimals": 0,
+              "noValue": "No driving data in this time range"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#c98500"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#A352CC"
+                    }
+                  },
+                  {
+                    "id": "custom.drawStyle",
+                    "value": "bars"
+                  },
+                  {
+                    "id": "custom.barWidthFactor",
+                    "value": 0.05
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 100
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) >= 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+              "refId": "A",
+              "legendFormat": "Draw",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) < 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+              "refId": "B",
+              "legendFormat": "Regen braking",
+              "range": true
+            }
+          ],
+          "interval": "2m",
+          "maxDataPoints": 5000
+        },
+        {
           "type": "row",
           "title": "Body",
           "collapsed": false,
@@ -1176,7 +1393,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 32
+            "y": 40
           },
           "panels": []
         },
@@ -1193,7 +1410,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 33
+            "y": 41
           },
           "fieldConfig": {
             "defaults": {
@@ -1274,7 +1491,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 6,
-            "y": 33
+            "y": 41
           },
           "fieldConfig": {
             "defaults": {
@@ -1355,7 +1572,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 12,
-            "y": 33
+            "y": 41
           },
           "fieldConfig": {
             "defaults": {
@@ -1436,7 +1653,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 18,
-            "y": 33
+            "y": 41
           },
           "fieldConfig": {
             "defaults": {
@@ -1513,7 +1730,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 41
+            "y": 49
           },
           "panels": []
         },
@@ -1530,7 +1747,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 42
+            "y": 50
           },
           "fieldConfig": {
             "defaults": {
@@ -1608,7 +1825,7 @@ data:
             "h": 8,
             "w": 16,
             "x": 8,
-            "y": 42
+            "y": 50
           },
           "fieldConfig": {
             "defaults": {
@@ -1691,7 +1908,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 50
+            "y": 58
           },
           "panels": []
         },
@@ -1708,7 +1925,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 51
+            "y": 59
           },
           "fieldConfig": {
             "defaults": {
@@ -1795,7 +2012,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 12,
-            "y": 51
+            "y": 59
           },
           "fieldConfig": {
             "defaults": {
@@ -1872,7 +2089,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 18,
-            "y": 51
+            "y": 59
           },
           "fieldConfig": {
             "defaults": {
@@ -1956,7 +2173,7 @@ data:
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 59
+            "y": 67
           },
           "fieldConfig": {
             "defaults": {
@@ -2044,7 +2261,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 65
+            "y": 73
           },
           "panels": []
         },
@@ -2061,7 +2278,7 @@ data:
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 66
+            "y": 74
           },
           "fieldConfig": {
             "defaults": {
@@ -2141,7 +2358,7 @@ data:
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 66
+            "y": 74
           },
           "fieldConfig": {
             "defaults": {
@@ -2214,7 +2431,7 @@ data:
             "h": 4,
             "w": 12,
             "x": 12,
-            "y": 66
+            "y": 74
           },
           "fieldConfig": {
             "defaults": {

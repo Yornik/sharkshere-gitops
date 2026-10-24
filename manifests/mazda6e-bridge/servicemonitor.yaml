@@ -20,3 +20,14 @@ spec:
       path: /metrics
       interval: 60s
       scrapeTimeout: 10s
+      metricRelabelings:
+        # Every new pod gets a new name and IP. With these labels, each pod
+        # change starts new series, and the dashboard shows 2 lines or 2
+        # bars for the same car. Without them, the series continue. The
+        # Deployment uses Recreate, so a rollout never runs 2 pods. After an
+        # eviction, the old pod can still stop while the new pod starts. For
+        # about 1 scrape, samples from both pods then go into the same series,
+        # and the series can have a gap of up to 1 scrape. Both pods report
+        # the same car, so the values agree. The `up` series keeps both labels.
+        - action: labeldrop
+          regex: pod|instance
