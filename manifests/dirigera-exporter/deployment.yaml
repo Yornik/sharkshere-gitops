@@ -8,6 +8,11 @@ metadata:
     app.kubernetes.io/instance: dirigera-exporter
 spec:
   replicas: 1
+  # The ServiceMonitor drops the pod label, so 2 pods would send the same
+  # series during a rollout. Recreate keeps exactly 1 pod, and 1 client of
+  # the hub.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: dirigera-exporter

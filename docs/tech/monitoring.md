@@ -212,8 +212,8 @@ Three exporters turn a home data source into metrics. Each image comes from its 
 | Metric prefix | `ikea_` | `mazda6e_` |
 | Health metrics | `ikea_dirigera_scrape_success`, `ikea_dirigera_last_success_timestamp_seconds` | `mazda6e_scrape_success`, `mazda6e_vehicle_scrape_success`, `mazda6e_last_success_timestamp_seconds` |
 | After a failed poll | Sets the success metric to 0. The other gauges keep their last value. | Sets the success metric to 0. The other gauges keep their last value. After a refused login it waits 1 hour. |
-| Health on the dashboard | No panel | The row `Exporter` |
-| Rollout | Default `RollingUpdate` | `Recreate`, so that 1 session logs in with the device ID |
+| Health on the dashboard | The "Needs attention" strip says when the hub has not answered for 5 minutes. The charts then show a gap. | The row `Exporter` |
+| Rollout | `Recreate`, so that 2 pods do not send the same series | `Recreate`, so that 1 session logs in with the device ID |
 | Fixed settings | Hub address in `DIRIGERA_IP`. Temperature offset 0.0. | `EXPORT_LOCATION=false`, so the car position is not exported. |
 | CI in the source repository | ruff, pytest, image build | ruff, actionlint, hadolint, a read-only guard, pytest, `promtool` on every dashboard query, `pip-audit`, an image smoke test |
 
@@ -223,7 +223,7 @@ WARNING: The Mazda Secret is a full login to the Mazda account. The bridge only 
 
 NOTE: `up` stays 1 for both exporters when the hub or the Mazda cloud fails. The exporter still answers `/metrics`. Only the `*_scrape_success` and `*_last_success_timestamp_seconds` metrics show the failure. See gap G2.
 
-NOTE: The Mazda ServiceMonitor drops the labels `pod` and `instance`, so the series continue after a pod change. The `up` series keeps both labels.
+NOTE: Both ServiceMonitors drop the labels `pod` and `instance`, so the series continue after a pod change. The `up` series keeps both labels.
 
 NOTE: The Tibber exporter is a fork of `terjesannum/tibber-exporter` with 15-minute prices. Alloy drops its live-measurement lines and its `Updating prices`, `Updating HOURLY data` and `Updating DAILY data` lines. The process exits with code 1 when its live subscription fails. On 2026-10-23 at 10:54 UTC a timeout did this, and Kubernetes started it again. The pod showed 2 restarts after 2 days.
 
@@ -436,7 +436,7 @@ The Blind group is not complete. Other applications have no monitor either, amon
 
 Each gap has evidence. A gap is not always a missing signal. It can also be a lost signal or a comment in the repository that says something untrue. "Live" means a read-only query of the running cluster on 2026-10-23.
 
-NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is closed, because the logs of ArgoCD and democratic-csi reach Loki since 2026-10-24. The gaps keep their IDs, because other text refers to them.
+NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is closed, because the logs of ArgoCD and democratic-csi reach Loki since 2026-10-24. Gap G11 is closed, because the DIRIGERA dashboard hides the readings when the hub has not answered for 5 minutes. The gaps keep their IDs, because other text refers to them.
 
 | ID | Priority | Gap | Evidence | Suggested correction |
 |---|---|---|---|---|
@@ -448,7 +448,6 @@ NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is close
 | G8 | Medium | No probe checks the 15 public domains or their certificates. A public site that returns 5xx or has a bad certificate while its pods are Ready raises nothing. | No blackbox exporter, `Probe` object or `probe_success` query exists in `apps/`, `manifests/` or `bootstrap/`. | Add a blackbox exporter with `Probe` objects that carry the label `release: kube-prometheus-stack`. Alert on `probe_success == 0`. |
 | G9 | Medium | The comment in `apps/values.yaml` says that Prometheus scrapes the GitLab pods through a PodMonitor. No such PodMonitor exists. | Only `manifests/gitlab/podmonitor.yaml` exists, and it selects the Postgres pods. | Correct the comment, or add the PodMonitors. |
 | G10 | Low | The TrueNAS metrics have no dashboard in git, and the labels differ from the mapping file. | Live: 551 series and 113 metric names with `exported_job="truenas"`. Prometheus also renames the mapped label `instance` to `exported_instance`. No ConfigMap dashboard mentions TrueNAS. | Add a dashboard that queries `exported_job` and `exported_instance`. Or confirm that one lives in the UI only. |
-| G11 | Low | The DIRIGERA dashboard shows the last value for ever when the hub fails. | The exporter keeps the old gauges. The dashboard has no health panel. | Add a panel for `ikea_dirigera_scrape_success`, as the Mazda dashboard has. |
 | G12 | Low | The comments in the DIRIGERA and Tibber Deployments call the DIRIGERA exporter a Go exporter, and the DIRIGERA comment blames `GOMAXPROCS` for the CPU throttling. The exporter is Python. | `dirigera_exporter.py` uses `prometheus_client`, and the Dockerfile builds on a `python` image. The Tibber comment says "same Go-exporter shape as dirigera/graphite". | Correct the cause in both comments. Measure the throttling again, because the Go explanation does not apply to Python. |
 | G13 | Low | CI does not parse dashboard queries. A typo shows as an empty panel. | `.github/workflows/validate.yaml` has no `promtool` step. | Adapt the `promtool` check from the Mazda repository. It reads dashboard JSON, so extract the JSON from each ConfigMap. Replace `$__rate_interval` and `$__range` too, or the Tibber dashboard fails. |
 | G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 3 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
