@@ -23,6 +23,9 @@ spec:
         # change starts new series, and the dashboard shows broken lines: 6
         # pods in 53 days until 2026-10-24. Without them, the series
         # continue. The Deployment uses Recreate, so a rollout never runs 2
-        # pods. The `up` series keeps both labels.
+        # pods. After an eviction, the old pod can still stop while the new
+        # pod starts. For about 1 scrape, samples from both pods then go into
+        # the same series. Both pods read the same hub, so the values agree.
+        # The `up` series keeps both labels.
         - action: labeldrop
           regex: pod|instance
