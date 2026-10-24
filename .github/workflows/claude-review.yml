@@ -229,7 +229,7 @@ jobs:
       - name: Install the Anthropic SDK
         env:
           # renovate: datasource=pypi depName=anthropic
-          ANTHROPIC_VERSION: 2.2.0
+          ANTHROPIC_VERSION: 2.3.0
         run: pip install "anthropic==${ANTHROPIC_VERSION}"
 
       # The tool list in review.py is the whole boundary. The review reads
