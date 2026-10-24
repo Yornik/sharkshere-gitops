@@ -267,23 +267,35 @@ spec:
               in the Cluster manifest in git now. If the name ends in `-wal`, also check the rule
               CNPGWalArchiveFailing, because the cause is often a WAL archive that fails.
 
-        # These rules read series that can disappear without any error. A
-        # PodMonitor that loses its release label, a drop rule with a wrong regex
-        # or a missing kube-state-metrics gives no data, and then no rule above can
-        # fire. The `metric` label names the missing series. Live now: all 4 exist.
+        # These rules read series that can disappear without any error, and then
+        # no rule above can fire. A PodMonitor that loses its release label, or a
+        # drop regex that is wrong, hides 1 cluster and leaves the other 3
+        # reporting. absent() on the whole metric stays silent then. So the first 2
+        # checks look for a namespace that has a CNPG pod and no series. They
+        # assume 1 cluster in each namespace, as today. The last 2 checks catch
+        # the loss of a metric for every cluster. The `metric` label names the
+        # missing series. Live now: no namespace and no metric is missing.
         - alert: CNPGMetricsAbsent
           expr: |-
-            label_replace(absent(cnpg_pg_replication_lag), "metric", "cnpg_pg_replication_lag", "", "")
+            label_replace(
+              max by (namespace) (kube_pod_owner{owner_kind="Cluster"})
+              unless on (namespace) max by (namespace) (cnpg_collector_up),
+              "metric", "cnpg_collector_up", "", "")
+            or label_replace(
+              max by (namespace) (kube_pod_owner{owner_kind="Cluster"})
+              unless on (namespace) max by (namespace) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp),
+              "metric", "barman_cloud_cloudnative_pg_io_last_available_backup_timestamp", "", "")
+            or label_replace(absent(cnpg_pg_replication_lag), "metric", "cnpg_pg_replication_lag", "", "")
             or label_replace(absent(cnpg_pg_stat_archiver_last_archived_time), "metric", "cnpg_pg_stat_archiver_last_archived_time", "", "")
-            or label_replace(absent(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp), "metric", "barman_cloud_cloudnative_pg_io_last_available_backup_timestamp", "", "")
             or label_replace(absent(kube_pod_owner{owner_kind="Cluster"}), "metric", "kube_pod_owner{owner_kind=\"Cluster\"}", "", "")
           for: 15m
           labels:
             severity: warning
           annotations:
-            summary: No data for {{ $labels.metric }}. The CloudNativePG alerts cannot fire.
+            summary: No data for {{ $labels.metric }}{{ if $labels.namespace }} in {{ $labels.namespace }}{{ end }}. The CloudNativePG alerts that read it cannot fire.
             description: >-
-              Prometheus has no series for this metric. Check that the PodMonitors still carry the
-              label `release: kube-prometheus-stack` with
+              Prometheus has no series for this metric, for the namespace named above if there is one.
+              Check that the PodMonitors still carry the label `release: kube-prometheus-stack` with
               `kubectl --context yornik-sharkshere get podmonitors -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,RELEASE:.metadata.labels.release'`.
-              Then open /targets in Prometheus and look for the Postgres instances.
+              Then check the `metricRelabelings` regex in the PodMonitor of that namespace, because a wrong
+              drop regex hides the series too. Open /targets in Prometheus to see the Postgres instances.
