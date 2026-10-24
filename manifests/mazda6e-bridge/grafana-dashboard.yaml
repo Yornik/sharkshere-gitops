@@ -9,11 +9,11 @@
 #   is grafana-amazonprometheus-datasource, and every panel shows No data.
 # - The tire panels show bar, not kPa: the query divides by 100 and the
 #   thresholds are 2.2, 2.4 and 3.0 bar.
-# - The 2 "Charging current" queries and the "Battery current while
-#   driving" query also read the deprecated
+# - The 2 "Charging current" queries and the 2 "Battery current while
+#   driving" queries also read the deprecated
 #   mazda6e_charge_current_amperes (kind "total" and "dc"). Images before
-#   v1.1.0 export only that metric, so the fallback shows the charging
-#   history from before the update.
+#   v1.1.0 export only that metric, so the fallback shows the history
+#   from before the update.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -722,7 +722,7 @@ data:
         {
           "type": "timeseries",
           "title": "Charging current",
-          "description": "Current from the charger, and the current that goes into the high-voltage battery while a charger supplies the car. At a fast charger the two are about equal. On AC the battery current is lower, because the battery voltage is higher than the grid voltage.",
+          "description": "From charger is the current the charger supplies. Into battery is the current that charges the battery, so read it for charging speed: 100 A is about 40 kW. On AC the battery gets about half the charger's amps, because the battery runs at about 400 V and the grid at 230 V. At a DC fast charger the two are about the same, and many times higher than on AC.",
           "id": 11,
           "datasource": {
             "type": "prometheus",
@@ -743,10 +743,10 @@ data:
               "custom": {
                 "drawStyle": "line",
                 "lineWidth": 2,
-                "fillOpacity": 10,
+                "fillOpacity": 0,
                 "lineInterpolation": "stepAfter",
                 "showPoints": "never",
-                "spanNulls": 3600000,
+                "spanNulls": false,
                 "axisBorderShow": false,
                 "gradientMode": "none",
                 "stacking": {
@@ -755,7 +755,8 @@ data:
                 },
                 "thresholdsStyle": {
                   "mode": "off"
-                }
+                },
+                "axisSoftMax": 50
               },
               "thresholds": {
                 "mode": "absolute",
@@ -766,15 +767,58 @@ data:
                   }
                 ]
               },
-              "min": 0
+              "min": 0,
+              "decimals": 0
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#8a8a8a"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 15
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#A352CC"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "legend": {
               "displayMode": "list",
               "placement": "bottom",
-              "showLegend": true
+              "showLegend": true,
+              "calcs": [
+                "max"
+              ]
             },
             "tooltip": {
               "mode": "multi",
@@ -790,7 +834,7 @@ data:
               "editorMode": "code",
               "expr": "max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"})",
               "refId": "A",
-              "legendFormat": "Charger",
+              "legendFormat": "From charger",
               "range": true
             },
             {
@@ -799,12 +843,14 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}) > 0",
+              "expr": "(-min by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}) > 0) or on(vin) 0 * (max_over_time((max by (vin) (mazda6e_charger_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"total\"}))[6m:1m] offset -3m) > 0)",
               "refId": "B",
               "legendFormat": "Into battery",
               "range": true
             }
-          ]
+          ],
+          "interval": "1m",
+          "maxDataPoints": 5000
         },
         {
           "type": "state-timeline",
@@ -1186,7 +1232,7 @@ data:
         {
           "type": "timeseries",
           "title": "Battery current while driving",
-          "description": "High-voltage battery current while the car reports Driving. Above 0 the battery drives the car; below 0 regenerative braking charges it. Each point is one reading, about 1 every 2 minutes, not a continuous trace.",
+          "description": "Draw (above 0) is current the car takes from the battery. Regen braking (below 0) is current that braking puts back. Each dot is one reading, sent about every 2 minutes, so short peaks fall between dots. Ranges over 12 days show only some of the readings.",
           "id": 37,
           "datasource": {
             "type": "prometheus",
@@ -1220,7 +1266,9 @@ data:
                 "thresholdsStyle": {
                   "mode": "line"
                 },
-                "pointSize": 6
+                "pointSize": 6,
+                "axisSoftMin": -50,
+                "axisSoftMax": 100
               },
               "thresholds": {
                 "mode": "absolute",
@@ -1234,9 +1282,58 @@ data:
                     "value": 0
                   }
                 ]
-              }
+              },
+              "decimals": 0,
+              "noValue": "No drives in this time range"
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#c98500"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#A352CC"
+                    }
+                  },
+                  {
+                    "id": "custom.drawStyle",
+                    "value": "bars"
+                  },
+                  {
+                    "id": "custom.barWidthFactor",
+                    "value": 0.05
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 100
+                  },
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "legend": {
@@ -1256,12 +1353,25 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) >= 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
               "refId": "A",
-              "legendFormat": "Battery current",
+              "legendFormat": "Draw",
+              "range": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "max by (vin) (mazda6e_battery_current_amperes{vin=~\"$vin\"} or on(vin) mazda6e_charge_current_amperes{vin=~\"$vin\",kind=\"dc\"}) < 0 and on(vin) max by (vin) (mazda6e_vehicle_state{vin=~\"$vin\",state=\"driving\"}) == 1",
+              "refId": "B",
+              "legendFormat": "Regen braking",
               "range": true
             }
-          ]
+          ],
+          "interval": "2m",
+          "maxDataPoints": 5000
         },
         {
           "type": "row",
