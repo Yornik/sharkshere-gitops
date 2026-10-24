@@ -165,8 +165,21 @@ NOTE: Create the categories before Sonarr and Radarr use them. A category that S
 3. Choose Add category.
 4. Add a category named `tv` with save path `/media/series/downloads/`.
 5. Add a category named `movies` with save path `/media/movies/downloads/`.
+6. Open Tools, then Options, then BitTorrent.
+7. Under Seeding Limits, turn on When ratio reaches and enter `1`.
+8. Turn on When total seeding time reaches and enter `120` minutes.
+9. Turn on When inactive seeding time reaches and enter `120` minutes.
+10. Set then to Stop torrent, and save.
 
 Expected result: a finished download of category `tv` sits under `/media/series/downloads/`, and one of category `movies` under `/media/movies/downloads/`. The init containers of Sonarr and Radarr create these folders and put an empty `.ignore` file in each, so Jellyfin does not scan them as library folders.
+
+Expected result: about 2 hours after a download finishes, qBittorrent stops the torrent. Sonarr or Radarr then removes the torrent and its files in `downloads/`.
+
+NOTE: Sonarr and Radarr remove a stopped torrent only when Remove Completed is on for the qBittorrent download client. It is on by default. On 2026-10-24 it was on in both apps.
+
+NOTE: The seeding limits keep a download from using space twice for long. Sonarr and Radarr copy a download into the library, because the SMB share has no hardlinks. Seeding longer brings little: Mullvad has no port forwarding, so other peers cannot connect to qBittorrent. On 2026-10-24 the ratios after 20 hours were 0.00 to 0.46.
+
+NOTE: The seeding time counts only the time that a torrent seeds, not the time since it finished. A torrent that waits in the upload queue does not count. With a limit of 24 hours, about 400 GB of copies stayed in `downloads/` for more than a day.
 
 ## How to set up Sonarr
 
@@ -184,7 +197,7 @@ WARNING: The first visitor to a new Sonarr creates the login. Do steps 1 and 2 r
 
 NOTE: Sonarr needs an indexer to find a release. Without one, a request stays open. Do not add indexers in Sonarr. Prowlarr adds them. See [How to set up Prowlarr](#how-to-set-up-prowlarr).
 
-NOTE: An SMB share does not allow a permission change or a hardlink. Step 7 stops Sonarr from trying one. Step 8 makes Sonarr copy a finished download, so a download uses space twice until you delete the torrent.
+NOTE: An SMB share does not allow a permission change or a hardlink. Step 7 stops Sonarr from trying one. Step 8 makes Sonarr copy a finished download, so a download uses space twice until Sonarr removes the torrent. The seeding limits in [How to set up qBittorrent](#how-to-set-up-qbittorrent) make that happen after about 2 hours.
 
 ## How to set up Radarr
 

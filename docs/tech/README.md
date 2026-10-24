@@ -2,7 +2,7 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 54 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 55 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
@@ -24,7 +24,7 @@ This repo is one of three:
 | CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
-| Workloads | 54 ArgoCD Applications, 15 public HTTPS domains, 11 tailnet-only web interfaces, 1 tailnet-only SMB service |
+| Workloads | 55 ArgoCD Applications, 15 public HTTPS domains, 11 tailnet-only web interfaces, 1 tailnet-only SMB service |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
@@ -236,6 +236,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `mazda6e-bridge` | `monitoring` | read-only Mazda 6e car metrics exporter (Mazda cloud API) — see [runbook](../runbooks/mazda6e-bridge.md) |
 | `gotosocial` | `gotosocial` | fediverse service (`pub.fedishark.eu`) |
 | `jellyfin` | `jellyfin` | media service (`jelly.yornik.eu`) |
+| `intel-gpu-plugin` | `kube-system` | Intel GPU device plugin DaemonSet; offers each node's iGPU as `gpu.intel.com/i915`, so a pod can use it without a hostPath mount of `/dev/dri` |
 | `omni-tools` | `omni-tools` | utility services |
 | `qbittorrent` | `jellyfin` | torrent workload behind a gluetun (Mullvad WireGuard) sidecar; WebUI on the tailnet only |
 | `seerr` | `jellyfin` | media request UI; sends series requests to Sonarr and film requests to Radarr; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
