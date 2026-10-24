@@ -6,13 +6,13 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 
 | Document | Read it when |
 |---|---|
-| [`tech/README.md`](tech/README.md) | You need the storage classes or the application inventory. |
-| [`runbooks/tailnet-only-admin-uis.md`](runbooks/tailnet-only-admin-uis.md) | You need to reach Grafana or Alertmanager, or you change their tailnet address. |
-| [`runbooks/mazda6e-bridge.md`](runbooks/mazda6e-bridge.md) | You activate the Mazda exporter or replace its credentials. |
-| [`incidents/grafana-rwo-multi-attach.md`](incidents/grafana-rwo-multi-attach.md) | You change the rollout strategy of Grafana. |
-| [`incidents/2026-09-09-prometheus-release-label-selector.md`](incidents/2026-09-09-prometheus-release-label-selector.md) | A monitor or a rule does not appear in Prometheus. |
-| [`incidents/2026-07-10-loki-chunks-cache-oversized.md`](incidents/2026-07-10-loki-chunks-cache-oversized.md) | You change a Loki cache. |
-| [`incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](incidents/2026-10-12-truenas-update-readonly-pv-remount.md) and [`incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md`](incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md) | You change the storage alert. |
+| [`README.md`](README.md) | You need the storage classes or the application inventory. |
+| [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md) | You need to reach Grafana or Alertmanager, or you change their tailnet address. |
+| [`../runbooks/mazda6e-bridge.md`](../runbooks/mazda6e-bridge.md) | You activate the Mazda exporter or replace its credentials. |
+| [`../incidents/grafana-rwo-multi-attach.md`](../incidents/grafana-rwo-multi-attach.md) | You change the rollout strategy of Grafana. |
+| [`../incidents/2026-09-09-prometheus-release-label-selector.md`](../incidents/2026-09-09-prometheus-release-label-selector.md) | A monitor or a rule does not appear in Prometheus. |
+| [`../incidents/2026-07-10-loki-chunks-cache-oversized.md`](../incidents/2026-07-10-loki-chunks-cache-oversized.md) | You change a Loki cache. |
+| [`../incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md) and [`../incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md`](../incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md) | You change the storage alert. |
 | [`Yornik/dirigera-exporter`](https://github.com/Yornik/dirigera-exporter) | You change the DIRIGERA exporter. |
 | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) | You change the Mazda exporter or its dashboard. |
 
@@ -158,7 +158,7 @@ The cluster disables the scrape of etcd, the scheduler, the controller manager a
 
 ### How a monitor becomes visible
 
-CAUTION: Prometheus ignores a ServiceMonitor, PodMonitor or PrometheusRule without the label `release: kube-prometheus-stack`. There is no error. See [the incident](incidents/2026-09-09-prometheus-release-label-selector.md).
+CAUTION: Prometheus ignores a ServiceMonitor, PodMonitor or PrometheusRule without the label `release: kube-prometheus-stack`. There is no error. See [the incident](../incidents/2026-09-09-prometheus-release-label-selector.md).
 
 To list the monitors that Prometheus ignores, run:
 
@@ -214,7 +214,7 @@ Three exporters turn a home data source into metrics. Each image comes from its 
 
 Both Deployments run as user 65532, with a read-only root file system, no capabilities and a 128 Mi memory limit. Neither has a CPU limit.
 
-WARNING: The Mazda Secret is a full login to the Mazda account. The bridge only reads, and its CI enforces that. Another program with the same 3 values can control the car. See [`runbooks/mazda6e-bridge.md`](runbooks/mazda6e-bridge.md).
+WARNING: The Mazda Secret is a full login to the Mazda account. The bridge only reads, and its CI enforces that. Another program with the same 3 values can control the car. See [`../runbooks/mazda6e-bridge.md`](../runbooks/mazda6e-bridge.md).
 
 NOTE: `up` stays 1 for both exporters when the hub or the Mazda cloud fails. The exporter still answers `/metrics`. Only the `*_scrape_success` metrics show the failure. See gap G2.
 
@@ -258,7 +258,7 @@ The log level comes from the JSON fields `level`, `severity` and `log_level`, or
 | Mode | `SingleBinary`, 1 replica, filesystem store. | One small cluster. |
 | Retention | 1440 h (60 days), compactor on. | Same as the metrics. |
 | Authentication | Off. | Only Grafana and Alloy reach it. |
-| Chunks cache | Off. | Measured 0.3 % hit rate. See [the incident](incidents/2026-07-10-loki-chunks-cache-oversized.md). |
+| Chunks cache | Off. | Measured 0.3 % hit rate. See [the incident](../incidents/2026-07-10-loki-chunks-cache-oversized.md). |
 | Results cache | 256 MB. | Grafana repeats range queries. |
 | Log level | `error`. | Quiet pod log. |
 
@@ -270,7 +270,7 @@ Loki has no ruler. No alert is based on a log line.
 
 Grafana is reachable on the tailnet only, at `https://grafana.hedgehog-wage.ts.net`. A Tailscale Ingress terminates TLS. The Ingress skips Traefik, so no fail2ban or rate limit applies. The login is the only gate. The values configure the local admin account from the SOPS Secret `grafana-admin`, and no other login method.
 
-The Deployment uses `maxSurge: 0`, because the volume is ReadWriteOnce. See [the incident](incidents/grafana-rwo-multi-attach.md).
+The Deployment uses `maxSurge: 0`, because the volume is ReadWriteOnce. See [the incident](../incidents/grafana-rwo-multi-attach.md).
 
 ### Data sources
 
@@ -343,9 +343,9 @@ Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repo
 | `KubePersistentVolumeFillingUp` | Chart | A volume has less than 15 % free, with more checks. |
 | `CPUThrottlingHigh` | Chart | A container is throttled. Severity `info`. |
 | `Watchdog` | Chart | Always. It proves that the rule engine works. |
-| `VolumeRemountedReadOnly` | `apps/values.yaml` | A CSI volume turned read-only. Critical. Holds for 24 hours. See [the incident](incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md). |
+| `VolumeRemountedReadOnly` | `apps/values.yaml` | A CSI volume turned read-only. Critical. Holds for 24 hours. See [the incident](../incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md). |
 
-CAUTION: Alertmanager has no login. A tailnet device can silence every alert. See [`runbooks/tailnet-only-admin-uis.md`](runbooks/tailnet-only-admin-uis.md).
+CAUTION: Alertmanager has no login. A tailnet device can silence every alert. See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 
 ## Coverage
 
@@ -430,7 +430,7 @@ Expected result: the state is `UP`. If the target is missing, check the `release
 2. Set the label `release: kube-prometheus-stack` in `metadata.labels`.
 3. Name the port of the Service, not the number.
 4. Add the file to `kustomization.yaml`.
-5. Run the checks in [`AGENTS.md`](../AGENTS.md).
+5. Run the checks in [`AGENTS.md`](../../AGENTS.md).
 6. Merge the pull request.
 7. Check the target as described above.
 
@@ -451,7 +451,7 @@ Expected result: the sidecar loads the dashboard. A restart of Grafana is not ne
 2. Add a group to `additionalPrometheusRulesMap` in `apps/values.yaml`. Or add a PrometheusRule with the label `release: kube-prometheus-stack`.
 3. Set `for:` and a `severity` label.
 4. Add a comment that gives the reason for each value that is not obvious.
-5. Run the checks in [`AGENTS.md`](../AGENTS.md).
+5. Run the checks in [`AGENTS.md`](../../AGENTS.md).
 6. Merge the pull request.
 
 Expected result: the rule appears on `/rules` in Prometheus.
