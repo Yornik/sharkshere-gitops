@@ -440,6 +440,13 @@ apps:
                   stage.drop {
                     expression = "NodeGetVolumeStats|request headers map\\["
                   }
+                  stage.drop {
+                    // klog info lines of the CSI sidecars, like "I1023 20:56:30.2 ...".
+                    // They go to stderr and have no level word, so the stderr rule
+                    // below would label them error. About 109000 lines a day
+                    // (2026-10-23, after the lease drop). This drop skips W and E lines.
+                    expression = "^I[0-9]{4} "
+                  }
                 }
 
                 stage.match {
@@ -528,26 +535,35 @@ apps:
                   }
                 }
 
+                // Set the level label here, before the 2 drop stages below. A
+                // stage.match selector reads labels only, not extracted values.
+                // With this block after them, level!~"..." matched every line
+                // and dropped all logs of ArgoCD and democratic-csi (found
+                // 2026-10-23). See docs/tech/monitoring.md, gap G4.
+                stage.labels {
+                  values = {
+                    level = "",
+                  }
+                }
+
+                // Volume: keep warn and above, drop the rest. These stages need
+                // the level label from the block above. The list has "warning"
+                // because ArgoCD logs it, and stage.replace above does not
+                // rewrite it: its expression has no capture group.
                 stage.match {
-                  selector            = "{app=\"democratic-csi\", level!~\"warn|error|fatal|panic\"}"
+                  selector            = "{app=\"democratic-csi\", level!~\"warn|warning|error|fatal|panic\"}"
                   action              = "drop"
                   drop_counter_reason = "democratic_csi_non_error"
                 }
 
                 stage.match {
-                  selector            = "{namespace=\"argocd\", level!~\"warn|error|fatal|panic\"}"
+                  selector            = "{namespace=\"argocd\", level!~\"warn|warning|error|fatal|panic\"}"
                   action              = "drop"
                   drop_counter_reason = "argocd_non_error"
                 }
 
                 stage.drop {
                   longer_than = "16KB"
-                }
-
-                stage.labels {
-                  values = {
-                    level = "",
-                  }
                 }
 
                 forward_to = [loki.write.loki.receiver]
