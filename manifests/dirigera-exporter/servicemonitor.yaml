@@ -18,3 +18,11 @@ spec:
       path: /metrics
       interval: 30s
       scrapeTimeout: 10s
+      metricRelabelings:
+        # Every new pod gets a new name and IP. With these labels, each pod
+        # change starts new series, and the dashboard shows broken lines: 6
+        # pods in 53 days until 2026-10-24. Without them, the series
+        # continue. The Deployment uses Recreate, so a rollout never runs 2
+        # pods. The `up` series keeps both labels.
+        - action: labeldrop
+          regex: pod|instance
