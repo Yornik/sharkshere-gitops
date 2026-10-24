@@ -641,6 +641,10 @@ apps:
     namespace: gotosocial
     path: manifests/gotosocial
 
+  intel-gpu-plugin:
+    namespace: kube-system
+    path: manifests/intel-gpu-plugin
+
   jellyfin:
     namespace: jellyfin
     path: manifests/jellyfin
