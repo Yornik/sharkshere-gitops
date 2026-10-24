@@ -790,10 +790,6 @@ data:
                   {
                     "id": "custom.lineWidth",
                     "value": 1
-                  },
-                  {
-                    "id": "decimals",
-                    "value": 1
                   }
                 ]
               },
@@ -1298,7 +1294,6 @@ data:
                   }
                 ]
               },
-              "decimals": 1,
               "noValue": "No driving data in this time range"
             },
             "overrides": [
