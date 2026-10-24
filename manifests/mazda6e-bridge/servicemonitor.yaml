@@ -24,7 +24,9 @@ spec:
         # Every new pod gets a new name and IP. With these labels, each pod
         # change starts new series, and the dashboard shows 2 lines or 2
         # bars for the same car. Without them, the series continue. The
-        # Deployment uses Recreate, so 2 pods never send the same series.
-        # The `up` series keeps both labels.
+        # Deployment uses Recreate, so a rollout never runs 2 pods. After an
+        # eviction, the old pod can still stop while the new pod starts. Then
+        # Prometheus drops the duplicate samples for about 1 scrape. No data
+        # is lost. The `up` series keeps both labels.
         - action: labeldrop
           regex: pod|instance
