@@ -40,7 +40,7 @@ spec:
               # this script replaced KnownProxies with a sed range. When the
               # element was on 1 line, the range never ended and deleted the
               # rest of the file. Jellyfin then failed to load the file and ran
-              # with the default network settings.
+              # with the default network settings (found 2026-10-24, #590).
               if ! grep -q '</NetworkConfiguration>' "$CONF"; then
                 echo "network.xml has no closing tag, repairing it"
                 grep -q '<KnownProxies' "$CONF" || echo '  <KnownProxies />' >> "$CONF"
