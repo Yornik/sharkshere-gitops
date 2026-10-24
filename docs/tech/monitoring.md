@@ -264,7 +264,7 @@ Alloy keeps its read positions in `/tmp/alloy`, and no volume holds that path. A
 
 The pipeline reads the JSON fields `level`, `severity` and `log_level`, but only `level` reaches the label. Then a regex takes the first level keyword in the line, in any case, and replaces that value. The keywords are trace, debug, info, warn, warning, error, fatal and panic. A line on `stderr` without a level becomes `error`. A line on `stdout` without a level becomes `info`. The step that maps `warning` to `warn` does nothing: see gap G16.
 
-NOTE: Keep `stage.labels` before the 2 last drops of the table. A `stage.match` selector reads labels only, not extracted values. Until 2026-10-24 the label came after them, and they dropped every line of ArgoCD and democratic-csi. See gap G4.
+NOTE: Keep `stage.labels` before the 2 `stage.match` drops with the reasons `democratic_csi_non_error` and `argocd_non_error`. A `stage.match` selector reads labels only, not extracted values. Until 2026-10-24 the label came after them, and they dropped every line of ArgoCD and democratic-csi. See gap G4.
 
 ### Loki
 

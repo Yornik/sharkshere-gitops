@@ -451,9 +451,12 @@ apps:
                     // Access line of the csi-proxy container for NodeGetCapabilities.
                     // It goes to stderr and has no level word, so the stderr rule
                     // labels it error. It was the only line shape of csi-proxy in
-                    // Loki 15 minutes after the fix of 2026-10-24, about 25000 a day.
+                    // Loki 15 minutes after the fix of 2026-10-24: 189 lines. The
+                    // pod logs of 2026-10-23 hold about 25000 such lines a day.
+                    // The text in the brackets is "://localhost" here, and can
+                    // differ by client, so the pattern accepts any text.
                     // Other request lines of csi-proxy stay.
-                    expression = "request \\(://localhost\\) POST /csi\\.v1\\.Node/NodeGetCapabilities"
+                    expression = "request \\(.*\\) POST /csi\\.v1\\.Node/NodeGetCapabilities"
                   }
                 }
 
