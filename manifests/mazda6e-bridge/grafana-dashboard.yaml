@@ -722,7 +722,7 @@ data:
         {
           "type": "timeseries",
           "title": "Charging power",
-          "description": "From charger is the power the charger supplies. Into battery is the power that charges the battery. The gap between them is the charging loss. The car reports current, not voltage, so power is an estimate with fixed voltages: 230 V for AC and 379 V for the battery (68.8 kWh pack; set the battery_voltage variable to 364 for the 78 kWh pack). Ranges over 12 days skip some readings, so Max can read low.",
+          "description": "From charger is the power the charger supplies. Into battery is the power that charges the battery. The gap between them is the charging loss. The car reports current, not voltage, so power is an estimate with fixed voltages: 230 V for AC and 379 V for the battery (68.8 kWh pack). For the 78 kWh pack, add var-battery_voltage=364 to the dashboard URL. Ranges over 12 days skip some readings, so Max can read low.",
           "id": 11,
           "datasource": {
             "type": "prometheus",
@@ -2555,7 +2555,7 @@ data:
             "options": []
           },
           {
-            "type": "constant",
+            "type": "textbox",
             "hide": 2,
             "skipUrlSync": false,
             "name": "battery_voltage",
@@ -2575,7 +2575,7 @@ data:
             ]
           },
           {
-            "type": "constant",
+            "type": "textbox",
             "hide": 2,
             "skipUrlSync": false,
             "name": "grid_voltage",
