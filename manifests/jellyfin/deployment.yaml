@@ -36,6 +36,17 @@ spec:
               ENCODING=/config/config/encoding.xml
               KNOWN_PROXY_CIDR=10.244.0.0/16
               if [ ! -f "$CONF" ]; then exit 0; fi
+              # Repair a network.xml without its closing tag. An older version of
+              # this script replaced KnownProxies with a sed range. When the
+              # element was on 1 line, the range never ended and deleted the
+              # rest of the file. Jellyfin then failed to load the file and ran
+              # with the default network settings.
+              if ! grep -q '</NetworkConfiguration>' "$CONF"; then
+                echo "network.xml has no closing tag, repairing it"
+                grep -q '<KnownProxies' "$CONF" || echo '  <KnownProxies />' >> "$CONF"
+                grep -q '<PublishedServerUriBySubnet' "$CONF" || echo '  <PublishedServerUriBySubnet />' >> "$CONF"
+                echo '</NetworkConfiguration>' >> "$CONF"
+              fi
               # Force all clients (LAN + remote) to use the external URL for streams.
               # The env var only sets this in memory; patching the XML persists it.
               sed -i 's|<PublishedServerUriBySubnet />|<PublishedServerUriBySubnet><string>all=https://jelly.yornik.eu</string></PublishedServerUriBySubnet>|' "$CONF"
@@ -44,9 +55,13 @@ spec:
               # to store the internal pod address and bypass Traefik for streams.
               sed -i 's|<AutoDiscovery>true</AutoDiscovery>|<AutoDiscovery>false</AutoDiscovery>|' "$CONF"
               # Trust only the cluster pod subnet that Traefik comes from.
+              # An empty or single-line element: replace it on its line.
               sed -i "s|<KnownProxies />|<KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>|" "$CONF"
-              sed -i "s|<KnownProxies></KnownProxies>|<KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>|" "$CONF"
-              sed -i "/<KnownProxies>/,/<\\/KnownProxies>/c\\  <KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>" "$CONF"
+              sed -i "s|<KnownProxies>.*</KnownProxies>|<KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>|" "$CONF"
+              # A multi-line element, as Jellyfin writes it: replace the lines
+              # from the opening tag to the closing tag. The range starts only on
+              # a line that ends after the opening tag, so it always has an end.
+              sed -i "/<KnownProxies>[[:space:]]*\$/,/<\\/KnownProxies>/c\\  <KnownProxies><string>${KNOWN_PROXY_CIDR}</string></KnownProxies>" "$CONF"
               # Set public HTTPS port to 443 (Traefik terminates TLS)
               sed -i 's|<PublicHttpsPort>.*</PublicHttpsPort>|<PublicHttpsPort>443</PublicHttpsPort>|' "$CONF"
               sed -i 's|<PublicHttpPort>.*</PublicHttpPort>|<PublicHttpPort>443</PublicHttpPort>|' "$CONF"
@@ -58,9 +73,9 @@ spec:
                 sed -i 's|<VaapiDevice>.*</VaapiDevice>|<VaapiDevice>/dev/dri/renderD128</VaapiDevice>|' "$ENCODING"
                 sed -i 's|<EnableHardwareEncoding>false</EnableHardwareEncoding>|<EnableHardwareEncoding>true</EnableHardwareEncoding>|' "$ENCODING"
                 sed -i 's|<PreferSystemNativeHwDecoder>false</PreferSystemNativeHwDecoder>|<PreferSystemNativeHwDecoder>true</PreferSystemNativeHwDecoder>|' "$ENCODING"
-                # Add HEVC to hardware decoding codecs so QSV handles H.265 — this makes
-                # transcoding fast enough on the N150 iGPU that the Apple TV cold-start
-                # "Stopped at 0ms" issue no longer occurs.
+                # Add HEVC to the hardware decoding codecs, so QSV decodes H.265.
+                # NOTE: Until #589 (2026-10-24) the container could not open
+                # /dev/dri/renderD128, so these QSV settings had no effect.
                 grep -q '<string>hevc</string>' "$ENCODING" || \
                   sed -i 's|</HardwareDecodingCodecs>|<string>hevc</string></HardwareDecodingCodecs>|' "$ENCODING"
               fi
@@ -92,8 +107,9 @@ spec:
               if [ ! -f "$DB" ]; then echo "DB not found, skipping"; exit 0; fi
               apk add --no-cache sqlite > /dev/null 2>&1
               # Re-enable video transcoding (Kind=9=EnableVideoPlaybackTranscoding) for all users.
-              # Previously disabled to work around Apple TV "Stopped at 0ms" cold-start, but that
-              # is now solved by HEVC hardware decoding via QSV (see patch-network-config above).
+              # It was disabled to work around the Apple TV "Stopped at 0ms" cold start.
+              # NOTE: That was not fixed by QSV, as this comment once said. Until #589
+              # (2026-10-24) the container could not open the iGPU at all.
               sqlite3 "$DB" "UPDATE Permissions SET Value = 1 WHERE Kind = 9;"
               touch "$MARKER"
               echo "Done: video transcoding re-enabled for all users"
