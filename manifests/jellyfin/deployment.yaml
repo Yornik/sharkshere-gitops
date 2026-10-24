@@ -21,6 +21,8 @@ spec:
         # Belt-and-braces for /dev/dri access: common render (44) and video (226)
         # GIDs. renderD128 is 0666 on Talos nodes so these are not strictly
         # required, but they keep transcoding working if permissions tighten.
+        # The device cgroup access itself comes from the gpu.intel.com/i915
+        # resource below.
         supplementalGroups:
           - 44
           - 226
@@ -102,8 +104,9 @@ spec:
         - name: jellyfin
           image: jellyfin/jellyfin:12.3
           securityContext:
-            # Not privileged: QSV transcoding only needs the world-writable
-            # /dev/dri/renderD128 hostPath mount, no extra capabilities.
+            # Not privileged: QSV transcoding gets the iGPU from the
+            # gpu.intel.com/i915 resource (manifests/intel-gpu-plugin/), which
+            # also allows the device in the container's device cgroup.
             # privileged MUST stay explicitly false: the live object once had
             # privileged: true, and with server-side apply an omitted field
             # is retained, not removed — the merge produced the invalid combo
@@ -133,6 +136,11 @@ spec:
             limits:
               cpu: "4"
               memory: 4Gi
+              # The Intel GPU device plugin passes /dev/dri/card0 and
+              # /dev/dri/renderD128 into the container and allows them in its
+              # device cgroup. A hostPath mount of /dev/dri does not allow
+              # them: ffmpeg then fails with "No VA display found".
+              gpu.intel.com/i915: "1"
           volumeMounts:
             - name: config
               mountPath: /config
@@ -147,8 +155,6 @@ spec:
               readOnly: true
             - name: cache
               mountPath: /cache
-            - name: dri
-              mountPath: /dev/dri
             - name: dvdcss
               mountPath: /dvdcss
           livenessProbe:
@@ -178,9 +184,5 @@ spec:
             claimName: jellyfin-music
         - name: cache
           emptyDir: {}
-        - name: dri
-          hostPath:
-            path: /dev/dri
-            type: Directory
         - name: dvdcss
           emptyDir: {}
