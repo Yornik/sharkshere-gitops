@@ -59,7 +59,7 @@ spec:
               docs/incidents/2026-10-12-truenas-update-readonly-pv-remount.md.
 
         # The cluster is degraded, not down. 15 minutes lets a rolling update or
-        # a failover finish, which takes a few minutes for one instance. 30 days
+        # a failover finish, which takes a few minutes for 1 instance. 30 days
         # gave 393 minutes for gitlab-pg and 952 for soiree-pg (the 2026-10-12
         # incidents). The `> 0` leaves the case of 0 ready to the rule above.
         - alert: CNPGClusterInstanceNotReady
@@ -162,8 +162,8 @@ spec:
               credential or a bucket error, read the ObjectStore in the same namespace.
 
         # The newest failed backup is newer than the newest good backup. The state
-        # lasts until the next scheduled backup succeeds, up to 3 hours, so one
-        # mail is the normal result of one failure. `for` is short for that
+        # lasts until the next scheduled backup succeeds, up to 3 hours, so 1
+        # mail is the normal result of 1 failure. `for` is short for that
         # reason. Live now: no cluster in this state.
         - alert: CNPGBackupFailed
           expr: |-
@@ -184,7 +184,7 @@ spec:
         # 1 hour of margin. Live now: the newest backup of every cluster is 2.0
         # hours old. Over 30 days the oldest backup was 93 hours on shared-pg
         # (the 3.8 days above), 19 on gitlab-pg and 9 on soiree-pg, so this
-        # threshold would have caught all three.
+        # threshold would have caught all 3.
         - alert: CNPGBackupTooOld
           expr: time() - max by (namespace, job) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp) > 25200
           for: 15m
@@ -272,7 +272,7 @@ spec:
         # drop regex that is wrong, hides 1 cluster and leaves the other 3
         # reporting. absent() on the whole metric stays silent then. So the first 2
         # checks look for a namespace that has a CNPG pod and no series. They
-        # assume 1 cluster in each namespace, as today. The last 2 checks catch
+        # assume 1 cluster in each namespace, as today. The last 3 checks catch
         # the loss of a metric for every cluster. The `metric` label names the
         # missing series. Live now: no namespace and no metric is missing.
         - alert: CNPGMetricsAbsent
