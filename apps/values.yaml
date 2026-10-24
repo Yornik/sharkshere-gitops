@@ -447,6 +447,14 @@ apps:
                     // (2026-10-23, after the lease drop). This drop skips W and E lines.
                     expression = "^I[0-9]{4} "
                   }
+                  stage.drop {
+                    // Access line of the csi-proxy container for NodeGetCapabilities.
+                    // It goes to stderr and has no level word, so the stderr rule
+                    // labels it error. It was the only line shape of csi-proxy in
+                    // Loki 15 minutes after the fix of 2026-10-24, about 25000 a day.
+                    // Other request lines of csi-proxy stay.
+                    expression = "request \\(://localhost\\) POST /csi\\.v1\\.Node/NodeGetCapabilities"
+                  }
                 }
 
                 stage.match {
