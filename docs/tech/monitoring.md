@@ -358,7 +358,7 @@ The path is: Prometheus rule, Alertmanager, e-mail through Resend SMTP. The Aler
 
 The Secret also holds inhibit rules. A critical alert hides a warning or an info alert with the same `alertname` and `namespace`. A warning alert hides an info alert in the same way.
 
-Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repository adds 1 alert. The chart rules for etcd, the scheduler, the controller manager and kube-proxy are absent, because those components are disabled. The table lists 7 of the 135 alerting rules. Open `/rules` in Prometheus for the full list.
+Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repository adds 13 alerts: 1 in `apps/values.yaml` and 12 for Postgres in `manifests/monitoring/prometheusrule-cnpg.yaml`. The chart rules for etcd, the scheduler, the controller manager and kube-proxy are absent, because those components are disabled. Live on 2026-10-24, Prometheus holds 147 alerting rules in 33 rule objects. The table lists 19 of them. Open `/rules` in Prometheus for the full list.
 
 | Alert | Source | Fires when |
 |---|---|---|
@@ -369,6 +369,20 @@ Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repo
 | `CPUThrottlingHigh` | Chart | A container is throttled in more than 25 % of its CPU periods, for 15 minutes. Severity `info`. |
 | `Watchdog` | Chart | Always. It proves that the rule engine works. |
 | `VolumeRemountedReadOnly` | `apps/values.yaml` | A CSI volume that was read-write turned read-only. The rule skips `nfs`, `nfs4` and `cifs` mounts, so the 4 NFS volumes of this stack are not covered. Critical. It fires after 5 minutes and keeps firing for 24 hours after the expression stops matching, about 26 hours in total. See [the incident](../incidents/2026-10-13-readonly-alert-cleared-while-volume-broken.md). |
+| `CNPGClusterNoReadyInstance` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Critical. A Postgres cluster has 0 ready instances, for 5 minutes. |
+| `CNPGClusterInstanceNotReady` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. A cluster has 1 or 2 of 3 instances ready, for 15 minutes. |
+| `CNPGInstanceNotAnswering` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Critical. `cnpg_collector_up` reads 0, for 10 minutes. Postgres does not answer the exporter, and the pod can still read Ready. See [the incident](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md). |
+| `CNPGReplicationLagHigh` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. A standby replays more than 30 seconds behind, for 5 minutes. A standby that receives no WAL reads 0, so the next rule covers it. |
+| `CNPGReplicaNotStreaming` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. The primary streams to fewer than 2 standbys, for 15 minutes. |
+| `CNPGWalArchiveFailing` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. The newest WAL archive attempt failed and no later attempt succeeded, for 15 minutes. Only the primary exports these series. |
+| `CNPGBackupFailed` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. The newest failed backup is newer than the newest good backup, for 5 minutes. It clears at the next good backup, up to 3 hours later. |
+| `CNPGBackupTooOld` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. The newest good backup is older than 7 hours, for 15 minutes. A backup runs every 3 hours. |
+| `CNPGInstanceFenced` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. An instance is fenced, for 15 minutes. |
+| `CNPGVolumeFillingUp` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. The data volume or the WAL volume of an instance is more than 80 % full, for 15 minutes. |
+| `CNPGVolumeAlmostFull` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Critical. The same volumes are more than 90 % full, for 5 minutes. |
+| `CNPGMetricsAbsent` | `manifests/monitoring/prometheusrule-cnpg.yaml` | Warning. A series that the other Postgres rules read is missing, for 15 minutes. The series is missing in 1 namespace or for every cluster. The rules that read it cannot fire. |
+
+NOTE: `CNPGClusterInstanceNotReady` and `CNPGReplicaNotStreaming` assume 3 instances and 2 standbys. All 4 clusters set `instances: 3`. Change both rules if you change a cluster size. The Postgres rules were read on `/rules` on 2026-10-24: 12 rules, all `inactive`, and no Postgres alert in `/alerts`.
 
 CAUTION: Alertmanager has no login. A tailnet device can silence every alert. See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 
@@ -386,13 +400,12 @@ flowchart TB
   H1["Covered<br/>metrics and chart alerts"]
   A1["Kubernetes: nodes, pods,<br/>volumes, API server,<br/>kubelet, CoreDNS"]
   A2["Prometheus, Alertmanager,<br/>Grafana"]
-  A3["Postgres instances<br/>4 clusters, 1 dashboard"]
+  A3["Postgres: 4 clusters<br/>1 dashboard, 12 alerts"]
   A4["Home exporters<br/>metrics + dashboards"]
   A5["soiree, go-practice"]
 
   H2["Partial<br/>data but no alert"]
   B1["Exporter health<br/>no rule on scrape_success<br/>G2"]
-  B2["Postgres health<br/>no CloudNativePG rules<br/>G1"]
   B3["TrueNAS<br/>metrics, no dashboard<br/>G10"]
   B4["Logs of ArgoCD and<br/>democratic-csi<br/>dropped by Alloy<br/>G4"]
 
@@ -405,14 +418,14 @@ flowchart TB
   C6["etcd, scheduler,<br/>controller manager,<br/>kube-proxy<br/>scrape and rules off"]
 
   H1 ~~~ A1 ~~~ A2 ~~~ A3 ~~~ A4 ~~~ A5
-  H2 ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B4
+  H2 ~~~ B1 ~~~ B3 ~~~ B4
   H3 ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4 ~~~ C5 ~~~ C6
 
   class H1 okh
   class H2 parth
   class H3 noneh
   class A1,A2,A3,A4,A5 ok
-  class B1,B2,B3,B4 part
+  class B1,B3,B4 part
   class C1,C2,C3,C4,C5,C6 none
 ```
 
@@ -422,9 +435,10 @@ The Blind group is not complete. Other applications have no monitor either, amon
 
 Each gap has evidence. A gap is not always a missing signal. It can also be a lost signal or a comment in the repository that says something untrue. "Live" means a read-only query of the running cluster on 2026-10-23.
 
+NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. The other gaps keep their IDs, because other text refers to them.
+
 | ID | Priority | Gap | Evidence | Suggested correction |
 |---|---|---|---|---|
-| G1 | High | No alert rule is specific to the 4 Postgres clusters. Replication lag, WAL archive failure and backup failure raise nothing. | `apps/values.yaml` sets `monitoring.prometheusRule.enabled: true` for `cnpg-operator`. Chart 0.29.1 has no such key. Live: 135 alerting rules in 32 objects, none for CloudNativePG. Generic pod and volume alerts still apply. | Add a PrometheusRule with the label `release: kube-prometheus-stack`. Remove the dead key. |
 | G2 | High | A failure of the hub or the Mazda cloud raises no alert. | `up` stays 1. No rule uses `ikea_dirigera_scrape_success` or `mazda6e_scrape_success`. Live: both read 1 today, so a failure would be silent. | Alert on both metrics at 0 for 15 minutes. Use a longer period for Mazda, because it waits 1 hour after a refused login. |
 | G3 | High | The monitoring stack stores its data on the NAS that it monitors. Nothing outside the cluster notices that the stack is down. | All 4 volumes use `truenas-ssd`. Live: the running Alertmanager sends `Watchdog` to the receiver `null`, and e-mail is its only receiver type. | Send `Watchdog` to an external heartbeat service that alerts when the signal stops. |
 | G4 | High | The logs of ArgoCD and democratic-csi are missing from Loki. The 2 drop stages remove every line, not only the lines below `warn`. | Live: Loki holds 0 lines for `{namespace="argocd"}` and for `{namespace="democratic-csi"}` over 7 days. 14 ArgoCD pods run. The democratic-csi NFS node pods show 11 to 20 restarts and have no log to read. In `apps/values.yaml` the `level` label is set by `stage.labels` after the 2 `stage.match` stages that select on it. A selector sees labels only, not extracted values. | Drop on the extracted value inside a `stage.match` for the namespace or the app, with `stage.drop`, `source = "level"` and `expression = "^(trace\|debug\|info)$"`. Or move `stage.labels` before the 2 stages. In both cases fix gap G16 too, or `warning` lines stay dropped. Test with `{namespace="argocd"}` in Explore. |
@@ -497,4 +511,5 @@ Expected result: the rule appears on `/rules` in Prometheus.
 - Chart facts come from `helm template` of `kube-prometheus-stack` 92.11.0, `loki` 7.5.0 and `alloy` 1.14.3 with the inline values of `apps/values.yaml`, run on 2026-10-23. Every other Helm app was rendered the same way to count its monitors.
 - Exporter facts come from the source of `Yornik/dirigera-exporter` and `Yornik/mazda6e-grafana-bridge`, read on 2026-10-23. They hold for tag `v0.3.0` of the first and for tags `v1.0.0` and `v1.1.0` of the second.
 - Cluster facts come from read-only queries on 2026-10-23, through the Omni Kubernetes endpoint. The queries read Prometheus targets, rules and alerts, Loki counts, the Alertmanager status, and pod and ArgoCD state. 49 targets were up, 174 pods were Running or Succeeded, and 55 ArgoCD Applications existed: the 54 in `apps/values.yaml` and `root`.
+- The Postgres alerts were checked against the live Prometheus on 2026-10-23 and 2026-10-24. Each expression ran without an error, and none returned a series on the healthy state. Each threshold was run against 30 days of history. After the merge of [PR 578](https://github.com/Yornik/sharkshere-gitops/pull/578), `/rules` showed the group `cloudnative-pg` with 12 rules, all `inactive` with health `ok`. `/alerts` held no Postgres alert. Prometheus held 147 alerting rules in 33 rule objects, and every object carried the label `release: kube-prometheus-stack`.
 - The Alertmanager configuration is a SOPS Secret. The routes in this file come from the running Alertmanager, with secrets left out.
