@@ -119,6 +119,8 @@ The 8 checks run in parallel and take about 20 seconds.
 | Decide whether to review | Reads the push and decides if the review runs. |
 | Claude review | Reviews the pull request against [`REVIEW.md`](REVIEW.md) and posts 1 comment with a verdict. |
 
+NOTE: The Claude review is off since 2026-10-25, because it used up its API credit. Both checks show as skipped. To switch the review on, set the repository variable `CLAUDE_REVIEW` to `on` (Settings, Secrets and variables, Actions, Variables).
+
 The Claude review runs on the Claude API, through [`.github/scripts/review.py`](.github/scripts/review.py). It needs the repository secret `ANTHROPIC_API_KEY`. Without the secret the check fails and the merge still works. The check reads the author to choose the checklist: a Renovate bump gets checklist A, any other author gets checklist B. It skips a draft. It skips a bump that carries the `automerge` label from `renovate.json5`, unless that bump also carries `helm`, `major` or `manual-apply`. It also skips a push that changes Markdown only, unless that Markdown sets the rules of the review. See the table in [`REVIEW.md`](REVIEW.md) and the job in [`.github/workflows/claude-review.yml`](.github/workflows/claude-review.yml).
 
 NOTE: The verdict is advice. A person merges the pull request. A red check means that the review did not run, not that the change is bad.
