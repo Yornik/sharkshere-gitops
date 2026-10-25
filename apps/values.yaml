@@ -427,6 +427,13 @@ apps:
 
                 stage.match {
                   selector = "{app=\"tibber-exporter\"}"
+                  // The websocket client logs the messages that it sends. The
+                  // first message, connection_init, carries the Tibber API
+                  // token. Keep it out of Loki. "token" also catches a new
+                  // message format. See docs/incidents/.
+                  stage.drop {
+                    expression = "connection_init|\"token\""
+                  }
                   stage.drop {
                     expression = "\"liveMeasurement\":"
                   }
