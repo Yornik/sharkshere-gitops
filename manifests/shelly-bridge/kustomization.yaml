@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
+  - grafana-dashboard.yaml
+# No ksops generator yet. Authentication can still be off on the device, so
+# there is no password to encrypt. The Deployment reads the Secret
+# `shelly-bridge` as optional. To add the password, see
+# docs/runbooks/shelly-bridge.md.

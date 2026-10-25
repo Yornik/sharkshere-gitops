@@ -1,0 +1,36 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: shelly-bridge
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: shelly-bridge
+      app.kubernetes.io/instance: shelly-bridge
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    # The bridge polls the device every 15 s. The "Failed polls" panel of the
+    # dashboard needs at least 2 scrapes a minute, so do not go above 30 s.
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Every new pod gets a new name and IP. With these labels, each pod
+        # change starts new series. Without them, the series continue, and a
+        # new pod looks like a bridge restart: the energy counter goes back to
+        # 0 in the same series. The source CI tests the energy and cost
+        # queries on that case. The Deployment uses Recreate, so a rollout
+        # does not run 2 pods. After an eviction, the old pod can still stop
+        # while the new pod starts. The bridge stops at SIGTERM, after the
+        # poll in progress, so this lasts at most 1 poll. If Prometheus
+        # scrapes both pods in that time, the 2 energy counters mix in 1
+        # series, and the energy and cost of that day read too high. The `up`
+        # series keeps both labels.
+        - action: labeldrop
+          regex: pod|instance

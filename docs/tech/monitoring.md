@@ -9,6 +9,7 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | [`README.md`](README.md) | You need the storage classes or the application inventory. |
 | [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md) | You need to reach Grafana or Alertmanager, or you change their tailnet address. |
 | [`../runbooks/mazda6e-bridge.md`](../runbooks/mazda6e-bridge.md) | You activate the Mazda exporter or replace its credentials. |
+| [`../runbooks/shelly-bridge.md`](../runbooks/shelly-bridge.md) | You add the password of the Shelly exporter, or it reads no data. |
 | [`../incidents/grafana-rwo-multi-attach.md`](../incidents/grafana-rwo-multi-attach.md) | You change the rollout strategy of Grafana. |
 | [`../incidents/2026-09-09-prometheus-release-label-selector.md`](../incidents/2026-09-09-prometheus-release-label-selector.md) | A monitor or a rule does not appear in Prometheus. |
 | [`../incidents/2026-07-10-loki-chunks-cache-oversized.md`](../incidents/2026-07-10-loki-chunks-cache-oversized.md) | You change a Loki cache. |
@@ -16,17 +17,18 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | [`../incidents/2026-10-11-backup-prune-transient-delete-504.md`](../incidents/2026-10-11-backup-prune-transient-delete-504.md) and [`../incidents/2026-10-21-gitlab-backup-object-storage-504.md`](../incidents/2026-10-21-gitlab-backup-object-storage-504.md) | You get a `KubeJobFailed` e-mail. |
 | [`Yornik/dirigera-exporter`](https://github.com/Yornik/dirigera-exporter) | You change the DIRIGERA exporter. |
 | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) | You change the Mazda exporter or its dashboard. |
+| [`Yornik/shelly-bridge`](https://github.com/Yornik/shelly-bridge) | You change the Shelly exporter or its dashboard. |
 | [`Yornik/tibber-exporter`](https://github.com/Yornik/tibber-exporter) | You change the Tibber exporter. |
 
 ## At a glance
 
 | Item | Value |
 |---|---|
-| Applications | 8: `kube-prometheus-stack`, `loki`, `alloy`, `monitoring`, `truenas-monitoring`, `tibber-exporter`, `dirigera-exporter`, `mazda6e-bridge`. |
+| Applications | 9: `kube-prometheus-stack`, `loki`, `alloy`, `monitoring`, `truenas-monitoring`, `tibber-exporter`, `dirigera-exporter`, `mazda6e-bridge`, `shelly-bridge`. |
 | Namespace | `monitoring`, with Pod Security level `privileged`. |
 | Metrics | Prometheus, 1 replica. Retention is 60 days or 45 GiB, on a 50 Gi volume. |
 | Logs | Alloy on each node, then Loki. Loki keeps 60 days on a 30 Gi volume. |
-| Dashboards | Grafana. 25 from the chart, 1 for Postgres, 3 in this repository. |
+| Dashboards | Grafana. 25 from the chart, 1 for Postgres, 4 in this repository. |
 | Alerts | Prometheus rules, then Alertmanager, then e-mail through Resend SMTP. |
 | Access | The web interfaces are on the tailnet only. Grafana and Alertmanager each have a Tailscale Ingress. Prometheus has no address outside the cluster. The 2 NAS push ports are NodePorts without authentication. |
 | Storage | All 4 stateful components use the `truenas-ssd` class. They store their data on the NAS that they monitor. |
@@ -51,6 +53,7 @@ flowchart LR
     TibberAPI(["Tibber API"])
     Hub(["DIRIGERA hub<br/>on the LAN"])
     MazdaCloud(["Mazda cloud"])
+    Relay(["Shelly relay<br/>on the LAN"])
     NAS(["TrueNAS"])
   end
 
@@ -59,6 +62,7 @@ flowchart LR
     TE["tibber-exporter"]
     DE["dirigera-exporter"]
     MB["mazda6e-bridge"]
+    SB["shelly-bridge"]
     GE["graphite-exporter"]
     Alloy["Alloy<br/>DaemonSet"]
   end
@@ -82,6 +86,7 @@ flowchart LR
   TibberAPI --> TE
   Hub --> DE
   MazdaCloud --> MB
+  Relay --> SB
   NAS -->|"Graphite :32003"| GE
   NAS -->|"syslog :30514"| Alloy
   Logs --> Alloy
@@ -92,6 +97,7 @@ flowchart LR
   TE -->|scrape| Prom
   DE -->|scrape| Prom
   MB -->|scrape| Prom
+  SB -->|scrape| Prom
   GE -->|scrape| Prom
   Alloy -->|push| Loki
 
@@ -105,8 +111,8 @@ flowchart LR
   TS --> Graf
   TS --> AM
 
-  class TibberAPI,Hub,MazdaCloud,NAS,Mail,Admin ext
-  class TE,DE,MB,GE,K8s,PG,Apps,Logs src
+  class TibberAPI,Hub,MazdaCloud,Relay,NAS,Mail,Admin ext
+  class TE,DE,MB,SB,GE,K8s,PG,Apps,Logs src
   class Alloy col
   class Prom,Loki store
   class Graf,TS ui
@@ -129,7 +135,7 @@ flowchart LR
 | Loki | `loki` | Stores logs. `SingleBinary` mode, 1 replica, filesystem store. | 30 Gi, `truenas-ssd` |
 | Alloy | `alloy` | Reads the log file of each pod on its node. Receives syslog from the NAS. Runs as a DaemonSet on every schedulable node. | none |
 | graphite-exporter | `truenas-monitoring` | Turns the Graphite stream of the NAS into Prometheus metrics. | none |
-| Home exporters | `tibber-exporter`, `dirigera-exporter`, `mazda6e-bridge` | See [Home exporters](#home-exporters). | none |
+| Home exporters | `tibber-exporter`, `dirigera-exporter`, `mazda6e-bridge`, `shelly-bridge` | See [Home exporters](#home-exporters). | none |
 
 NOTE: Four components keep their data on the NAS that they monitor. If the NAS stops, the volumes of all 4 stop together. See gap G3.
 
@@ -146,6 +152,7 @@ The chart creates 9 ServiceMonitors: Alertmanager, API server, CoreDNS, kubelet,
 | tibber-exporter | ServiceMonitor | 30 s | `manifests/tibber-exporter/servicemonitor.yaml` |
 | dirigera-exporter | ServiceMonitor | 30 s | `manifests/dirigera-exporter/servicemonitor.yaml` |
 | mazda6e-bridge | ServiceMonitor | 60 s | `manifests/mazda6e-bridge/servicemonitor.yaml` |
+| shelly-bridge | ServiceMonitor | 30 s | `manifests/shelly-bridge/servicemonitor.yaml` |
 | graphite-exporter | ServiceMonitor | 30 s | `manifests/truenas-monitoring/servicemonitor.yaml` |
 | soiree | ServiceMonitor | 30 s | `manifests/soiree/servicemonitor.yaml` |
 | go-practice web | ServiceMonitor | 30 s | `manifests/go-practice/servicemonitor-web.yaml` |
@@ -199,31 +206,33 @@ The group `downsample_5m` records 6 metrics every 5 minutes. They go to the same
 
 ## Home exporters
 
-Three exporters turn a home data source into metrics. Each image comes from its own repository and CI. This repository holds the manifests and the dashboard copy. This section is based on the source code of the DIRIGERA and Mazda repositories, read on 2026-10-23. The facts hold for tag `v0.3.0` of the DIRIGERA exporter and for tags `v1.0.0` and `v1.1.0` of the Mazda bridge.
+4 exporters turn a home data source into metrics. Each image comes from its own repository and CI. This repository holds the manifests and the dashboard copy. This section is based on the source code of the DIRIGERA and Mazda repositories, read on 2026-10-23, and of the Shelly repository, read on 2026-10-25. The facts hold for tag `v0.3.0` of the DIRIGERA exporter and for tags `v1.0.0` and `v1.1.0` of the Mazda bridge. For the Shelly bridge, they hold for tag `v1.0.0`.
 
-| Item | DIRIGERA exporter | Mazda 6e bridge |
-|---|---|---|
-| Source | [`Yornik/dirigera-exporter`](https://github.com/Yornik/dirigera-exporter) | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) |
-| Language | Python, `prometheus_client`, the `dirigera` library | Python, `prometheus_client`, `requests`, `cryptography` |
-| Data source | The local HTTPS API of the IKEA hub. The hub uses a self-signed certificate, so the library skips verification. | The Mazda cloud API, Europe backend only. |
-| Poll interval | 30 s | 120 s. The code refuses a value below 60 s. |
-| Scrape interval | 30 s | 60 s |
-| Credential | Hub token in the Secret `dirigera-api` | E-mail, password and device ID in the Secret `mazda6e-api` |
-| Metric prefix | `ikea_` | `mazda6e_` |
-| Health metrics | `ikea_dirigera_scrape_success`, `ikea_dirigera_last_success_timestamp_seconds` | `mazda6e_scrape_success`, `mazda6e_vehicle_scrape_success`, `mazda6e_last_success_timestamp_seconds` |
-| After a failed poll | Sets the success metric to 0. The other gauges keep their last value. | Sets the success metric to 0. The other gauges keep their last value. After a refused login it waits 1 hour. |
-| Health on the dashboard | The "Needs attention" strip says when the hub has not answered for 5 minutes. The charts then show a gap. | The row `Exporter` |
-| Rollout | `Recreate`, so that 2 pods do not send the same series | `Recreate`, so that 1 session logs in with the device ID |
-| Fixed settings | Hub address in `DIRIGERA_IP`. Temperature offset 0.0. | `EXPORT_LOCATION=false`, so the car position is not exported. |
-| CI in the source repository | ruff, pytest, image build | ruff, actionlint, hadolint, a read-only guard, pytest, `promtool` on every dashboard query, `pip-audit`, an image smoke test |
+| Item | DIRIGERA exporter | Mazda 6e bridge | Shelly bridge |
+|---|---|---|---|
+| Source | [`Yornik/dirigera-exporter`](https://github.com/Yornik/dirigera-exporter) | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) | [`Yornik/shelly-bridge`](https://github.com/Yornik/shelly-bridge) |
+| Language | Python, `prometheus_client`, the `dirigera` library | Python, `prometheus_client`, `requests`, `cryptography` | Python, `prometheus_client`, `requests` |
+| Data source | The local HTTPS API of the IKEA hub. The hub uses a self-signed certificate, so the library skips verification. | The Mazda cloud API, Europe backend only. | The local RPC API of the Shelly Plus 1PM relay of the boiler, over HTTP. 3 read methods only. |
+| Poll interval | 30 s | 120 s. The code refuses a value below 60 s. | 15 s. The code accepts 5 s to 3600 s. |
+| Scrape interval | 30 s | 60 s | 30 s. The "Failed polls" panel needs at least 2 scrapes a minute. |
+| Credential | Hub token in the Secret `dirigera-api` | E-mail, password and device ID in the Secret `mazda6e-api` | Admin password of the relay in the optional Secret `shelly-bridge`, for authentication on the relay. On 2026-10-25, git held no Secret `shelly-bridge` and no KSOPS generator. |
+| Metric prefix | `ikea_` | `mazda6e_` | `shelly_` |
+| Health metrics | `ikea_dirigera_scrape_success`, `ikea_dirigera_last_success_timestamp_seconds` | `mazda6e_scrape_success`, `mazda6e_vehicle_scrape_success`, `mazda6e_last_success_timestamp_seconds` | `shelly_scrape_success`, `shelly_last_success_timestamp_seconds`, `shelly_scrape_errors_total` |
+| After a failed poll | Sets the success metric to 0. The other gauges keep their last value. | Sets the success metric to 0. The other gauges keep their last value. After a refused login it waits 1 hour. | Sets the success metric to 0. The readings stay for 3 polls, then disappear. After a refused password it waits 5 minutes. |
+| Health on the dashboard | The "Needs attention" strip says when the hub has not answered for 5 minutes. The charts then show a gap. | The row `Exporter` | The row `Bridge` |
+| Rollout | `Recreate`, so that 2 pods do not send the same series | `Recreate`, so that 1 session logs in with the device ID | `Recreate`, so that 2 energy counters do not mix in 1 series |
+| Fixed settings | Hub address in `DIRIGERA_IP`. Temperature offset 0.0. | `EXPORT_LOCATION=false`, so the car position is not exported. | Relay address in `SHELLY_URL`. The `device` label `boiler`. |
+| CI in the source repository | ruff, pytest, image build | ruff, actionlint, hadolint, a read-only guard, pytest, `promtool` on every dashboard query, `pip-audit`, an image smoke test | ruff, actionlint, hadolint, a read-only guard, pytest, `promtool` on every dashboard query, a test of the energy and cost queries on made-up data, `pip-audit`, an image smoke test |
 
-Both Deployments run as user 65532, with a read-only root file system, no capabilities and a 128 Mi memory limit. Neither has a CPU limit.
+The 3 Deployments run as user 65532, with a read-only root file system, no capabilities and a 128 Mi memory limit. None has a CPU limit.
 
 WARNING: The Mazda Secret is a full login to the Mazda account. The bridge only reads, and its CI enforces that. Another program with the same 3 values can start climate control, flash the lights, sound the horn or change the charge limit. Unlocking the doors or opening the windows or trunk also needs a control PIN. The Secret does not hold the PIN. See [`../runbooks/mazda6e-bridge.md`](../runbooks/mazda6e-bridge.md).
 
-NOTE: `up` stays 1 for both exporters when the hub or the Mazda cloud fails. The exporter still answers `/metrics`. Only the `*_scrape_success` and `*_last_success_timestamp_seconds` metrics show the failure. See gap G2.
+NOTE: `up` stays 1 for the 3 exporters when the hub, the Mazda cloud or the relay fails. The exporter still answers `/metrics`. Only the `*_scrape_success` and `*_last_success_timestamp_seconds` metrics show the failure. See gap G2.
 
-NOTE: Both ServiceMonitors drop the labels `pod` and `instance`, so the series continue after a pod change. The `up` series keeps both labels.
+NOTE: The 3 ServiceMonitors drop the labels `pod` and `instance`, so the series continue after a pod change. The `up` series keeps both labels.
+
+WARNING: The Shelly bridge only reads, and its CI enforces that. The relay itself accepts writes. With authentication off, any device on the LAN can switch the boiler on or off. See [`../runbooks/shelly-bridge.md`](../runbooks/shelly-bridge.md).
 
 NOTE: The Tibber exporter is a fork of `terjesannum/tibber-exporter` with 15-minute prices. Alloy drops its live-measurement lines and its `Updating prices`, `Updating HOURLY data` and `Updating DAILY data` lines. The process exits with code 1 when its live subscription fails. On 2026-10-23 at 10:54 UTC a timeout did this, and Kubernetes started it again. The pod showed 2 restarts after 2 days.
 
@@ -318,7 +327,7 @@ flowchart LR
   classDef ui fill:#f3e8ff,stroke:#8a4fd1,color:#2d1250
 
   Chart["kube-prometheus-stack chart<br/>25 default dashboards"]:::src
-  CM["ConfigMaps with the label<br/>grafana_dashboard: '1'<br/>Tibber, DIRIGERA,<br/>Mazda 6e"]:::src
+  CM["ConfigMaps with the label<br/>grafana_dashboard: '1'<br/>Tibber, DIRIGERA,<br/>Mazda 6e, Shelly relay"]:::src
   URL["GitHub raw URL<br/>pinned commit, no hash check<br/>CloudNativePG cluster"]:::src
 
   Side["Dashboard sidecar<br/>watches ConfigMaps"]:::mech
@@ -341,8 +350,9 @@ flowchart LR
 | Tibber | `manifests/tibber-exporter/grafana-dashboard.yaml` | UID `5rT8QDiVk`. |
 | DIRIGERA Air Quality | `manifests/dirigera-exporter/grafana-dashboard.yaml` | UID `dirigera-air`. Refresh 30 s, range 24 h. |
 | Mazda 6e | The source repository, `dashboards/mazda6e.json` | UID `mazda6e-bridge`. Refresh 5 m, range 7 days. This copy differs from the source. The file header lists the differences. |
+| Shelly relay | The source repository, `dashboards/shelly.json` | UID `shelly-bridge`. Refresh 1 m, range 7 days. This copy differs from the source in 1 place, the data source variable. The cost panels read `tibber_power_price{type="total"}` from `tibber-exporter`. |
 
-Make each change to the Mazda dashboard in the source repository first. The source CI parses every panel query of `dashboards/mazda6e.json` with `promtool`. It does not check the copy in this repository. CI in this repository does not parse dashboard queries.
+Make each change to the Mazda or the Shelly dashboard in the source repository first. The CI of each source repository parses every panel query with `promtool`. It does not check the copy in this repository. CI in this repository does not parse dashboard queries.
 
 A dashboard that you build in the Grafana UI exists only on the Grafana volume. Git does not hold it.
 
@@ -440,7 +450,7 @@ NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is close
 
 | ID | Priority | Gap | Evidence | Suggested correction |
 |---|---|---|---|---|
-| G2 | High | A failure of the hub or the Mazda cloud raises no alert. | `up` stays 1. No rule uses `ikea_dirigera_scrape_success` or `mazda6e_scrape_success`. Live: both read 1 today, so a failure would be silent. | Alert on both metrics at 0 for 15 minutes. Use a longer period for Mazda, because it waits 1 hour after a refused login. |
+| G2 | High | A failure of the hub, the Mazda cloud or the Shelly relay raises no alert. | `up` stays 1. No rule uses `ikea_dirigera_scrape_success`, `mazda6e_scrape_success` or `shelly_scrape_success`. Live: the first 2 read 1 today, so a failure would be silent. The Shelly bridge is new on 2026-10-25. | Alert on the 3 metrics at 0 for 15 minutes. Use a longer period for Mazda, because it waits 1 hour after a refused login. |
 | G3 | High | The monitoring stack stores its data on the NAS that it monitors. Nothing outside the cluster notices that the stack is down. | All 4 volumes use `truenas-ssd`. Live: the running Alertmanager sends `Watchdog` to the receiver `null`, and e-mail is its only receiver type. | Send `Watchdog` to an external heartbeat service that alerts when the signal stops. |
 | G5 | Medium | Prometheus will trim by size before the 60 days end. | Live: the blocks hold 42.3 GiB against a limit of 45 GiB, and the limit also counts the WAL and head chunks. The oldest data is 52 days old. At about 0.8 GiB for each day, the limit is reached at about 55 days or sooner. The volume holds 29.2 GiB of 50 GiB. The NAS probably compresses the data, but git does not record that. | Grow the volume before you raise `retentionSize`. Prometheus advises a size limit of at most 85 % of the disk, and 45 GiB is 90 % of 50 Gi. Or lower `retention` to match. |
 | G6 | Medium | Alloy and Loki are not scraped. A stopped log shipper on one node raises nothing while its pod stays Ready. | The charts render no ServiceMonitor. The keys `serviceMonitor.enabled` (Alloy) and `monitoring.serviceMonitor.enabled` (Loki) are `false` by default. Live: Prometheus has no target for either. | Enable both. For Alloy, set `serviceMonitor.additionalLabels` to `release: kube-prometheus-stack`. For Loki, set `monitoring.serviceMonitor.labels` to the same value. The Loki chart ignores `additionalLabels`. |
@@ -450,7 +460,7 @@ NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is close
 | G10 | Low | The TrueNAS metrics have no dashboard in git, and the labels differ from the mapping file. | Live: 551 series and 113 metric names with `exported_job="truenas"`. Prometheus also renames the mapped label `instance` to `exported_instance`. No ConfigMap dashboard mentions TrueNAS. | Add a dashboard that queries `exported_job` and `exported_instance`. Or confirm that one lives in the UI only. |
 | G12 | Low | The comments in the DIRIGERA and Tibber Deployments call the DIRIGERA exporter a Go exporter, and the DIRIGERA comment blames `GOMAXPROCS` for the CPU throttling. The exporter is Python. | `dirigera_exporter.py` uses `prometheus_client`, and the Dockerfile builds on a `python` image. The Tibber comment says "same Go-exporter shape as dirigera/graphite". | Correct the cause in both comments. Measure the throttling again, because the Go explanation does not apply to Python. |
 | G13 | Low | CI does not parse dashboard queries. A typo shows as an empty panel. | `.github/workflows/validate.yaml` has no `promtool` step. | Adapt the `promtool` check from the Mazda repository. It reads dashboard JSON, so extract the JSON from each ConfigMap. Replace `$__rate_interval` and `$__range` too, or the Tibber dashboard fails. |
-| G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 3 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
+| G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 4 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
 | G15 | Low | The `tolerations` value for Alloy is ignored. | In `apps/values.yaml` the key sits beside `controller`. The `alloy` chart reads only `controller.tolerations`, and the render has no toleration. All 4 nodes accept pods today, so there is no effect now. | Move `tolerations` under `controller`. A tainted node then keeps a log shipper. |
 | G16 | Low | 2 Alloy stages do nothing: the Traefik probe drop and the `warning` to `warn` replace. | The Traefik expression looks for the field `UserAgent`, and Traefik drops request headers by default. The expression `^warning$` of `stage.replace` has no capture group, and the stage replaces only capture groups. | Match the field that Traefik writes, or remove the stage. Change the expression to `^(warning)$`. The label `level` then reads `warn` instead of `warning` for every app, so check the queries that use `level="warning"` first. The drops of ArgoCD and democratic-csi list both values, so they do not change. |
 
@@ -509,6 +519,7 @@ Expected result: the rule appears on `/rules` in Prometheus.
 
 - Chart facts come from `helm template` of `kube-prometheus-stack` 92.11.0, `loki` 7.5.0 and `alloy` 1.14.3 with the inline values of `apps/values.yaml`, run on 2026-10-23. Every other Helm app was rendered the same way to count its monitors.
 - Exporter facts come from the source of `Yornik/dirigera-exporter` and `Yornik/mazda6e-grafana-bridge`, read on 2026-10-23. They hold for tag `v0.3.0` of the first and for tags `v1.0.0` and `v1.1.0` of the second.
+- Facts on the Shelly bridge come from tag `v1.0.0` of `Yornik/shelly-bridge`, read on 2026-10-25. On that day, GHCR served `ghcr.io/yornik/shelly-bridge:v1.0.0` without a login, with an `amd64` image. Prometheus held 1 series of `tibber_power_price{type="total"}`, which the cost panels read.
 - Cluster facts come from read-only queries on 2026-10-23, through the Omni Kubernetes endpoint. The queries read Prometheus targets, rules and alerts, Loki counts, the Alertmanager status, and pod and ArgoCD state. 49 targets were up, 174 pods were Running or Succeeded, and 55 ArgoCD Applications existed: the 54 in `apps/values.yaml` and `root`.
 - The Postgres alerts were checked against the live Prometheus on 2026-10-23 and 2026-10-24. Each expression ran without an error, and none returned a series on the healthy state. Each threshold was run against 30 days of history. After the merge of [PR 578](https://github.com/Yornik/sharkshere-gitops/pull/578), `/rules` showed the group `cloudnative-pg` with 12 rules, all `inactive` with health `ok`. `/alerts` held no Postgres alert. Prometheus held 147 alerting rules in 33 rule objects, and every object carried the label `release: kube-prometheus-stack`.
 - The log fix for ArgoCD and democratic-csi was checked on the live cluster on 2026-10-24, after the merge of [PR 577](https://github.com/Yornik/sharkshere-gitops/pull/577). ArgoCD synced `alloy` at 07:33 UTC, and the 4 Alloy pods reloaded by 07:35. In the next 6 minutes Loki held 4 `warning` lines of ArgoCD. For democratic-csi it held only `csi-proxy` access lines for `NodeGetCapabilities`: 189 in 15 minutes, all with `level="error"` on `stderr`. A second change drops these lines.

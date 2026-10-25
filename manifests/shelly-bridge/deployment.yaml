@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shelly-bridge
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: shelly-bridge
+    app.kubernetes.io/instance: shelly-bridge
+spec:
+  replicas: 1
+  # The ServiceMonitor drops the pod label, so 2 pods would write to the same
+  # series. Each pod counts energy from 0, so 2 counters in 1 series make
+  # increase() count the old total again. Recreate keeps exactly 1 pod, and 1
+  # client of the device, which serves only a few connections at a time.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: shelly-bridge
+      app.kubernetes.io/instance: shelly-bridge
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: shelly-bridge
+        app.kubernetes.io/instance: shelly-bridge
+    spec:
+      # The bridge talks only to the relay on the LAN. It needs no Kubernetes API access.
+      automountServiceAccountToken: false
+      containers:
+        - name: shelly-bridge
+          # Read-only exporter for the Shelly Plus 1PM relay of the boiler.
+          # Source + CI: github.com/Yornik/shelly-bridge
+          image: ghcr.io/yornik/shelly-bridge:v1.0.0
+          imagePullPolicy: IfNotPresent
+          # SHELLY_PASSWORD, the admin password of the device. With
+          # authentication off on the device, the bridge needs no password,
+          # so `optional` lets the pod start without the Secret. The pod reads
+          # the Secret only when it starts. To add or replace it, see
+          # docs/runbooks/shelly-bridge.md.
+          envFrom:
+            - secretRef:
+                name: shelly-bridge
+                optional: true
+          env:
+            # The Shelly device on the home LAN, as DIRIGERA_IP for the hub.
+            # Scheme, host and port only: the bridge refuses a path or a
+            # password here.
+            - name: SHELLY_URL
+              value: "http://192.168.1.25"
+            # The `device` label of every device series. The dashboard selects
+            # the device by it, so a new name starts new series. The 4 health
+            # metrics of the bridge have no `device` label.
+            - name: SHELLY_DEVICE_NAME
+              value: "boiler"
+            # The default. 2 polls in each 30 s scrape. The bridge accepts 5 to
+            # 3600. The readings drop out 3 intervals after the last good poll.
+            - name: SHELLY_POLL_SECONDS
+              value: "15"
+            - name: LISTEN_PORT
+              value: "9122"
+          ports:
+            - name: http
+              containerPort: 9122
+              protocol: TCP
+          # Both probes use /healthz, which answers while the process runs.
+          # /readyz turns 503 when the device does not answer. A device outage
+          # is not a fault of the pod. With /readyz, ArgoCD would show the
+          # Application as not Healthy, and a rollout would wait for the
+          # device. Prometheus also scrapes a pod that is not ready: on
+          # 2026-10-25 the generated scrape config dropped only pods in phase
+          # Failed or Succeeded. So shelly_scrape_success 0 shows the outage.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the full
+            # reasoning. Same Python exporter shape as mazda6e-bridge, which
+            # used 28 Mi on 2026-10-25. The memory limit stays.
+            requests:
+              cpu: 20m
+              memory: 48Mi
+            limits:
+              memory: 128Mi

@@ -644,6 +644,12 @@ apps:
     namespace: monitoring
     path: manifests/mazda6e-bridge
 
+  # Read-only exporter for the Shelly relay of the boiler. To add the device
+  # password, see docs/runbooks/shelly-bridge.md.
+  shelly-bridge:
+    namespace: monitoring
+    path: manifests/shelly-bridge
+
   gotosocial:
     namespace: gotosocial
     path: manifests/gotosocial
