@@ -7,5 +7,6 @@ resources:
   - ingress-grafana-tailnet.yaml
   - ingress-alertmanager-tailnet.yaml
   - prometheusrule-cnpg.yaml
+  - prometheusrule-tibber.yaml
 generators:
   - secret-generator.yaml

@@ -8,6 +8,20 @@ metadata:
     app.kubernetes.io/instance: tibber-exporter
 spec:
   replicas: 1
+  # The exporter holds 1 live websocket for the Tibber token. With
+  # RollingUpdate, the new pod opens a second subscription before the old pod
+  # stops. The ServiceMonitor also drops the pod label, so 2 pods would send
+  # the same series. Recreate keeps exactly 1 pod.
+  # On 2026-10-25 the live Deployment held the rollingUpdate block that the
+  # API server adds by default. argocd-controller owns it with an Update.
+  # ArgoCD diffs with a server-side apply (controller.diff.server.side), and
+  # that apply does not remove the block. The API server then rejects
+  # Recreate with "spec.strategy.rollingUpdate: Forbidden", and the whole
+  # Application stops syncing. Remove the block 1 time by hand, as in part 2
+  # of docs/incidents/2026-09-08-gitlab-valkey-rollingupdate-multi-attach.md.
+  # dirigera-exporter needed the same patch on 2026-10-24.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: tibber-exporter
@@ -37,9 +51,13 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+          # /healthz (from v1.2.0) answers while the HTTP listener runs and
+          # does not depend on Tibber, so a Tibber outage neither restarts
+          # the pod nor takes it out of service. The alerts in
+          # manifests/monitoring/prometheusrule-tibber.yaml watch the data.
           livenessProbe:
             httpGet:
-              path: /metrics
+              path: /healthz
               port: http
             initialDelaySeconds: 30
             periodSeconds: 30
@@ -47,7 +65,7 @@ spec:
             failureThreshold: 5
           readinessProbe:
             httpGet:
-              path: /metrics
+              path: /healthz
               port: http
             initialDelaySeconds: 15
             periodSeconds: 10

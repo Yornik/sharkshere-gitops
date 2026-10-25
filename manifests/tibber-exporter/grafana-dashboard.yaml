@@ -1,4 +1,14 @@
 ---
+# The Tibber dashboard. Source: Yornik/tibber-grafana-dashboard, dashboard.json.
+# This copy differs from the source in 4 places: UID 5rT8QDiVk (the UID this
+# Grafana has always used), time zone Europe/Amsterdam (the source uses the
+# browser's), editable false, and a hidden data source variable.
+# Grafana aligns 1d query steps to the viewer's current UTC offset, not to the
+# offset of each day, so a step can sit 1 hour before or after local midnight.
+# The per-day panels take max_over_time(...[1d:1m] offset -25h) of the
+# since-midnight totals: the window starts 1 hour after the step, which gives
+# the right total at any of these alignments, also on the 23- and 25-hour
+# days. Today's bar appears 1 hour after local midnight.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,45 +19,34 @@ metadata:
 data:
   dashboard.json: |-
     {
-      "__elements": {},
-      "__requires": [
-        {
-          "type": "panel",
-          "id": "bargauge",
-          "name": "Bar gauge",
-          "version": ""
-        },
-        {
-          "type": "panel",
-          "id": "gauge",
-          "name": "Gauge",
-          "version": ""
-        },
-        {
-          "type": "grafana",
-          "id": "grafana",
-          "name": "Grafana",
-          "version": "10.1.1"
-        },
-        {
-          "type": "datasource",
-          "id": "prometheus",
-          "name": "Prometheus",
-          "version": "1.0.0"
-        },
-        {
-          "type": "panel",
-          "id": "stat",
-          "name": "Stat",
-          "version": ""
-        },
-        {
-          "type": "panel",
-          "id": "timeseries",
-          "name": "Time series",
-          "version": ""
-        }
+      "uid": "5rT8QDiVk",
+      "title": "Tibber",
+      "description": "Tibber power, price and cost for one home. Phone first; the meter values (Power now, Today so far, Phase current now) go blank when the meter feed stops. Exporter alerts (needs kube-prometheus alert rules) can be turned on under Settings > Annotations.",
+      "tags": [
+        "home",
+        "energy"
       ],
+      "timezone": "Europe/Amsterdam",
+      "editable": false,
+      "graphTooltip": 1,
+      "refresh": "1m",
+      "schemaVersion": 41,
+      "time": {
+        "from": "now-24h",
+        "to": "now"
+      },
+      "timepicker": {
+        "refresh_intervals": [
+          "30s",
+          "1m",
+          "5m",
+          "15m"
+        ]
+      },
+      "fiscalYearStartMonth": 0,
+      "liveNow": false,
+      "weekStart": "monday",
+      "links": [],
       "annotations": {
         "list": [
           {
@@ -60,1028 +59,2427 @@ data:
             "hide": true,
             "iconColor": "rgba(0, 211, 255, 1)",
             "name": "Annotations & Alerts",
-            "target": {
-              "limit": 100,
-              "matchAny": false,
-              "tags": [],
-              "type": "dashboard"
-            },
             "type": "dashboard"
+          },
+          {
+            "name": "Feed gaps",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(137, 135, 129, 0.7)",
+            "filter": {
+              "exclude": false,
+              "ids": [
+                8,
+                9,
+                13,
+                15,
+                16
+              ]
+            },
+            "expr": "max_over_time((absent_over_time(tibber_power_consumption{home_id=\"$home\"}[90s]))[$__interval:1m])",
+            "step": "1m",
+            "titleFormat": "No meter readings",
+            "textFormat": "No reading in the 90 s before this point",
+            "useValueForTime": false
+          },
+          {
+            "name": "Exporter alerts",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "${datasource}"
+            },
+            "enable": false,
+            "hide": true,
+            "iconColor": "rgba(137, 135, 129, 0.7)",
+            "filter": {
+              "exclude": false,
+              "ids": [
+                8,
+                9,
+                13,
+                15,
+                16
+              ]
+            },
+            "expr": "max by (alertname) (ALERTS{alertstate=\"firing\",container=\"tibber-exporter\"} or ALERTS{alertstate=\"firing\",pod=~\"tibber-exporter.*\"} or ALERTS{alertstate=\"firing\",job=\"tibber-exporter\"} or ALERTS{alertstate=\"firing\",deployment=\"tibber-exporter\"})",
+            "step": "1m",
+            "titleFormat": "{{alertname}}",
+            "useValueForTime": false
           }
         ]
       },
-      "editable": true,
-      "fiscalYearStartMonth": 0,
-      "graphTooltip": 1,
-      "id": null,
-      "links": [],
-      "liveNow": false,
-      "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "mappings": [],
-              "max": 14000,
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  },
-                  {
-                    "color": "semi-dark-orange",
-                    "value": 3000
-                  },
-                  {
-                    "color": "semi-dark-red",
-                    "value": 6000
-                  }
-                ]
-              },
-              "unit": "watt"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 8,
-            "x": 0,
-            "y": 0
-          },
-          "id": 6,
-          "options": {
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showThresholdLabels": false,
-            "showThresholdMarkers": true,
-            "text": {}
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_power_consumption{home_id=\"$home\"})",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Current power consumption",
-          "type": "gauge"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 1,
-              "mappings": [],
-              "max": 32,
-              "min": 0,
-              "noValue": "0",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 20
-                  },
-                  {
-                    "color": "red",
-                    "value": 25
-                  }
-                ]
-              },
-              "unit": "A"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 2,
-            "x": 8,
-            "y": 0
-          },
-          "id": 21,
-          "options": {
-            "displayMode": "lcd",
-            "minVizHeight": 10,
-            "minVizWidth": 0,
-            "orientation": "vertical",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showUnfilled": true,
-            "valueMode": "color"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_current{home_id=\"$home\",line=\"1\"}) or on() vector(0)",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "L1",
-          "type": "bargauge"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 1,
-              "mappings": [],
-              "max": 32,
-              "min": 0,
-              "noValue": "0",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 20
-                  },
-                  {
-                    "color": "red",
-                    "value": 25
-                  }
-                ]
-              },
-              "unit": "A"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 2,
-            "x": 10,
-            "y": 0
-          },
-          "id": 23,
-          "options": {
-            "displayMode": "lcd",
-            "minVizHeight": 10,
-            "minVizWidth": 0,
-            "orientation": "vertical",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showUnfilled": true,
-            "valueMode": "color"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_current{home_id=\"$home\",line=\"2\"}) or on() vector(0)",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "L2",
-          "type": "bargauge"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 1,
-              "mappings": [],
-              "max": 32,
-              "min": 0,
-              "noValue": "0",
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 20
-                  },
-                  {
-                    "color": "red",
-                    "value": 25
-                  }
-                ]
-              },
-              "unit": "A"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 2,
-            "x": 12,
-            "y": 0
-          },
-          "id": 22,
-          "options": {
-            "displayMode": "lcd",
-            "minVizHeight": 10,
-            "minVizWidth": 0,
-            "orientation": "vertical",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showUnfilled": true,
-            "valueMode": "color"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_current{home_id=\"$home\",line=\"3\"}) or on() vector(0)",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "L3",
-          "type": "bargauge"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "scaleDistribution": {
-                  "type": "linear"
-                }
-              },
-              "unit": "watt"
-            },
-            "overrides": []
-          },
-      "gridPos": {
-        "h": 6,
-        "w": 10,
-        "x": 14,
-        "y": 0
-      },
-      "id": 11,
-          "maxDataPoints": 10000,
-          "options": {
-            "calculate": false,
-            "cellGap": 1,
-            "cellValues": {
-              "unit": "watt"
-            },
-            "color": {
-              "exponent": 0.5,
-              "fill": "dark-orange",
-              "mode": "scheme",
-              "reverse": false,
-              "scale": "exponential",
-              "scheme": "Plasma",
-              "steps": 69
-            },
-            "exemplars": {
-              "color": "rgba(255,0,255,0.7)"
-            },
-            "filterValues": {
-              "le": 1e-09
-            },
-            "from": "0",
-            "legend": {
-              "show": false
-            },
-            "legendGradientQuality": "high",
-            "rowsFrame": {
-              "layout": "auto"
-            },
-            "showCellBorder": false,
-            "showLegend": false,
-            "showTooltip": true,
-            "showValueIndicator": true,
-            "to": "0",
-            "tooltip": {
-              "mode": "single",
-              "showColorScale": false,
-              "yHistogram": false
-            },
-            "yAxis": {
-              "axisPlacement": "left",
-              "reverse": false
-            }
-          },
-          "pluginVersion": "12.3.2",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "expr": "sum(rate(tibber_power_consumption_day_total{home_id=\"$home\"}[15m])) * 3600 * 1000",
-              "legendFormat": "{{null}} ",
-              "refId": "A"
-            }
-          ],
-      "title": "Heat Map",
-      "type": "heatmap"
-    },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "kwatt"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "Power consumption"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "semi-dark-green",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 14,
-            "x": 0,
-            "y": 6
-          },
-          "id": 3,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "expr": "sum(irate(tibber_power_consumption_day_total{home_id=\"$home\"}[$__rate_interval])) * 60 * 60",
-              "legendFormat": "Power consumption",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Power consumption",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 1,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "kwatth"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 6,
-            "x": 0,
-            "y": 14
-          },
-          "id": 8,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_power_consumption_day_total{home_id=\"$home\"})",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Power consumption today",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 1,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "watt"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 6,
-            "x": 12,
-            "y": 14
-          },
-          "id": 25,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_power_consumption_day_avg{home_id=\"$home\"})",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Avg today",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 1,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "watt"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 6,
-            "x": 18,
-            "y": 14
-          },
-          "id": 26,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_power_consumption_day_max{home_id=\"$home\"})",
-              "instant": true,
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Max today",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "Price inc. tax"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "dark-green",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 10,
-            "x": 14,
-            "y": 6
-          },
-          "id": 4,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "expr": "last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])",
-              "legendFormat": "Price",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Price per kWh",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  },
-                  {
-                    "color": "semi-dark-orange",
-                    "value": 40
-                  },
-                  {
-                    "color": "semi-dark-red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 6,
-            "x": 6,
-            "y": 14
-          },
-          "id": 9,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "avg(tibber_power_cost_day{home_id=\"$home\"})",
-              "instant": true,
-              "legendFormat": "",
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Cost today",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "semi-dark-green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "currencyEUR"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 3,
-            "w": 24,
-            "x": 0,
-            "y": 17
-          },
-          "id": 24,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "10.1.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "$datasource"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "sum(increase(tibber_power_cost_day_total{home_id=\"$home\"}[$__range]))",
-              "instant": true,
-              "legendFormat": "",
-              "range": false,
-              "refId": "A"
-            }
-          ],
-          "title": "Cost selected period",
-          "type": "stat"
-        }
-      ],
-      "refresh": "1m",
-      "schemaVersion": 38,
-      "style": "dark",
-      "tags": [],
       "templating": {
         "list": [
           {
             "name": "datasource",
-            "label": "Datasource",
+            "label": "Data source",
             "type": "datasource",
             "query": "prometheus",
             "refresh": 1,
-            "hide": 0,
-            "current": {
-              "selected": true,
-              "text": "Prometheus",
-              "value": "Prometheus"
-            }
+            "hide": 2,
+            "current": {},
+            "regex": "",
+            "includeAll": false,
+            "multi": false,
+            "options": []
           },
           {
-            "current": {},
+            "name": "home",
+            "label": "Home",
+            "type": "query",
             "datasource": {
               "type": "prometheus",
-              "uid": "$datasource"
+              "uid": "${datasource}"
             },
             "definition": "tibber_home_info",
-            "hide": 0,
-            "includeAll": false,
-            "label": "Home",
-            "multi": false,
-            "name": "home",
-            "options": [],
             "query": {
               "query": "tibber_home_info",
               "refId": "StandardVariableQuery"
             },
             "refresh": 1,
+            "hide": 0,
+            "current": {},
+            "options": [],
+            "includeAll": false,
+            "multi": false,
             "regex": "/.*home_id=\"(?<value>[^\"]+)(?:.*name=\"(?<text>[^\"]+))?/",
-            "skipUrlSync": false,
             "sort": 0,
-            "type": "query"
+            "skipUrlSync": false
           }
         ]
       },
-      "time": {
-        "from": "now-7d",
-        "to": "now"
-      },
-      "timepicker": {
-        "refresh_intervals": [
-          "5s",
-          "10s",
-          "30s",
-          "1m",
-          "5m",
-          "15m",
-          "30m",
-          "1h",
-          "2h",
-          "1d"
-        ]
-      },
-      "timezone": "",
-      "title": "Tibber",
-      "uid": "5rT8QDiVk",
-      "version": 14,
-      "weekStart": ""
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "",
+          "description": "Is the meter data live? Live: the newest reading is under 2 min old (normal is 10 to 40 s). Delayed: 2 to 5 min. Stopped: older than 5 min. From 2 min the meter values on this page (Power now, Today so far, Phase current now) are blank instead of showing an old number. With an absolute time range (for example after zooming) this shows the state at the end of the range.",
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 24,
+            "h": 2
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "time() - (max(timestamp(tibber_power_consumption{home_id=\"$home\"})) or max(max_over_time(timestamp(tibber_power_consumption{home_id=\"$home\"})[24h:1m])))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "time() - (max(timestamp(tibber_power_consumption{home_id=\"$home\"})) or max(max_over_time(timestamp(tibber_power_consumption{home_id=\"$home\"})[24h:1m])))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  }
+                ]
+              },
+              "decimals": 0,
+              "noValue": "No reading in 24 h"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Meter feed"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "transparent",
+                          "value": null
+                        },
+                        {
+                          "color": "#fab219",
+                          "value": 120
+                        },
+                        {
+                          "color": "#d03b3b",
+                          "value": 300
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "range",
+                        "options": {
+                          "from": 0,
+                          "to": 119.999,
+                          "result": {
+                            "text": "● Live",
+                            "index": 0
+                          }
+                        }
+                      },
+                      {
+                        "type": "range",
+                        "options": {
+                          "from": 120,
+                          "to": 299.999,
+                          "result": {
+                            "text": "◐ Delayed",
+                            "index": 1
+                          }
+                        }
+                      },
+                      {
+                        "type": "range",
+                        "options": {
+                          "from": 300,
+                          "to": 1000000000000.0,
+                          "result": {
+                            "text": "○ Stopped",
+                            "index": 2
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "noValue",
+                    "value": "○ No reading in 24 h"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Since last reading"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "transparent"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "orientation": "auto",
+            "textMode": "value_and_name",
+            "colorMode": "background_solid",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "wideLayout": false,
+            "showPercentChange": false,
+            "text": {
+              "titleSize": 12,
+              "valueSize": 18
+            }
+          },
+          "transparent": true,
+          "timeFrom": "15m",
+          "hideTimeOverride": true
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Power now",
+          "description": "Power drawn from the grid, newest meter reading. Blank ('No reading') once the newest reading is 2 min old, so a stopped feed never looks like a live value. With an absolute time range (for example after zooming) this shows the state at the end of the range.",
+          "gridPos": {
+            "x": 0,
+            "y": 2,
+            "w": 6,
+            "h": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (tibber_power_consumption{home_id=\"$home\"} and on(pod) topk(1, timestamp(tibber_power_consumption{home_id=\"$home\"}) > time() - 120))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              },
+              "noValue": "No reading",
+              "displayName": "Power"
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "orientation": "auto",
+            "textMode": "value",
+            "colorMode": "none",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "wideLayout": false,
+            "showPercentChange": false,
+            "text": {
+              "titleSize": 13,
+              "valueSize": 48
+            }
+          },
+          "timeFrom": "15m",
+          "hideTimeOverride": true
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Price now",
+          "description": "Price per kWh incl. tax of the current 15-minute slot (the exporter shows a new slot 0.5 to 2 min after it starts). Now and In 1 hour: Tibber's level for the current slot and for the slot that starts 60 min from now, relative to recent prices. 'No price' when the exporter is not scraped. With an absolute time range (for example after zooming) this shows the state at the end of the range.",
+          "gridPos": {
+            "x": 6,
+            "y": 2,
+            "w": 9,
+            "h": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (tibber_power_price{home_id=\"$home\",type=\"total\"})",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "max by (home_id) (tibber_power_price_level{home_id=\"$home\"})",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "C",
+              "expr": "max by (home_id) (tibber_power_price_level_next_hour{home_id=\"$home\"})",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  }
+                ]
+              },
+              "noValue": "No price"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Per kWh"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "transparent"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Now"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "1": {
+                            "text": "Very cheap",
+                            "color": "rgba(111, 102, 248, 0.28)",
+                            "index": 0
+                          },
+                          "2": {
+                            "text": "Cheap",
+                            "color": "rgba(11, 135, 208, 0.16)",
+                            "index": 1
+                          },
+                          "3": {
+                            "text": "Normal",
+                            "color": "transparent",
+                            "index": 2
+                          },
+                          "4": {
+                            "text": "Expensive",
+                            "color": "rgba(199, 90, 5, 0.16)",
+                            "index": 3
+                          },
+                          "5": {
+                            "text": "Very expensive",
+                            "color": "rgba(220, 63, 99, 0.28)",
+                            "index": 4
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "In 1 hour"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "1": {
+                            "text": "Very cheap",
+                            "color": "rgba(111, 102, 248, 0.28)",
+                            "index": 0
+                          },
+                          "2": {
+                            "text": "Cheap",
+                            "color": "rgba(11, 135, 208, 0.16)",
+                            "index": 1
+                          },
+                          "3": {
+                            "text": "Normal",
+                            "color": "transparent",
+                            "index": 2
+                          },
+                          "4": {
+                            "text": "Expensive",
+                            "color": "rgba(199, 90, 5, 0.16)",
+                            "index": 3
+                          },
+                          "5": {
+                            "text": "Very expensive",
+                            "color": "rgba(220, 63, 99, 0.28)",
+                            "index": 4
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "orientation": "auto",
+            "textMode": "value_and_name",
+            "colorMode": "background_solid",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "wideLayout": false,
+            "showPercentChange": false,
+            "text": {
+              "titleSize": 13,
+              "valueSize": 26
+            }
+          },
+          "timeFrom": "15m",
+          "hideTimeOverride": true
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Today so far",
+          "description": "Since local midnight, from the exporter's day counters. Paid per kWh is cost divided by energy; it stays blank until 0.1 kWh is used. Blank ('No reading') when the newest reading is more than 2 min old. With an absolute time range (for example after zooming) this shows the state at the end of the range.",
+          "gridPos": {
+            "x": 15,
+            "y": 2,
+            "w": 9,
+            "h": 4
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (tibber_power_consumption_day_total{home_id=\"$home\"} and on(pod) topk(1, timestamp(tibber_power_consumption{home_id=\"$home\"}) > time() - 120))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "max by (home_id) (tibber_power_cost_day{home_id=\"$home\"} and on(pod) topk(1, timestamp(tibber_power_consumption{home_id=\"$home\"}) > time() - 120))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "C",
+              "expr": "max by (home_id) (tibber_power_cost_day{home_id=\"$home\"} and on(pod) topk(1, timestamp(tibber_power_consumption{home_id=\"$home\"}) > time() - 120)) / (max by (home_id) (tibber_power_consumption_day_total{home_id=\"$home\"} and on(pod) topk(1, timestamp(tibber_power_consumption{home_id=\"$home\"}) > time() - 120)) > 0.1)",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              },
+              "noValue": "No reading"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Energy"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "kwatth"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Cost"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Paid per kWh"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "noValue",
+                    "value": "Under 0.1 kWh"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "orientation": "auto",
+            "textMode": "value_and_name",
+            "colorMode": "none",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "wideLayout": false,
+            "showPercentChange": false,
+            "text": {
+              "titleSize": 13,
+              "valueSize": 26
+            }
+          },
+          "timeFrom": "now/d",
+          "hideTimeOverride": true
+        },
+        {
+          "id": 5,
+          "type": "table",
+          "title": "Next hour, per quarter",
+          "description": "The 15-minute slots that start in the next hour, with the price and level Tibber announced for them. Prometheus holds prices only 60 min ahead, so this is as far as the page can see. For up to 2 min after a quarter starts the last row can still show the previous slot. Not affected by the selected range; empty for an absolute range.",
+          "gridPos": {
+            "x": 0,
+            "y": 6,
+            "w": 8,
+            "h": 7
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (last_over_time(tibber_power_price_next_hour{home_id=\"$home\",type=\"total\"}[15m] offset 45m)) and on() (vector(time()) > ${__from:date:seconds}) and on() (vector($__range_s) == 3600)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Price",
+              "interval": "15m",
+              "format": "table"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "max by (home_id) (last_over_time(tibber_power_price_level_next_hour{home_id=\"$home\"}[15m] offset 45m)) and on() (vector(time()) > ${__from:date:seconds}) and on() (vector($__range_s) == 3600)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Level",
+              "interval": "15m",
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              },
+              "noValue": "Shown when the range ends now"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Time"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Starts"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "time:HH:mm"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 70
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Per kWh"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 90
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Level"
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "1": {
+                            "text": "Very cheap",
+                            "color": "rgba(111, 102, 248, 0.28)",
+                            "index": 0
+                          },
+                          "2": {
+                            "text": "Cheap",
+                            "color": "rgba(11, 135, 208, 0.16)",
+                            "index": 1
+                          },
+                          "3": {
+                            "text": "Normal",
+                            "color": "transparent",
+                            "index": 2
+                          },
+                          "4": {
+                            "text": "Expensive",
+                            "color": "rgba(199, 90, 5, 0.16)",
+                            "index": 3
+                          },
+                          "5": {
+                            "text": "Very expensive",
+                            "color": "rgba(220, 63, 99, 0.28)",
+                            "index": 4
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-background",
+                      "mode": "basic",
+                      "applyToRow": true
+                    }
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "left"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "footer": {
+              "show": false,
+              "reducer": [
+                "sum"
+              ],
+              "fields": ""
+            }
+          },
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "Time",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "home_id": true,
+                  "home_id 1": true,
+                  "home_id 2": true
+                },
+                "indexByName": {
+                  "Time": 0,
+                  "Value #A": 1,
+                  "Value #B": 2
+                }
+              }
+            }
+          ],
+          "timeFrom": "+1h",
+          "hideTimeOverride": true,
+          "maxDataPoints": 10,
+          "interval": "15m"
+        },
+        {
+          "id": 6,
+          "type": "stat",
+          "title": "In the selected range",
+          "description": "Totals over the time range picked at the top right, from the meter and cost counters. Paid per kWh is cost divided by energy. Market average is the plain average of the slot prices in the range: paying less than it means more of the power was used in cheaper slots.",
+          "gridPos": {
+            "x": 8,
+            "y": 6,
+            "w": 8,
+            "h": 7
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "sum by (home_id) (increase(tibber_power_consumption_meter_total{home_id=\"$home\"}[$__range]))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "sum by (home_id) (increase(tibber_power_cost_day_total{home_id=\"$home\"}[$__range]))",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "C",
+              "expr": "sum by (home_id) (increase(tibber_power_cost_day_total{home_id=\"$home\"}[$__range])) / (sum by (home_id) (increase(tibber_power_consumption_meter_total{home_id=\"$home\"}[$__range])) > 0.1)",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "D",
+              "expr": "avg_over_time((max by (home_id) (tibber_power_price{home_id=\"$home\",type=\"total\"}))[$__range:1m])",
+              "editorMode": "code",
+              "range": false,
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "text",
+                    "value": null
+                  }
+                ]
+              },
+              "noValue": "No data"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "A"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Energy"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "kwatth"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "B"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Cost"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "C"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Paid per kWh"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byFrameRefID",
+                  "options": "D"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Market average"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyEUR"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "reduceOptions": {
+              "values": false,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": ""
+            },
+            "orientation": "auto",
+            "textMode": "value_and_name",
+            "colorMode": "none",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "wideLayout": false,
+            "showPercentChange": false,
+            "text": {
+              "titleSize": 13,
+              "valueSize": 22
+            }
+          }
+        },
+        {
+          "id": 7,
+          "type": "barchart",
+          "title": "Energy used at each price level",
+          "description": "Share of the kWh in the selected range, by Tibber's level for the slot it was used in. More at the cheap end means use was shifted into cheap slots. Integrated from the 30-second power readings at 1-minute resolution, so it can be 1 to 2 % short of the counters when the range contains a feed outage.",
+          "gridPos": {
+            "x": 16,
+            "y": 6,
+            "w": 8,
+            "h": 7
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "label_replace(label_replace(100 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])) and on (home_id) (max by (home_id) (tibber_power_price_level{home_id=\"$home\"}) == 1))[$__range:1m]) / 60000 or on (home_id) (0 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000))) / on (home_id) (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000), \"level\", \"Very cheap\", \"\", \"\"), \"n\", \"1\", \"\", \"\") or label_replace(label_replace(100 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])) and on (home_id) (max by (home_id) (tibber_power_price_level{home_id=\"$home\"}) == 2))[$__range:1m]) / 60000 or on (home_id) (0 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000))) / on (home_id) (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000), \"level\", \"Cheap\", \"\", \"\"), \"n\", \"2\", \"\", \"\") or label_replace(label_replace(100 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])) and on (home_id) (max by (home_id) (tibber_power_price_level{home_id=\"$home\"}) == 3))[$__range:1m]) / 60000 or on (home_id) (0 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000))) / on (home_id) (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000), \"level\", \"Normal\", \"\", \"\"), \"n\", \"3\", \"\", \"\") or label_replace(label_replace(100 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])) and on (home_id) (max by (home_id) (tibber_power_price_level{home_id=\"$home\"}) == 4))[$__range:1m]) / 60000 or on (home_id) (0 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000))) / on (home_id) (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000), \"level\", \"Expensive\", \"\", \"\"), \"n\", \"4\", \"\", \"\") or label_replace(label_replace(100 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])) and on (home_id) (max by (home_id) (tibber_power_price_level{home_id=\"$home\"}) == 5))[$__range:1m]) / 60000 or on (home_id) (0 * (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000))) / on (home_id) (sum_over_time((max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[1m])))[$__range:1m]) / 60000), \"level\", \"Very expensive\", \"\", \"\"), \"n\", \"5\", \"\", \"\")",
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "decimals": 0,
+              "min": 0,
+              "max": 118,
+              "noValue": "No data",
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "#8a8a8a"
+              },
+              "custom": {
+                "fillOpacity": 100,
+                "lineWidth": 0,
+                "gradientMode": "none",
+                "axisPlacement": "hidden",
+                "axisBorderShow": false,
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Level"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "Very cheap": {
+                            "color": "#6f66f8",
+                            "index": 0
+                          },
+                          "Cheap": {
+                            "color": "rgba(11, 135, 208, 0.8)",
+                            "index": 1
+                          },
+                          "Normal": {
+                            "color": "rgba(119, 119, 119, 0.55)",
+                            "index": 2
+                          },
+                          "Expensive": {
+                            "color": "rgba(199, 90, 5, 0.75)",
+                            "index": 3
+                          },
+                          "Very expensive": {
+                            "color": "#dc3f63",
+                            "index": 4
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 100
+                  },
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "auto"
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "orientation": "horizontal",
+            "xField": "Level",
+            "colorByField": "Level",
+            "showValue": "always",
+            "stacking": "none",
+            "groupWidth": 0.75,
+            "barWidth": 0.9,
+            "barRadius": 0,
+            "fullHighlight": false,
+            "xTickLabelRotation": 0,
+            "xTickLabelSpacing": 0,
+            "legend": {
+              "showLegend": false,
+              "displayMode": "list",
+              "placement": "bottom",
+              "calcs": []
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            },
+            "text": {
+              "valueSize": 14
+            }
+          },
+          "transformations": [
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "n",
+                    "desc": false
+                  }
+                ]
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "home_id": true,
+                  "n": true
+                },
+                "renameByName": {
+                  "level": "Level",
+                  "Value": "Share"
+                },
+                "indexByName": {
+                  "level": 0,
+                  "Value": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Price per 15-minute slot",
+          "description": "One bar per 15-minute slot at its start time: the height is the price per kWh incl. tax, the colour Tibber's level for that slot. No bar means no price was recorded. Over long ranges a bar is the average of several slots, coloured by their rounded average level. Grey regions: no meter readings.",
+          "gridPos": {
+            "x": 0,
+            "y": 13,
+            "w": 24,
+            "h": 9
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "avg_over_time((max by (home_id) (last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])))[$__interval:15m] offset -$__interval) and on (home_id) (round(avg_over_time((max by (home_id) (last_over_time(tibber_power_price_level{home_id=\"$home\"}[15m])))[$__interval:15m] offset -$__interval)) == 1)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Very cheap"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "avg_over_time((max by (home_id) (last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])))[$__interval:15m] offset -$__interval) and on (home_id) (round(avg_over_time((max by (home_id) (last_over_time(tibber_power_price_level{home_id=\"$home\"}[15m])))[$__interval:15m] offset -$__interval)) == 2)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Cheap"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "C",
+              "expr": "avg_over_time((max by (home_id) (last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])))[$__interval:15m] offset -$__interval) and on (home_id) (round(avg_over_time((max by (home_id) (last_over_time(tibber_power_price_level{home_id=\"$home\"}[15m])))[$__interval:15m] offset -$__interval)) == 3)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Normal"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "D",
+              "expr": "avg_over_time((max by (home_id) (last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])))[$__interval:15m] offset -$__interval) and on (home_id) (round(avg_over_time((max by (home_id) (last_over_time(tibber_power_price_level{home_id=\"$home\"}[15m])))[$__interval:15m] offset -$__interval)) == 4)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Expensive"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "E",
+              "expr": "avg_over_time((max by (home_id) (last_over_time(tibber_power_price{home_id=\"$home\",type=\"total\"}[15m])))[$__interval:15m] offset -$__interval) and on (home_id) (round(avg_over_time((max by (home_id) (last_over_time(tibber_power_price_level{home_id=\"$home\"}[15m])))[$__interval:15m] offset -$__interval)) == 5)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Very expensive"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "currencyEUR",
+              "decimals": 2,
+              "min": 0,
+              "custom": {
+                "drawStyle": "bars",
+                "lineInterpolation": "linear",
+                "lineWidth": 0,
+                "fillOpacity": 100,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "pointSize": 4,
+                "spanNulls": false,
+                "insertNulls": false,
+                "axisPlacement": "auto",
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "barAlignment": 1,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "barWidthFactor": 0.9,
+                "axisWidth": 64,
+                "axisSoftMin": 0
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Very cheap"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#6f66f8"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 100
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Cheap"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "rgba(11, 135, 208, 0.8)"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 80
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Normal"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "rgba(119, 119, 119, 0.55)"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 55
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Expensive"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "rgba(199, 90, 5, 0.75)"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 75
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Very expensive"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#dc3f63"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 100
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "list",
+              "placement": "bottom",
+              "calcs": []
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none",
+              "hideZeros": false
+            }
+          },
+          "interval": "15m",
+          "maxDataPoints": 1000
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Power",
+          "description": "Measured power, averaged per interval (line), with a band up to the highest reading in the interval (Prometheus keeps one reading every 30 s, so short spikes can be missed). It shares its time axis with the price bars above. A break in the line means no reading; grey regions mark the time the feed was down.",
+          "gridPos": {
+            "x": 0,
+            "y": 22,
+            "w": 24,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (avg_over_time(tibber_power_consumption{home_id=\"$home\"}[$__interval]))",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Average"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "max by (home_id) (max_over_time(tibber_power_consumption{home_id=\"$home\"}[$__interval]))",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Highest reading"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "min": 0,
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "text"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "pointSize": 4,
+                "spanNulls": false,
+                "insertNulls": false,
+                "axisPlacement": "auto",
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "barAlignment": 0,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "axisWidth": 64,
+                "axisSoftMin": 0
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Highest reading"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineWidth",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "Average"
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 22
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#8a8a8a"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "list",
+              "placement": "bottom",
+              "calcs": []
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none",
+              "hideZeros": false
+            }
+          },
+          "interval": "1m"
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "Energy per day",
+          "description": "Per local day (in the dashboard's time zone), last 30 days, from the exporter's since-midnight totals. The pale bar is today, still growing; it appears 1 hour after local midnight. With an absolute time range this panel follows that range instead of the last 30 days.",
+          "gridPos": {
+            "x": 0,
+            "y": 30,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (max_over_time((tibber_power_consumption_day_total{home_id=\"$home\"} and on() (vector(time()) <= ${__to:date:seconds}))[1d:1m] offset -25h)) and on() (vector(time()) <= ${__to:date:seconds} - 86400)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Full day",
+              "interval": "1d"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "max by (home_id) (max_over_time((tibber_power_consumption_day_total{home_id=\"$home\"} and on() (vector(time()) <= ${__to:date:seconds}))[1d:1m] offset -25h)) and on() (vector(time()) > ${__to:date:seconds} - 86400)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Today so far",
+              "interval": "1d"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "kwatth",
+              "min": 0,
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "#8a8a8a"
+              },
+              "custom": {
+                "drawStyle": "bars",
+                "lineInterpolation": "linear",
+                "lineWidth": 0,
+                "fillOpacity": 100,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "pointSize": 4,
+                "spanNulls": false,
+                "insertNulls": false,
+                "axisPlacement": "auto",
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "barAlignment": 1,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "barWidthFactor": 0.7,
+                "axisSoftMin": 0
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Today so far"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "rgba(138, 138, 138, 0.45)"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 45
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "list",
+              "placement": "bottom",
+              "calcs": []
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none",
+              "hideZeros": false
+            }
+          },
+          "timeFrom": "30d",
+          "maxDataPoints": 40,
+          "interval": "1d"
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Cost per day",
+          "description": "Per local day (in the dashboard's time zone), last 30 days, from the exporter's since-midnight totals. The pale bar is today, still growing; it appears 1 hour after local midnight. With an absolute time range this panel follows that range instead of the last 30 days.",
+          "gridPos": {
+            "x": 12,
+            "y": 30,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A",
+              "expr": "max by (home_id) (max_over_time((tibber_power_cost_day{home_id=\"$home\"} and on() (vector(time()) <= ${__to:date:seconds}))[1d:1m] offset -25h)) and on() (vector(time()) <= ${__to:date:seconds} - 86400)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Full day",
+              "interval": "1d"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "B",
+              "expr": "max by (home_id) (max_over_time((tibber_power_cost_day{home_id=\"$home\"} and on() (vector(time()) <= ${__to:date:seconds}))[1d:1m] offset -25h)) and on() (vector(time()) > ${__to:date:seconds} - 86400)",
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "legendFormat": "Today so far",
+              "interval": "1d"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "currencyEUR",
+              "min": 0,
+              "color": {
+                "mode": "fixed",
+                "fixedColor": "#8a8a8a"
+              },
+              "custom": {
+                "drawStyle": "bars",
+                "lineInterpolation": "linear",
+                "lineWidth": 0,
+                "fillOpacity": 100,
+                "gradientMode": "none",
+                "showPoints": "never",
+                "pointSize": 4,
+                "spanNulls": false,
+                "insertNulls": false,
+                "axisPlacement": "auto",
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "barAlignment": 1,
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "barWidthFactor": 0.7,
+                "axisSoftMin": 0
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Today so far"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "rgba(138, 138, 138, 0.45)"
+                    }
+                  },
+                  {
+                    "id": "custom.fillOpacity",
+                    "value": 45
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "list",
+              "placement": "bottom",
+              "calcs": []
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none",
+              "hideZeros": false
+            }
+          },
+          "timeFrom": "30d",
+          "maxDataPoints": 40,
+          "interval": "1d"
+        },
+        {
+          "id": 17,
+          "type": "row",
+          "title": "Meter and feed details",
+          "collapsed": true,
+          "gridPos": {
+            "x": 0,
+            "y": 38,
+            "w": 24,
+            "h": 1
+          },
+          "panels": [
+            {
+              "id": 12,
+              "type": "bargauge",
+              "title": "Phase current now",
+              "description": "Newest reading per phase, in whole amperes as the meter reports them. 0 A is a real reading here; a missing reading shows 'No reading'. The bars run to 25 A, a common main fuse: check the size of yours. Orange from 20 A, red at 25 A. With an absolute time range (for example after zooming) this shows the state at the end of the range.",
+              "gridPos": {
+                "x": 0,
+                "y": 39,
+                "w": 8,
+                "h": 6
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "A",
+                  "expr": "max by (line) ((tibber_current{home_id=\"$home\"} and (timestamp(tibber_current{home_id=\"$home\"}) > time() - 120)) and on(pod) topk(1, timestamp(tibber_power_consumption{home_id=\"$home\"}) > time() - 120))",
+                  "editorMode": "code",
+                  "range": false,
+                  "instant": true,
+                  "legendFormat": "L{{line}}"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "amp",
+                  "decimals": 0,
+                  "min": 0,
+                  "max": 25,
+                  "noValue": "No reading",
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "#8a8a8a",
+                        "value": null
+                      },
+                      {
+                        "color": "#fab219",
+                        "value": 20
+                      },
+                      {
+                        "color": "#d03b3b",
+                        "value": 25
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "reduceOptions": {
+                  "values": false,
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": ""
+                },
+                "orientation": "horizontal",
+                "displayMode": "basic",
+                "valueMode": "text",
+                "namePlacement": "left",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizHeight": 12,
+                "minVizWidth": 8,
+                "maxVizHeight": 18,
+                "text": {
+                  "titleSize": 13,
+                  "valueSize": 16
+                }
+              },
+              "timeFrom": "15m",
+              "hideTimeOverride": true
+            },
+            {
+              "id": 13,
+              "type": "state-timeline",
+              "title": "Feed history",
+              "description": "Meter readings: whether a reading arrived in the 90 s before each point. Exporter scraped: whether Prometheus reached the exporter.",
+              "gridPos": {
+                "x": 8,
+                "y": 39,
+                "w": 16,
+                "h": 6
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "A",
+                  "expr": "(max(last_over_time(tibber_power_consumption{home_id=\"$home\"}[90s])) * 0 + 1) or on() vector(0)",
+                  "editorMode": "code",
+                  "range": true,
+                  "instant": false,
+                  "legendFormat": "Meter readings"
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "B",
+                  "expr": "max(up and on(job) group by (job) (last_over_time(tibber_home_info{home_id=\"$home\"}[1d])))",
+                  "editorMode": "code",
+                  "range": true,
+                  "instant": false,
+                  "legendFormat": "Exporter scraped"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "text",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "fillOpacity": 80,
+                    "lineWidth": 0,
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    }
+                  },
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "○ None",
+                          "color": "#d03b3b",
+                          "index": 0
+                        },
+                        "1": {
+                          "text": "● OK",
+                          "color": "rgba(137, 135, 129, 0.35)",
+                          "index": 1
+                        }
+                      }
+                    }
+                  ]
+                },
+                "overrides": []
+              },
+              "options": {
+                "mergeValues": true,
+                "showValue": "auto",
+                "alignValue": "left",
+                "rowHeight": 0.8,
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "interval": "1m"
+            },
+            {
+              "id": 14,
+              "type": "stat",
+              "title": "Minutes without readings",
+              "description": "Minutes without any meter reading in the 90 s before them. Gaps shorter than 90 s are not counted. Before the exporter has 7 days of history the 7-day figure counts the missing days too. With an absolute time range (for example after zooming) this shows the state at the end of the range.",
+              "gridPos": {
+                "x": 0,
+                "y": 45,
+                "w": 8,
+                "h": 7
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "A",
+                  "expr": "1440 - count_over_time((max by (home_id) (last_over_time(tibber_power_consumption{home_id=\"$home\"}[90s])))[24h:1m])",
+                  "editorMode": "code",
+                  "range": false,
+                  "instant": true
+                },
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "B",
+                  "expr": "10080 - count_over_time((max by (home_id) (last_over_time(tibber_power_consumption{home_id=\"$home\"}[90s])))[7d:1m])",
+                  "editorMode": "code",
+                  "range": false,
+                  "instant": true
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "text",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "unit": "suffix: min",
+                  "decimals": 0,
+                  "noValue": "No data"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byFrameRefID",
+                      "options": "A"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Last 24 h"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byFrameRefID",
+                      "options": "B"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Last 7 days"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "reduceOptions": {
+                  "values": false,
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": ""
+                },
+                "orientation": "auto",
+                "textMode": "value_and_name",
+                "colorMode": "none",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "wideLayout": false,
+                "showPercentChange": false,
+                "text": {
+                  "titleSize": 13,
+                  "valueSize": 24
+                }
+              },
+              "timeFrom": "15m",
+              "hideTimeOverride": true
+            },
+            {
+              "id": 15,
+              "type": "timeseries",
+              "title": "Voltage per phase",
+              "description": "Average voltage per phase per interval.",
+              "gridPos": {
+                "x": 8,
+                "y": 45,
+                "w": 8,
+                "h": 7
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "A",
+                  "expr": "max by (phase) (avg_over_time(tibber_voltage{home_id=\"$home\"}[$__interval]))",
+                  "editorMode": "code",
+                  "range": true,
+                  "instant": false,
+                  "legendFormat": "L{{phase}}"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "volt",
+                  "decimals": 0,
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "#8a8a8a"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 4,
+                    "spanNulls": false,
+                    "insertNulls": false,
+                    "axisPlacement": "auto",
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "barAlignment": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineStyle": {
+                      "fill": "solid"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "L1"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "#1baf7a"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "L2"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "#9085e9"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "L3"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "#008300"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "legend": {
+                  "showLegend": true,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "none",
+                  "hideZeros": false
+                }
+              },
+              "interval": "1m"
+            },
+            {
+              "id": 16,
+              "type": "timeseries",
+              "title": "Meter signal strength",
+              "description": "Signal strength of the Tibber Pulse, average per interval. Closer to 0 is better. The meter reports it every 2 min, so the shortest interval is 4 min.",
+              "gridPos": {
+                "x": 16,
+                "y": 45,
+                "w": 8,
+                "h": 7
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "${datasource}"
+                  },
+                  "refId": "A",
+                  "expr": "max by (home_id) (avg_over_time(tibber_signal_strength{home_id=\"$home\"}[$__interval]))",
+                  "editorMode": "code",
+                  "range": true,
+                  "instant": false,
+                  "legendFormat": "Signal"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "suffix: dBm",
+                  "decimals": 0,
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "text"
+                  },
+                  "custom": {
+                    "drawStyle": "line",
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "showPoints": "never",
+                    "pointSize": 4,
+                    "spanNulls": false,
+                    "insertNulls": false,
+                    "axisPlacement": "auto",
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "barAlignment": 0,
+                    "stacking": {
+                      "mode": "none",
+                      "group": "A"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    },
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineStyle": {
+                      "fill": "solid"
+                    }
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "legend": {
+                  "showLegend": false,
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": "none",
+                  "hideZeros": false
+                }
+              },
+              "interval": "4m"
+            }
+          ]
+        }
+      ]
     }

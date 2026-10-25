@@ -18,3 +18,20 @@ spec:
       path: /metrics
       interval: 30s
       scrapeTimeout: 10s
+      metricRelabelings:
+        # Every new pod gets a new name and IP. With these labels, each pod
+        # change starts new series: 7 pods in the 55 days to 2026-10-25.
+        # Without them, the series continue. The Deployment uses Recreate,
+        # so a rollout never runs 2 pods. After an eviction, the old pod can
+        # still stop while the new pod starts. For about 1 scrape, samples
+        # from both pods then go into the same series. Both pods read the
+        # same Tibber account, so the values agree. The `up` series keeps
+        # both labels.
+        - action: labeldrop
+          regex: pod|instance
+        # tibber_home_info carries the home address and its coordinates.
+        # Prometheus keeps them for 60 days, and no dashboard reads them. From
+        # this metric the Tibber dashboard reads only home_id, name and job.
+        # No other metric has these labels.
+        - action: labeldrop
+          regex: address1|address2|address3|postal_code|city|latitude|longitude
