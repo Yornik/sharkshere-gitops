@@ -27,6 +27,13 @@ jobs:
     # `opened` event holds no label, because Renovate adds the labels in a
     # second call, so a condition on it says "review" for every bump that
     # merges itself. The job is cheap and the paid review is behind it.
+    #
+    # The review is off. It runs only when the repository variable
+    # CLAUDE_REVIEW is `on`. The review used up its API credit by
+    # 2026-10-25. The variable is not in the event payload, so the reason
+    # above still holds. When this job is skipped, the review job is skipped
+    # too, and neither check fails.
+    if: vars.CLAUDE_REVIEW == 'on'
     runs-on: ubuntu-latest
     permissions:
       contents: read

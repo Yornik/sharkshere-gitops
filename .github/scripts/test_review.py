@@ -377,6 +377,11 @@ class WorkflowShape(unittest.TestCase):
         self.assertIn("concurrency", self.wf["jobs"]["review"])
         self.assertNotIn("concurrency", self.wf["jobs"]["gate"])
 
+    def test_the_review_is_off_unless_the_variable_is_on(self):
+        # The review used up its API credit by 2026-10-25. The repository
+        # variable switches it on again without a change to the workflow.
+        self.assertEqual(self.wf["jobs"]["gate"]["if"], "vars.CLAUDE_REVIEW == 'on'")
+
     def test_the_review_job_waits_for_the_gate(self):
         review_job = self.wf["jobs"]["review"]
         self.assertEqual(review_job["needs"], "gate")
