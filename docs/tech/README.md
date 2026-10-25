@@ -386,7 +386,7 @@ Average run: ~20 seconds.
 
 2 more workflows exist. Neither gates a merge:
 
-- `claude-review.yml` runs on each pull request and posts an advisory review, using the checklists in `REVIEW.md`.
+- `claude-review.yml` posts an advisory review on a pull request, using the checklists in `REVIEW.md`. It is off: it runs only when the repository variable `CLAUDE_REVIEW` is `on`.
 - `cleanup-merged-branches.yml` is run by hand. It deletes remote branches that no open pull request uses.
 
 ## Dependency updates
