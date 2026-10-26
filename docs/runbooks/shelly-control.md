@@ -188,7 +188,7 @@ WARNING: 2 controllers of 1 relay work against each other. Do not merge `ALLOW_S
 
 NOTE: In shadow mode, the rules can want a state that the relay does not have. The Decisions list on the page then shows "Would switch on" or "Would switch off". In Loki, the field `outcome` of that quarter is `would_switch`.
 
-NOTE: The source repository replays 5 days of prices against the switches of the Pi. The factors of the Pi are 1.03 to 1.05 to switch on. They are 1.24 to 1.26 to switch off. An older published copy of the script says 1.20 and 1.50. The replay rules those values out.
+NOTE: The live cron script on the Pi, `boiler2.sh` (read on 2026-10-25), switches on below 1.05 times the day's average and off above 1.25 times. Its morning rule applies only in the 05:00 quarter, with the 1.25 line. These are the defaults of `v1.0.0`. The source repository replays 5 days of prices against the switches of the Pi, and these factors reproduce them. An older published copy of the script says 1.20 and 1.50. The replay rules those values out.
 
 1. In Grafana Explore, use the data source `Loki`. Read the decisions:
 
@@ -199,8 +199,8 @@ NOTE: The source repository replays 5 days of prices against the switches of the
 2. Compare the `action` of each quarter with the switches of the Pi. The "Rules want, relay is" panel shows both: `shelly_control_target_on` and `shelly_switch_output` of `shelly-bridge`.
 3. Read `shelly_control_shadow_disagreements_total`. It counts the quarters where the relay still differed from the rules 1 minute in.
 4. For each counted quarter, find the cause in the Decisions list on the page.
-5. Read the factors in the cron script on the Pi.
-6. If the factors differ from the page, set the same values on the page.
+5. Check that the cron script on the Pi still uses 1.05, 1.25 and the 05:00 quarter.
+6. If the script or the page differs, set the values of the script on the page.
 
 Expected result: the counter grows only in quarters where the 2 rule sets really differ.
 
