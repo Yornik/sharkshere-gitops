@@ -231,7 +231,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `local-path-provisioner` | `local-path-storage` | node-local default storage class |
 | `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party` + `vesper-labs.org`, plus CronJobs for CAA, DANE TLSA and mail records |
 | `monitoring` | `monitoring` | monitoring namespace, Grafana tailnet Ingress, secrets |
-| `tibber-exporter` | `monitoring` | energy metrics exporter |
+| `tibber-exporter` | `monitoring` | energy metrics exporter (Tibber API), with 3 alerts on the live data and the price — see [runbook](../runbooks/tibber-exporter.md) |
 | `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
 | `mazda6e-bridge` | `monitoring` | read-only Mazda 6e car metrics exporter (Mazda cloud API) — see [runbook](../runbooks/mazda6e-bridge.md) |
 | `shelly-bridge` | `monitoring` | read-only Shelly relay metrics exporter for the boiler (local device API) — see [runbook](../runbooks/shelly-bridge.md) |

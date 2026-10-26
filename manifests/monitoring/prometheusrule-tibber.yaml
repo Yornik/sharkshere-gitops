@@ -1,0 +1,113 @@
+# Alerts for the Tibber exporter. The runbook is
+# docs/runbooks/tibber-exporter.md.
+#
+# The chart alerts see the pod, not the data. On 2026-10-25 the live feed
+# delivered data for 2 minutes only between 00:49 and 02:16 UTC. Image
+# v1.1.2 exits when the feed fails, so the pod went into CrashLoopBackOff.
+# 4 chart alerts fired: TargetDown, KubePodNotReady,
+# KubeDeploymentReplicasMismatch and KubePodCrashLooping. None of them said
+# that the power data had stopped. From v1.2.0 the exporter reconnects in
+# its process and the pod stays Ready. The chart alerts then stay silent,
+# and only these rules see a dead feed.
+#
+# The release label is required. Prometheus ignores a PrometheusRule without
+# it and gives no error. See
+# docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+#
+# Each expression was run on 2026-10-25 against all data in Prometheus: 54
+# days, from 2026-09-01 18:00 UTC, at the rule interval of 30 s. The text
+# says what each rule would have done.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tibber-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: tibber-exporter
+      rules:
+        # The exporter sends each live value with the time of the
+        # measurement. It stops sending the value when the measurement is
+        # older than 5 minutes. So Prometheus stores a sample only when
+        # Tibber sends new data. absent_over_time then reads "no live data",
+        # whatever the cause: Tibber, the Pulse, the websocket, the pod or
+        # the scrape. v1.1.2 and v1.2.0 both behave like this.
+        # 10 minutes plus `for: 5m` makes 15 minutes without data. The
+        # restart or reconnect at the 24-hour cut of Tibber leaves a gap of
+        # less than 2 minutes on most days. Outside the incident, 11 gaps were
+        # longer than 2 minutes, and the longest was 10 minutes on
+        # 2026-09-02. The rule fires 1 time: on 2026-10-25 from 01:04 to
+        # 02:08 UTC.
+        - alert: TibberLiveDataStale
+          expr: |-
+            absent_over_time(tibber_power_consumption{namespace="monitoring", job="tibber-exporter"}[10m])
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: Prometheus has stored no live Tibber power measurement for 15 minutes.
+            description: >-
+              The live panels of the Tibber dashboard show no data. The cause can be
+              Tibber, the Pulse at the meter, the websocket, the exporter pod or the
+              scrape. Follow the section "TibberLiveDataStale" in
+              docs/runbooks/tibber-exporter.md.
+
+        # From v1.2.0 the exporter reconnects in its process. It sets
+        # tibber_live_connected to 0 when a session ends, at the latest 1
+        # minute after the last new measurement. It sets it to 1 again when
+        # new data arrives. During a Tibber outage the series stays at 0 and
+        # the pod stays Ready. v1.1.2 does not export the series, so the rule
+        # returns nothing until v1.2.0 runs. 15 minutes lets the daily
+        # reconnect and a short restart of the Tibber servers pass. `max by`
+        # keeps 1 series if 2 pods run for a moment after an eviction.
+        # The series does not exist yet, so the backtest used a stand-in: no
+        # new sample for 1 minute, for 15 minutes. It fires 1 time: on
+        # 2026-10-25 at 01:05 UTC. The longest other run was 9 minutes.
+        # Each burst of new data resets `for` here and the window of
+        # TibberLiveDataStale. So a feed that flaps, for example 1 minute of
+        # data in each 10, fires neither rule. On 2026-10-25 a 2-minute burst
+        # cleared TibberLiveDataStale at 02:08, and the feed stopped again
+        # until 02:16. The exporter README gives a rule on
+        # avg_over_time(tibber_live_connected[30m]) for that case.
+        - alert: TibberLiveFeedDown
+          expr: |-
+            max by (namespace, job, home_id) (
+              tibber_live_connected{namespace="monitoring", job="tibber-exporter"}
+            ) == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: The Tibber live feed has delivered no new data for 15 minutes. The exporter runs.
+            description: >-
+              The exporter process runs and tries to reconnect by itself. To see why
+              the sessions end, query
+              `sum by (reason) (increase(tibber_live_reconnects_total{namespace="monitoring", job="tibber-exporter"}[1h]))`.
+              Follow the section "TibberLiveFeedDown" in
+              docs/runbooks/tibber-exporter.md.
+
+        # Prices come in 15-minute slots. The total price changed 5096 times
+        # in the 54 days, about 95 times a day. The exporter keeps the old
+        # price when the price query fails, so a frozen value is the only
+        # sign. 2 hours plus `for: 30m` makes 2.5 hours without a change.
+        # The rule does not fire in the backtest. The longest flat price was
+        # 105 minutes, around noon on 2026-09-18 and on 2026-09-20. On a
+        # sunny day in spring or summer the price can stay flat for longer,
+        # and the rule then fires without a fault.
+        - alert: TibberPriceNotUpdating
+          expr: |-
+            max by (namespace, job) (
+              changes(tibber_power_price{namespace="monitoring", job="tibber-exporter", type="total"}[2h])
+            ) == 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: The Tibber price has not changed for 2.5 hours.
+            description: >-
+              The Tibber dashboard and the cost panels of the Shelly dashboard can use
+              an old price. Compare the price with the Tibber app first: a flat price
+              on a sunny day is not a fault. Follow the section "TibberPriceNotUpdating"
+              in docs/runbooks/tibber-exporter.md.
