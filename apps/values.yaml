@@ -1483,7 +1483,7 @@ apps:
     helm:
       repoURL: https://charts.openproject.org/
       chart: openproject
-      targetRevision: 13.15.1
+      targetRevision: 13.16.0
       values: |
         # We ship our own IngressRoute (see manifests/openproject/) so the
         # chart's bundled Ingress stays off.
