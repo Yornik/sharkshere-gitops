@@ -650,6 +650,15 @@ apps:
     namespace: monitoring
     path: manifests/shelly-bridge
 
+  # Not read-only: this one SWITCHES the boiler, through the same Shelly relay,
+  # by the Tibber price. Its own namespace keeps it away from the read-only
+  # exporters in monitoring. ALLOW_SWITCHING in manifests/shelly-control/ is
+  # the master switch. First deploy, the switch-over from the Pi cron job and
+  # the way back: docs/runbooks/shelly-control.md.
+  shelly-control:
+    namespace: shelly-control
+    path: manifests/shelly-control
+
   gotosocial:
     namespace: gotosocial
     path: manifests/gotosocial

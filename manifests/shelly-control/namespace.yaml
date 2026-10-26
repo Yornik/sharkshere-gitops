@@ -1,0 +1,15 @@
+# shelly-control switches the boiler. It runs in its own namespace, away from
+# the read-only exporters and the Secrets in `monitoring`. The Grafana
+# dashboard is the only object of this Application in `monitoring`. See
+# kustomization.yaml.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shelly-control
+  labels:
+    # The pod meets the restricted profile: UID 65532, no privilege
+    # escalation, all capabilities dropped, seccomp RuntimeDefault, and only a
+    # PVC volume. With the label, the API server refuses a later pod spec that
+    # weakens one of these settings. go-practice and go-practice-runner set
+    # the same label for the same reason.
+    pod-security.kubernetes.io/enforce: restricted

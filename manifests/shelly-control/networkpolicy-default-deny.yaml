@@ -1,0 +1,21 @@
+# NetworkPolicy has an effect only if the CNI plugin of the cluster enforces it.
+# The CNI is Flannel, and Flannel does not enforce NetworkPolicy (checked on
+# 2026-10-17, see docs/tech/README.md). These policies take effect only after a
+# change to a CNI that enforces them. Treat them as defense in depth. Do not
+# depend on them. Today any pod in the cluster can call the service, which has
+# no login. To check the CNI again, see docs/runbooks/go-practice.md.
+#
+# No ingress and no egress for any pod in this namespace, except what
+# networkpolicy-ingress.yaml and networkpolicy-egress.yaml allow. Before a
+# change of the CNI, check those 2 files against the addresses in
+# deployment.yaml, or the service stops reading the relay and the prices.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: shelly-control
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

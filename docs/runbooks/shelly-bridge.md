@@ -19,6 +19,7 @@ The `shelly-bridge` Application polls the Shelly Plus 1PM device that switches t
 |---|---|
 | [`../tech/monitoring.md`](../tech/monitoring.md) | You need the other exporters, the scrape path or the dashboards. |
 | [`Yornik/shelly-bridge`](https://github.com/Yornik/shelly-bridge) | You change the bridge or its dashboard. The README lists every metric. |
+| [`shelly-control.md`](shelly-control.md) | You need the service that switches the same relay by the price. |
 
 ## What the bridge does
 
@@ -174,6 +175,8 @@ NOTE: Keep `optional: true` in `deployment.yaml`. The pod then still starts if t
    Expected result: the line ends with `with a password`.
 
 ### 4. Turn on authentication
+
+CAUTION: `shelly-control` also calls the device, and it has no password. With authentication on, it can no longer read or switch the relay. Give it the password first, from its own SOPS Secret in the namespace `shelly-control`. See [`shelly-control.md`](shelly-control.md#problems).
 
 CAUTION: Do not turn on authentication before step 9 of part 3 shows `with a password`. Without the password, the bridge logs `the device requires a password (HTTP 401)`, and the readings stop. They come back only after a restart with the Secret. After each 401, the bridge waits 5 minutes before it tries again.
 

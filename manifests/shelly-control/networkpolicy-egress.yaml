@@ -1,0 +1,47 @@
+# The 3 destinations of the service. See networkpolicy-default-deny.yaml for the
+# CNI that this needs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: shelly-control-egress
+  namespace: shelly-control
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: shelly-control
+      app.kubernetes.io/instance: shelly-control
+  policyTypes:
+    - Egress
+  egress:
+    # Cluster DNS, for tibber-exporter.monitoring.svc.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # The prices. 1 element with both selectors: the exporter pod in the
+    # namespace monitoring. The port is the container port, because the
+    # policy applies after the Service sends the connection to the pod.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tibber-exporter
+              app.kubernetes.io/instance: tibber-exporter
+      ports:
+        - port: 8080
+          protocol: TCP
+    # The relay, SHELLY_URL in deployment.yaml. The relay serves HTTP on port
+    # 80 only. If the address of the relay changes, change it here too.
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.25/32
+      ports:
+        - port: 80
+          protocol: TCP

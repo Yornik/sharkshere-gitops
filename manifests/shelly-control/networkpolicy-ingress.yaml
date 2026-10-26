@@ -1,0 +1,34 @@
+# The Tailscale proxy reaches the page, and Prometheus reaches /metrics. See
+# networkpolicy-default-deny.yaml for the CNI that this needs. The kubelet
+# probes come from the node, and NetworkPolicy does not block traffic between a
+# pod and its own node.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: shelly-control-ingress
+  namespace: shelly-control
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: shelly-control
+      app.kubernetes.io/instance: shelly-control
+  policyTypes:
+    - Ingress
+  ingress:
+    # The proxy pod of ingress-tailnet.yaml runs in the namespace tailscale.
+    # The rule selects the namespace, not the proxy pod. The operator sets the
+    # labels of the proxy pod, and a new operator release can change them.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale
+      ports:
+        - port: 9123
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 9123
+          protocol: TCP
