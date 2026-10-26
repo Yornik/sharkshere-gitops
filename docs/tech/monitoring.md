@@ -10,7 +10,7 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md) | You need to reach Grafana or Alertmanager, or you change their tailnet address. |
 | [`../runbooks/mazda6e-bridge.md`](../runbooks/mazda6e-bridge.md) | You activate the Mazda exporter or replace its credentials. |
 | [`../runbooks/shelly-bridge.md`](../runbooks/shelly-bridge.md) | You add the password of the Shelly exporter, or it reads no data. |
-| [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md) | You read the "Shelly control" dashboard, or the boiler does not switch by price. |
+| [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md) | You get a `shelly-control` alert, you read the "Shelly control" dashboard, or the boiler does not switch by price. |
 | [`../runbooks/tibber-exporter.md`](../runbooks/tibber-exporter.md) | You get a Tibber alert, or the Tibber dashboard shows no live data. |
 | [`../incidents/grafana-rwo-multi-attach.md`](../incidents/grafana-rwo-multi-attach.md) | You change the rollout strategy of Grafana. |
 | [`../incidents/2026-09-09-prometheus-release-label-selector.md`](../incidents/2026-09-09-prometheus-release-label-selector.md) | A monitor or a rule does not appear in Prometheus. |
@@ -238,7 +238,7 @@ NOTE: The ServiceMonitors of the 4 home exporters drop the labels `pod` and `ins
 
 WARNING: The Shelly bridge only reads, and its CI enforces that. The relay itself accepts writes. With authentication off, any device on the LAN can switch the boiler on or off. See [`../runbooks/shelly-bridge.md`](../runbooks/shelly-bridge.md).
 
-NOTE: `shelly-control` is not an exporter. It switches the same relay by the Tibber price, in its own namespace. It reads the prices from `tibber-exporter`, and its dashboard reads `shelly_switch_output` from the Shelly bridge. Its ServiceMonitor drops `pod` and `instance` too. See [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md).
+NOTE: `shelly-control` is not an exporter. It switches the same relay by the Tibber price, in its own namespace. It reads the prices from `tibber-exporter`, and its dashboard reads `shelly_switch_output` from the Shelly bridge. Its ServiceMonitor drops `pod` and `instance` too. 8 alerts read its metrics. See [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md).
 
 NOTE: The Tibber exporter is a fork of `terjesannum/tibber-exporter` with 15-minute prices. Alloy drops its live-measurement lines, the lines with the API token, and its `Updating prices`, `Updating HOURLY data` and `Updating DAILY data` lines.
 
@@ -381,7 +381,7 @@ The path is: Prometheus rule, Alertmanager, e-mail through Resend SMTP. The Aler
 
 The Secret also holds inhibit rules. A critical alert hides a warning or an info alert with the same `alertname` and `namespace`. A warning alert hides an info alert in the same way.
 
-Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repository adds 16 alerts: 1 in `apps/values.yaml`, 12 for Postgres in `manifests/monitoring/prometheusrule-cnpg.yaml` and 3 for the Tibber exporter in `manifests/monitoring/prometheusrule-tibber.yaml`. The chart rules for etcd, the scheduler, the controller manager and kube-proxy are absent, because those components are disabled. Live on 2026-10-25, before the Tibber rules, Prometheus held 147 alerting rules in 33 rule objects. After the merge it holds 150 in 34. The table lists 22 of them. Open `/rules` in Prometheus for the full list.
+Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repository adds 24 alerts: 1 in `apps/values.yaml` and 12 for Postgres in `manifests/monitoring/prometheusrule-cnpg.yaml`. It also adds 3 for the Tibber exporter in `manifests/monitoring/prometheusrule-tibber.yaml` and 8 for `shelly-control` in `manifests/monitoring/prometheusrule-shelly-control.yaml`. The chart rules for etcd, the scheduler, the controller manager and kube-proxy are absent, because those components are disabled. Live on 2026-10-26, before the `shelly-control` rules, Prometheus held 150 alerting rules in 34 rule objects. After the merge it holds 158 in 35. The table lists 30 of them. Open `/rules` in Prometheus for the full list.
 
 | Alert | Source | Fires when |
 |---|---|---|
@@ -407,8 +407,18 @@ Rendered on 2026-10-23, the chart gives 134 alerts in 30 rule objects. This repo
 | `TibberLiveDataStale` | `manifests/monitoring/prometheusrule-tibber.yaml` | Warning. Prometheus stored no live Tibber measurement for 15 minutes. It works with each release of the exporter. See [the runbook](../runbooks/tibber-exporter.md#tibberlivedatastale). |
 | `TibberLiveFeedDown` | `manifests/monitoring/prometheusrule-tibber.yaml` | Warning. `tibber_live_connected` reads 0 for 15 minutes: the exporter runs, but the feed delivers no new data. The series exists from exporter `v1.2.0`. Until then the rule returns nothing. |
 | `TibberPriceNotUpdating` | `manifests/monitoring/prometheusrule-tibber.yaml` | Warning. The total price did not change for 2.5 hours. A flat price on a sunny day can also fire it. |
+| `ShellyControlSwitchFailed` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. A switch command to the boiler relay failed, or the relay did not follow it. It fires at once and clears 15 minutes after the last failure. See [the runbook](../runbooks/shelly-control.md#shellycontrolswitchfailed). |
+| `ShellyControlRelayUnreadable` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. `shelly_control_relay_read_success` reads 0 for 20 minutes: 2 evaluations in a row could not read the relay. `shelly-control` sends no switch command then. |
+| `ShellyControlNoUsablePrice` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. The known prices do not cover the current quarter and its whole day, for 30 minutes. The rules switch nothing. A normal midnight does not fire it, because the prices of tomorrow arrive at about 13:00. |
+| `ShellyControlDecisionsStalled` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. The last decision is older than 20 minutes, while `/metrics` still answers. Or the process has made no decision 20 minutes after it started. The service decides each quarter hour. |
+| `ShellyControlStateNotSaved` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. `shelly_control_state_saved` reads 0 for 20 minutes: 2 writes in a row to the volume failed. `VolumeRemountedReadOnly` skips this NFS volume. |
+| `ShellyControlRelayNotAtTarget` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. In live mode the relay differs from the target of the rules for 20 minutes. A press on the relay button or a switch that the device did not confirm ends within 15 minutes. |
+| `ShellyControlNotLive` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. `shelly_control_live` or `shelly_control_switching_allowed` reads 0 for 30 minutes, so the rules switch nothing. The service also falls back to shadow mode when it cannot read or use `state.json`. |
+| `ShellyControlMetricsAbsent` | `manifests/monitoring/prometheusrule-shelly-control.yaml` | Warning. Prometheus has no `shelly_control_live` series for 15 minutes. The other 7 rules cannot fire. |
 
 NOTE: With exporter `v1.2.0`, a Tibber outage fires `TibberLiveDataStale` and `TibberLiveFeedDown` about 1 minute apart. With `v1.1.2`, an outage fires `TibberLiveDataStale` and the chart alerts for the pod and the scrape target. An inhibit rule in the Alertmanager Secret can hide the duplicates. The inhibit rules above match on the same `alertname`, so they do not cover this case.
+
+NOTE: A failed scrape of `shelly-control` fires `TargetDown` after 10 minutes and `ShellyControlMetricsAbsent` after 15 to 20 minutes. A relay that does not switch fires `ShellyControlSwitchFailed` at once and `ShellyControlRelayNotAtTarget` after 20 minutes. They are in different groups, so Alertmanager sends 2 e-mails.
 
 NOTE: `CNPGClusterInstanceNotReady` and `CNPGReplicaNotStreaming` assume 3 instances and 2 standbys. All 4 clusters set `instances: 3`. Change both rules if you change a cluster size. The Postgres rules were read on `/rules` on 2026-10-24: 12 rules, all `inactive`, and no Postgres alert in `/alerts`.
 
@@ -431,11 +441,11 @@ flowchart TB
   A3["Postgres: 4 clusters<br/>1 dashboard, 12 alerts"]
   A4["Home exporters<br/>metrics + dashboards<br/>Tibber: 3 alerts"]
   A5["soiree, go-practice"]
+  A6["shelly-control<br/>metrics + dashboard,<br/>8 alerts"]
 
   H2["Partial<br/>data but no alert"]
   B1["Exporter health<br/>no rule on scrape_success<br/>G2"]
   B3["TrueNAS<br/>metrics, no dashboard<br/>G10"]
-  B4["shelly-control<br/>metrics + dashboard,<br/>no service alert<br/>G17"]
 
   H3["Blind to app metrics<br/>not scraped"]
   C1["Loki, Alloy<br/>G6"]
@@ -445,15 +455,15 @@ flowchart TB
   C5["Public domains<br/>no probe<br/>G8"]
   C6["etcd, scheduler,<br/>controller manager,<br/>kube-proxy<br/>scrape and rules off"]
 
-  H1 ~~~ A1 ~~~ A2 ~~~ A3 ~~~ A4 ~~~ A5
-  H2 ~~~ B1 ~~~ B3 ~~~ B4
+  H1 ~~~ A1 ~~~ A2 ~~~ A3 ~~~ A4 ~~~ A5 ~~~ A6
+  H2 ~~~ B1 ~~~ B3
   H3 ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4 ~~~ C5 ~~~ C6
 
   class H1 okh
   class H2 parth
   class H3 noneh
-  class A1,A2,A3,A4,A5 ok
-  class B1,B3,B4 part
+  class A1,A2,A3,A4,A5,A6 ok
+  class B1,B3 part
   class C1,C2,C3,C4,C5,C6 none
 ```
 
@@ -463,11 +473,11 @@ The Blind group is not complete. Other applications have no monitor either, amon
 
 Each gap has evidence. A gap is not always a missing signal. It can also be a lost signal or a comment in the repository that says something untrue. "Live" means a read-only query of the running cluster on 2026-10-23.
 
-NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is closed, because the logs of ArgoCD and democratic-csi reach Loki since 2026-10-24. Gap G11 is closed, because the DIRIGERA dashboard hides the readings when the hub has not answered for 5 minutes. The gaps keep their IDs, because other text refers to them.
+NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is closed, because the logs of ArgoCD and democratic-csi reach Loki since 2026-10-24. Gap G11 is closed, because the DIRIGERA dashboard hides the readings when the hub has not answered for 5 minutes. Gap G17 is closed, because 8 alerts in `manifests/monitoring/prometheusrule-shelly-control.yaml` watch the switches, the relay, the prices, the decisions, the volume and the mode of `shelly-control`. The gaps keep their IDs, because other text refers to them.
 
 | ID | Priority | Gap | Evidence | Suggested correction |
 |---|---|---|---|---|
-| G2 | High | A failure of the hub, the Mazda cloud or the Shelly relay raises no alert. | `up` stays 1. No rule uses `ikea_dirigera_scrape_success`, `mazda6e_scrape_success` or `shelly_scrape_success`. Live: the first 2 read 1 today, so a failure would be silent. The Shelly bridge is new on 2026-10-25. | Alert on the 3 metrics at 0 for 15 minutes. Use a longer period for Mazda, because it waits 1 hour after a refused login. `manifests/monitoring/prometheusrule-tibber.yaml` shows the pattern for the Tibber exporter. |
+| G2 | High | A failure of the hub, the Mazda cloud or the Shelly relay raises no alert. | `up` stays 1. No rule uses `ikea_dirigera_scrape_success`, `mazda6e_scrape_success` or `shelly_scrape_success`. Live: the first 2 read 1 today, so a failure would be silent. The Shelly bridge is new on 2026-10-25. `shelly-control` reads the same relay each quarter hour, so a relay that does not answer fires `ShellyControlRelayUnreadable`. A fault of the bridge alone raises nothing. | Alert on the 3 metrics at 0 for 15 minutes. Use a longer period for Mazda, because it waits 1 hour after a refused login. `manifests/monitoring/prometheusrule-tibber.yaml` shows the pattern for the Tibber exporter. |
 | G3 | High | The monitoring stack stores its data on the NAS that it monitors. Nothing outside the cluster notices that the stack is down. | All 4 volumes use `truenas-ssd`. Live: the running Alertmanager sends `Watchdog` to the receiver `null`, and e-mail is its only receiver type. | Send `Watchdog` to an external heartbeat service that alerts when the signal stops. |
 | G5 | Medium | Prometheus will trim by size before the 60 days end. | Live: the blocks hold 42.3 GiB against a limit of 45 GiB, and the limit also counts the WAL and head chunks. The oldest data is 52 days old. At about 0.8 GiB for each day, the limit is reached at about 55 days or sooner. The volume holds 29.2 GiB of 50 GiB. The NAS probably compresses the data, but git does not record that. | Grow the volume before you raise `retentionSize`. Prometheus advises a size limit of at most 85 % of the disk, and 45 GiB is 90 % of 50 Gi. Or lower `retention` to match. |
 | G6 | Medium | Alloy and Loki are not scraped. A stopped log shipper on one node raises nothing while its pod stays Ready. | The charts render no ServiceMonitor. The keys `serviceMonitor.enabled` (Alloy) and `monitoring.serviceMonitor.enabled` (Loki) are `false` by default. Live: Prometheus has no target for either. | Enable both. For Alloy, set `serviceMonitor.additionalLabels` to `release: kube-prometheus-stack`. For Loki, set `monitoring.serviceMonitor.labels` to the same value. The Loki chart ignores `additionalLabels`. |
@@ -480,7 +490,6 @@ NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is close
 | G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 5 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
 | G15 | Low | The `tolerations` value for Alloy is ignored. | In `apps/values.yaml` the key sits beside `controller`. The `alloy` chart reads only `controller.tolerations`, and the render has no toleration. All 4 nodes accept pods today, so there is no effect now. | Move `tolerations` under `controller`. A tainted node then keeps a log shipper. |
 | G16 | Low | 2 Alloy stages do nothing: the Traefik probe drop and the `warning` to `warn` replace. | The Traefik expression looks for the field `UserAgent`, and Traefik drops request headers by default. The expression `^warning$` of `stage.replace` has no capture group, and the stage replaces only capture groups. | Match the field that Traefik writes, or remove the stage. Change the expression to `^(warning)$`. The label `level` then reads `warn` instead of `warning` for every app, so check the queries that use `level="warning"` first. The drops of ArgoCD and democratic-csi list both values, so they do not change. |
-| G17 | High | Only the chart alerts for the pod cover `shelly-control`. A failed switch, a relay that the service cannot read, or prices that stop raise nothing. | No rule uses a `shelly_control_` metric. The service is new on 2026-10-26. It is the only controller of the boiler, because the Pi cron job was removed that day. `up` stays 1 while the relay or the exporter is away, because `/metrics` still answers. | Add 4 alerts soon. Alert on an increase of `shelly_control_switch_failures_total`. Alert on `shelly_control_relay_read_success` at 0 for 15 minutes. Alert on `shelly_control_prices_usable` at 0 for 30 minutes. Alert on a `shelly_control_last_evaluation_timestamp_seconds` older than 20 minutes. Follow `manifests/monitoring/prometheusrule-tibber.yaml`. |
 
 ## Procedures
 
@@ -545,4 +554,8 @@ Expected result: the rule appears on `/rules` in Prometheus.
 - Tibber exporter facts come from tag `v1.1.2` of `Yornik/tibber-exporter` and from [PR 31](https://github.com/Yornik/tibber-exporter/pull/31) at commit `fc3a06b`, read on 2026-10-25. PR 31 merged that day. `v1.2.0` was released the same day, and [PR 597](https://github.com/Yornik/sharkshere-gitops/pull/597) deployed it at about 15:17 UTC. Its `/healthz` answered `ok` on the live pod.
 - The Tibber alerts were checked against the live Prometheus on 2026-10-25. It held 54 days of Tibber data, from 2026-09-01 18:00 UTC. Each expression ran at a step of 30 s, the rule interval. `TibberLiveDataStale` fires 1 time, on 2026-10-25 from 01:04 to 02:08 UTC. In that outage the 4 chart alerts started to fire between 01:00 UTC (`TargetDown`) and 01:07 UTC (`KubePodCrashLooping`). Outside the outage, the longest gap between 2 live samples was 10 minutes, on 2026-09-02.
 - `TibberLiveFeedDown` has no series before `v1.2.0`. A stand-in, no new sample for 1 minute during 15 minutes, fires 1 time, at 01:05 UTC in the same outage. `TibberPriceNotUpdating` does not fire. The longest flat price was 105 minutes. `promtool check rules` passed on the 3 rules.
+- The `shelly-control` alerts were checked against the live Prometheus on 2026-10-26. The service had data from 09:51 UTC. Each expression ran at a step of 30 s, the rule interval, up to 17:42 UTC. Only the expression of `ShellyControlNotLive` matched, from 09:51 to 16:54 UTC, while the service ran in shadow mode. The rule would have fired at 10:21 UTC. In shadow mode the relay differed from the target from 15:30 to 16:54 UTC, and `ShellyControlRelayNotAtTarget` skips shadow mode.
+- The largest age of the last `shelly-control` decision was 895 s. Both pods of that day made their first decision within 4 s after the process started. No switch, read or write failed. The data holds no midnight. The prices of 2026-10-27 arrived at 12:15 UTC.
+- The Shelly bridge read the relay every 15 s from 2026-10-25 13:54 UTC to 2026-10-26 17:15 UTC without a failed read. `shelly_scrape_errors_total` stayed 0 and did not reset.
+- `promtool check rules --lint=all` passed on the 8 `shelly-control` rules. A `promtool test rules` file with 21 cases passed. Each alert fires in its fault case and stays silent on a healthy service. The cases include a normal midnight, a press on the relay button, a keep between the lines and shadow mode. They also include a pod that makes no decision after it starts. The test file is not in this repository. The facts on the metrics come from tag `v1.0.0` of `Yornik/Shelly-control`.
 - The Alertmanager configuration is a SOPS Secret. The routes in this file come from the running Alertmanager, with secrets left out.
