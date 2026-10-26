@@ -8,5 +8,6 @@ resources:
   - ingress-alertmanager-tailnet.yaml
   - prometheusrule-cnpg.yaml
   - prometheusrule-tibber.yaml
+  - prometheusrule-shelly-control.yaml
 generators:
   - secret-generator.yaml

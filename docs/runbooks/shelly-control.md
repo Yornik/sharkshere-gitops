@@ -1,6 +1,6 @@
 # Shelly control
 
-The `shelly-control` Application switches the Shelly Plus 1PM relay of the electric water boiler by the Tibber electricity price. It decides every quarter hour with rules that a person sets on its web page. It replaces a cron job on a Raspberry Pi, which the owner removed on 2026-10-26. This file says how to deploy it, how to move the switching from the Pi to it, how to go back, and what to watch.
+The `shelly-control` Application switches the Shelly Plus 1PM relay of the electric water boiler by the Tibber electricity price. It decides every quarter hour with rules that a person sets on its web page. It replaces a cron job on a Raspberry Pi, which the owner removed on 2026-10-26. This file says how to deploy it, how to move the switching from the Pi to it, how to go back, and what to watch. It also says what the 8 alerts mean and what to do when one fires.
 
 | Item | Value |
 |---|---|
@@ -17,7 +17,7 @@ The `shelly-control` Application switches the Shelly Plus 1PM relay of the elect
 | State | The PVC `shelly-control-state-ssd`, 1Gi, `truenas-ssd`, at `/data`. ArgoCD does not prune it. |
 | Metrics | `:9123/metrics`, scraped every 30 s. The scrape removes the `pod` and `instance` labels. |
 | Dashboard | "Shelly control", UID `shelly-control`, from `manifests/shelly-control/grafana-dashboard.yaml`. |
-| Alerts | Only the chart alerts for pods, Deployments and scrape targets, such as `KubePodCrashLooping`, `KubePodNotReady`, `KubeDeploymentReplicasMismatch` and `TargetDown`. No rule reads a `shelly_control_` metric. See gap G17 in [`../tech/monitoring.md`](../tech/monitoring.md#gaps). |
+| Alerts | 8 rules in `manifests/monitoring/prometheusrule-shelly-control.yaml`. See [Alerts](#alerts). The chart alerts for pods, Deployments and scrape targets also apply, such as `KubePodCrashLooping`, `KubePodNotReady`, `KubeDeploymentReplicasMismatch` and `TargetDown`. |
 
 ## Documents
 
@@ -229,17 +229,20 @@ NOTE: In shadow mode, an override still switches while `ALLOW_SWITCHING` is `"tr
 
 CAUTION: `ALLOW_SWITCHING="false"` does not change the saved mode. A mode Live in `state.json` stays Live. If a later change sets `ALLOW_SWITCHING` to `"true"` again, the rules can switch the relay at once. The page asks for no confirmation then. A revert of the pull request is such a change.
 
-NOTE: If the page does not answer, for example because the tailnet is down, start at step 4. Do steps 1 to 3 and step 8 as soon as the page answers.
+NOTE: If the page does not answer, for example because the tailnet is down, start at step 5. Alertmanager is on the tailnet too. Do steps 1 to 4 and step 9 as soon as the page answers.
+
+NOTE: `ShellyControlNotLive` fires 30 minutes after step 1 or step 7. Step 4 silences it before then. `ShellyControlRelayNotAtTarget` needs live mode, so it stops. The other alerts in [Alerts](#alerts) stay on.
 
 1. On the page, choose Shadow.
 2. Save.
 3. If the page shows an override, choose End override now.
-4. In `manifests/shelly-control/deployment.yaml`, set `ALLOW_SWITCHING` to `"false"`.
-5. Open a pull request with the change.
-6. Merge the pull request. ArgoCD replaces the pod.
-7. Make sure that `shelly_control_switching_allowed` reads 0.
-8. Make sure that `shelly_control_live` and `shelly_control_override_active` read 0.
-9. On the Pi, put the cron job back.
+4. In Alertmanager, silence `ShellyControlNotLive` for the time that the Pi switches the boiler. See [`tailnet-only-admin-uis.md`](tailnet-only-admin-uis.md) for the address.
+5. In `manifests/shelly-control/deployment.yaml`, set `ALLOW_SWITCHING` to `"false"`.
+6. Open a pull request with the change.
+7. Merge the pull request. ArgoCD replaces the pod.
+8. Make sure that `shelly_control_switching_allowed` reads 0.
+9. Make sure that `shelly_control_live` and `shelly_control_override_active` read 0.
+10. On the Pi, put the cron job back.
 
 Expected result: the Pi switches the boiler at the next quarter hour that crosses a line.
 
@@ -254,22 +257,286 @@ The service keeps 3 JSON files in `/data`, on the PVC `shelly-control-state-ssd`
 | `prices.json` | The last good prices. | The service reads them again from the exporter. |
 
 - The service writes each file to a temporary file, syncs it and renames it. A crash leaves the old file or the new one.
-- If `state.json` cannot be read, the service renames it to `state.json.unreadable-<time>`. It then uses the defaults in shadow mode and shows a banner.
+- If `state.json` cannot be read or used, the service uses the defaults in shadow mode. It shows a banner that names the cause.
+- A read error on the volume leaves `state.json` in place. The service moves a broken file to `state.json.unreadable-<time>`. It moves a file from a newer release to `state.json.newer-<time>`.
 - If a write fails, the service goes on with the state in memory. It shows a banner and counts `shelly_control_state_write_errors_total`.
 - The PVC has `Prune=false`. ArgoCD does not delete it when it leaves git. `truenas-ssd` has the reclaim policy Delete, so a deleted PVC deletes the NAS dataset.
 
 ## What to watch
 
-The chart alerts `KubePodCrashLooping`, `KubePodNotReady`, `KubeDeploymentReplicasMismatch` and `TargetDown` fire when the pod crashes, is not ready, does not roll out or stops answering the scrape. No alert covers a failed switch, a relay that the service cannot read, prices that stop or evaluations that stop. See G17. Watch these metrics on the dashboard:
+The chart alerts `KubePodCrashLooping`, `KubePodNotReady`, `KubeDeploymentReplicasMismatch` and `TargetDown` fire when the pod crashes, is not ready, does not roll out or stops answering the scrape. Both probes read `/healthz`, so the pod stays Ready without prices or decisions. The 8 alerts in [Alerts](#alerts) read the metrics of the service instead. The dashboard shows the same metrics:
 
-| Metric | Problem when |
+| Metric | Problem when | Alert |
+|---|---|---|
+| `shelly_control_switch_failures_total` | It grows. The label `reason` says why. | `ShellyControlSwitchFailed` |
+| `shelly_control_relay_read_success` | It reads 0 at 2 evaluations in a row. The service cannot read the relay. | `ShellyControlRelayUnreadable` |
+| `shelly_control_prices_usable` | It reads 0. The rules switch nothing until the prices come back. | `ShellyControlNoUsablePrice` |
+| `shelly_control_last_evaluation_timestamp_seconds` | It is older than 20 minutes. Or it is missing 20 minutes after the process started. The service makes no decisions. | `ShellyControlDecisionsStalled` |
+| `shelly_control_state_saved` | It reads 0 at 2 evaluations in a row. A restart loses the changes since the last good write. | `ShellyControlStateNotSaved` |
+| `shelly_control_relay_on` and `shelly_control_target_on` | They differ in live mode for more than 15 minutes. The relay does not follow the rules. | `ShellyControlRelayNotAtTarget` |
+| `shelly_control_live` and `shelly_control_switching_allowed` | 1 of them reads 0. The owner chose live mode on 2026-10-26 at about 16:54 UTC, so the service must switch. | `ShellyControlNotLive` |
+| `shelly_control_prices_known_until_timestamp_seconds` | After about 15:00 local time it still shows the coming midnight. The prices of tomorrow are late, and at midnight the rules stop. Tibber publishes them at about 13:00 local time. On 2026-10-26 the service had them at 12:15 UTC, 13:15 local time. | none |
+
+## Alerts
+
+| Alert | Fires when |
 |---|---|
-| `shelly_control_switch_failures_total` | It grows. The label `reason` says why. |
-| `shelly_control_relay_read_success` | It reads 0 for more than 15 minutes. The service cannot read the relay. |
-| `shelly_control_prices_usable` | It reads 0. The rules switch nothing until the prices come back. |
-| `shelly_control_last_evaluation_timestamp_seconds` | It is older than 20 minutes. The service makes no decisions. |
-| `shelly_control_state_saved` | It reads 0. A restart loses the changes since the last good write. |
-| `shelly_control_live` and `shelly_control_switching_allowed` | After the switch-over, 1 of them reads 0. The service does not switch. |
+| `ShellyControlSwitchFailed` | A switch command failed, or the relay did not follow it. It fires at once and clears 15 minutes after the last failure. |
+| `ShellyControlRelayUnreadable` | `shelly_control_relay_read_success` reads 0 for 20 minutes: 2 evaluations in a row could not read the relay. |
+| `ShellyControlNoUsablePrice` | `shelly_control_prices_usable` reads 0 for 30 minutes. |
+| `ShellyControlDecisionsStalled` | The last decision is older than 20 minutes. Or the process has made no decision 20 minutes after it started. |
+| `ShellyControlStateNotSaved` | `shelly_control_state_saved` reads 0 for 20 minutes: 2 writes in a row failed. |
+| `ShellyControlRelayNotAtTarget` | In live mode, with `ALLOW_SWITCHING` on and a good read of the relay, the relay differs from the target for 20 minutes. |
+| `ShellyControlNotLive` | `shelly_control_live` or `shelly_control_switching_allowed` reads 0 for 30 minutes. |
+| `ShellyControlMetricsAbsent` | Prometheus has no `shelly_control_live` series for 15 minutes. |
+
+All 8 have the severity `warning`. Alertmanager sends each one by e-mail. The rules and the reason for each threshold are in `manifests/monitoring/prometheusrule-shelly-control.yaml`.
+
+The service evaluates 5 s after each quarter hour. A value that 1 evaluation sets stays until the next evaluation, up to 15 minutes later. That is why 3 rules wait 20 minutes.
+
+Some faults fire more than 1 alert:
+
+- A relay that does not switch fires `ShellyControlSwitchFailed` at once and `ShellyControlRelayNotAtTarget` after 20 minutes.
+- A scrape that fails fires `TargetDown` after 10 minutes and `ShellyControlMetricsAbsent` after 15 to 20 minutes.
+- A relay that does not answer fires `ShellyControlRelayUnreadable`. If a decision wants to switch it, `ShellyControlSwitchFailed` does not fire, because the service sends no command to a relay that it cannot read.
+
+To read the state of the service, use Grafana Explore with the data source `Prometheus`. Run this query:
+
+```promql
+max by (__name__) ({namespace="shelly-control", job="shelly-control", __name__=~"shelly_control_(live|switching_allowed|override_active|relay_read_success|relay_on|target_on|prices_up|prices_usable|state_saved)"})
+```
+
+To read the decisions, use the data source `Loki`. Run this query:
+
+```logql
+{namespace="shelly-control", app="shelly-control"} | json | event="evaluation"
+```
+
+Each decision has the fields `rule`, `outcome`, `note` and `error`. The [Problems](#problems) table lists the error lines.
+
+### ShellyControlSwitchFailed
+
+The service sent `Switch.Set`, and the device refused it or did not answer. Or the device accepted it, and the relay stayed in the old state. The service tries again after 60 s, at most 3 times in a quarter.
+
+1. Read the label `reason` of the alert.
+2. In Grafana Explore, use the data source `Loki`. Read the failed decisions:
+
+   ```logql
+   {namespace="shelly-control", app="shelly-control"} | json | event="evaluation" | outcome="failed"
+   ```
+
+3. Find the reason in the table below.
+4. Do the action of that row.
+
+| Reason | Meaning | Action |
+|---|---|---|
+| `timeout` or `connection` | The relay did not answer. | Open the "Shelly relay" dashboard. If the row `Bridge` also shows failed polls, the relay or its Wi-Fi is down. Check the power and the Wi-Fi of the relay. |
+| `auth` | The device asks for a password. | See the row `the device requires a password (HTTP 401)` in [Problems](#problems). |
+| `http` | The address answered with an HTTP error. If the field `error` of the failed decision ends with `(RPC error <code>: <message>)`, the relay refused the call. | Read the code and the message in the field `error`. If there is no RPC error, something that is not the relay answered. Then make sure that the relay still has the address in `SHELLY_URL`. |
+| `invalid_response` | Something answered that is not the relay. The reply is not a JSON object, or it is larger than 64 KiB. | Make sure that the relay still has the address in `SHELLY_URL`. |
+| `not_confirmed` | The device accepted the command, but the relay stayed in the old state. | Open the Shelly app or the web interface of the relay. Look for a protection error, a timer or an input setting that switches the relay back. |
+
+Expected result: at the next quarter hour, `shelly_control_switch_commands_total` grows, and the alert clears 15 minutes after the last failure.
+
+NOTE: If the boiler must heat before the fix, press the button on the relay or use the Shelly app. The service reads the new state at its next evaluation, a retry included. Between the lines it keeps that state. Above the switch-off line it switches the relay off again as soon as `Switch.Set` works. When switching works again, set an override on the page instead.
+
+### ShellyControlRelayUnreadable
+
+The service cannot read the relay, so it sends no switch command. The relay keeps its last state.
+
+1. Open the "Shelly relay" dashboard.
+2. If the row `Bridge` also shows failed polls, the relay or the LAN is down. Check the power and the Wi-Fi of the relay. See [`shelly-bridge.md`](shelly-bridge.md).
+3. If `shelly-bridge` reads the relay, count the read errors of `shelly-control` by reason. Use the data source `Prometheus`:
+
+   ```promql
+   sum by (reason) (increase(shelly_control_relay_read_errors_total{namespace="shelly-control", job="shelly-control"}[1h]))
+   ```
+
+4. Read the error lines. Use the data source `Loki`:
+
+   ```logql
+   {namespace="shelly-control", app="shelly-control"} | json | event=~"device_failing|device_back"
+   ```
+
+5. If the reason is `auth`, see the row `the device requires a password (HTTP 401)` in [Problems](#problems). After a refused password, the service waits 5 minutes before it tries again.
+
+Expected result: the next evaluation reads the relay, and the alert clears.
+
+### ShellyControlNoUsablePrice
+
+The known prices do not cover this quarter and all of its day. The rules switch nothing, and the relay keeps its last state. An override still switches.
+
+1. Read how many hours of prices the service knows. Use the data source `Prometheus`:
+
+   ```promql
+   (max(shelly_control_prices_known_until_timestamp_seconds{namespace="shelly-control", job="shelly-control"}) - time()) / 3600
+   ```
+
+2. Read whether the last read from the exporter worked:
+
+   ```promql
+   max(shelly_control_prices_up{namespace="shelly-control", job="shelly-control"})
+   ```
+
+3. If `shelly_control_prices_up` reads 0, count the read errors by reason:
+
+   ```promql
+   sum by (reason) (increase(shelly_control_price_read_errors_total{namespace="shelly-control", job="shelly-control"}[1h]))
+   ```
+
+4. If the reason is `not_served`, `connection` or `timeout`, see the rows for the exporter in [Problems](#problems) and [`tibber-exporter.md`](tibber-exporter.md).
+5. If step 2 reads 1 and step 1 reads 0 or less, Tibber has not published the prices of today. Compare with the Tibber app.
+6. If the boiler must heat before the prices come back, set an override on the page. An override needs no price.
+
+Expected result: the service reads the prices within 5 minutes after the exporter serves them, and the alert clears.
+
+### ShellyControlDecisionsStalled
+
+The process answers `/metrics`, but it makes no decisions. Nothing switches the boiler by price. The rule also fires when the process has made no decision 20 minutes after it started. Then `shelly_control_last_evaluation_timestamp_seconds` is missing, and the rule measures the age from `process_start_time_seconds`.
+
+1. Read the log of the controller. Use the data source `Loki`:
+
+   ```logql
+   {namespace="shelly-control", app="shelly-control"} | json | event=~"bug|stop|controller_start"
+   ```
+
+2. If a `bug` line repeats at each quarter hour, each evaluation fails on an error. Copy the traceback into an issue in [`Yornik/Shelly-control`](https://github.com/Yornik/Shelly-control).
+
+NOTE: The alert clears after the restart in step 3, also when the bug stays. The rule then measures from the start of the new pod. If the new pod makes no decision, the alert fires again 20 minutes after the pod started. Step 4 shows whether the restart helped.
+
+3. Restart the pod:
+
+   NOTE: The rollout uses `Recreate`. The page and the metrics are gone for about 2 minutes. The new pod reads the mode and the settings from `state.json`.
+
+   ```sh
+   kubectl --context yornik-sharkshere -n shelly-control rollout restart deploy/shelly-control
+   ```
+
+4. After 2 minutes, read the age of the last decision in seconds. Use the data source `Prometheus`:
+
+   ```promql
+   time() - max(shelly_control_last_evaluation_timestamp_seconds{namespace="shelly-control", job="shelly-control"})
+   ```
+
+5. If the query returns no value, the new pod has made no decision. Do step 1 again.
+
+Expected result: the query returns a value under 900, and the Decisions list on the page shows a new decision.
+
+### ShellyControlStateNotSaved
+
+The service cannot write to `/data`. It runs on with its settings in memory. A restart loses each change since the last good write.
+
+1. Read the error. Use the data source `Loki`:
+
+   ```logql
+   {namespace="shelly-control", app="shelly-control"} | json | event=~"store_failing|store_back"
+   ```
+
+2. Get the state of the volume:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n shelly-control get pvc shelly-control-state-ssd
+   ```
+
+3. On the page, write down the mode, the factors, the morning window and an active override.
+4. If the error says "No space left on device", check the dataset of the volume on the NAS.
+
+CAUTION: Do not restart the pod for "Read-only file system". The volume is NFS (`truenas-ssd`), so a new pod mounts the same read-only share. A restart loses the changes that are only in memory. The incident [`../incidents/2026-10-12-truenas-update-readonly-pv-remount.md`](../incidents/2026-10-12-truenas-update-readonly-pv-remount.md) covers iSCSI ext4 volumes only.
+
+5. If the error says "Read-only file system", the NAS refuses the writes. Get the path of the NFS share of the volume:
+
+   ```sh
+   kubectl --context yornik-sharkshere get pv "$(kubectl --context yornik-sharkshere -n shelly-control get pvc shelly-control-state-ssd -o jsonpath='{.spec.volumeName}')" -o jsonpath='{.spec.csi.volumeAttributes.share}{"\n"}'
+   ```
+
+6. On TrueNAS, find the dataset of that path. Set its property `readonly` to `off`.
+7. On TrueNAS, make sure that the NFS share of that dataset is not read-only.
+8. Wait for the next evaluation. The service tries to write at each evaluation. Within 15 minutes the log shows `store_back` without a restart.
+9. If the NAS shows no fault and `store_back` does not come, restart the pod.
+10. On the page, compare the settings with the notes of step 3.
+11. Set each setting that differs again.
+
+NOTE: The service writes `state.json` only when a setting changes. Steps 12 to 15 write the settings in memory to the volume. The box "Always heat when the price is below zero" matters only at a negative price.
+
+12. On the page, clear the box "Always heat when the price is below zero".
+13. Save.
+14. Tick the box again.
+15. Save.
+
+NOTE: `VolumeRemountedReadOnly` skips NFS mounts, so it does not cover this volume. This alert is the only signal.
+
+Expected result: the log shows `store_back`, and the alert clears.
+
+### ShellyControlRelayNotAtTarget
+
+In live mode the service wants the relay in another state, but the relay does not change. A short difference is normal. A press on the relay button shows until the next quarter hour. So does a switch that the device did not confirm.
+
+CAUTION: Do not clear a protection error of the relay before you know the cause. The relay switched off to protect the boiler or the wiring.
+
+1. Read the decisions that did not switch. Use the data source `Loki`:
+
+   ```logql
+   {namespace="shelly-control", app="shelly-control"} | json | event="evaluation" | outcome=~"held_back|failed"
+   ```
+
+2. Read the field `note` or `error` of the newest line.
+3. If the device reports a protection error, read the error in the Shelly app. Find the cause at the boiler first.
+4. If the outcome is `failed`, follow [ShellyControlSwitchFailed](#shellycontrolswitchfailed).
+
+Expected result: the next evaluation switches the relay, and the alert clears.
+
+### ShellyControlNotLive
+
+The rules switch nothing, and the relay keeps its last state. The owner chose live mode on 2026-10-26 at about 16:54 UTC.
+
+1. Read both values. Use the data source `Prometheus`:
+
+   ```promql
+   max by (__name__) ({namespace="shelly-control", job="shelly-control", __name__=~"shelly_control_(live|switching_allowed)"})
+   ```
+
+2. If `shelly_control_switching_allowed` reads 0, `ALLOW_SWITCHING` is `"false"` in `manifests/shelly-control/deployment.yaml`. If someone set it on purpose, for example to [go back to the Pi](#how-to-go-back-to-the-pi), silence the alert.
+
+   CAUTION: If you set `ALLOW_SWITCHING` to `"true"` while the saved mode is Live, the rules can switch the relay at once. Make sure that the Pi does not switch the boiler first.
+
+3. If nobody set it on purpose, open a pull request that sets `ALLOW_SWITCHING` to `"true"` in `manifests/shelly-control/deployment.yaml`. While it is `"false"`, the page does not offer Live.
+4. Merge the pull request. ArgoCD replaces the pod.
+5. If `shelly_control_live` reads 0, read the banner on the page.
+6. If the banner says that the saved settings were not used, the service runs with the defaults in shadow mode. The banner names the cause:
+   - "could not be read": `state.json` is still in place. The cause is the volume or its permissions. Follow [ShellyControlStateNotSaved](#shellycontrolstatenotsaved) and [State on the volume](#state-on-the-volume). The service reads `state.json` only at start, so restart the pod when the volume works again.
+   - "could not be used and were moved to": the file was invalid. It is now the file that the banner names, `state.json.unreadable-<time>`.
+   - "written by a newer release and were moved to": the file is now `state.json.newer-<time>`. A rollback of the image causes this.
+7. Read who changed the mode last. Use the data source `Loki`:
+
+   ```logql
+   {namespace="shelly-control", app="shelly-control"} | json | event="change"
+   ```
+
+8. If someone chose Shadow on purpose, silence the alert for that time.
+9. Otherwise, do the steps in [2. Go live](#2-go-live).
+
+Expected result: both values read 1, and the alert clears.
+
+### ShellyControlMetricsAbsent
+
+Prometheus has no metrics of the service. The other 7 alerts cannot fire.
+
+1. Get the state of the pod:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n shelly-control get pods -l app.kubernetes.io/name=shelly-control
+   ```
+
+2. If no pod runs, check the Application:
+
+   ```sh
+   kubectl --context yornik-sharkshere -n argocd get application shelly-control
+   ```
+
+3. If the pod runs, check the scrape target. Use the procedure in [`../tech/monitoring.md`](../tech/monitoring.md#how-to-check-that-prometheus-scrapes-a-target). The scrape pool is `serviceMonitor/shelly-control/shelly-control/0`.
+4. If the target is missing, check the label `release: kube-prometheus-stack` on the ServiceMonitor. See [How a monitor becomes visible](../tech/monitoring.md#how-a-monitor-becomes-visible).
+
+Expected result: the target is `UP`, and the alert clears.
 
 ## Problems
 

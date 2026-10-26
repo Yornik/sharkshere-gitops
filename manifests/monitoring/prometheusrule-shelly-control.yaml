@@ -1,0 +1,249 @@
+# Alerts for shelly-control, the service that switches the relay of the
+# boiler by the Tibber price. The runbook is docs/runbooks/shelly-control.md.
+#
+# The service is the only controller of the boiler. The owner removed the
+# cron job on the Pi on 2026-10-26 and chose live mode at 16:54 UTC that day.
+# The chart alerts see the pod only. `up` stays 1 while the relay, the prices
+# or the volume fail, because /metrics still answers. These rules read the
+# metrics of the service. The facts below hold for tag v1.0.0 of
+# github.com/Yornik/Shelly-control.
+#
+# The service evaluates its rules 5 s after each quarter hour. It evaluates
+# again after a change on the page, and 60 s after a failed switch, at most 3
+# times in a quarter. Each evaluation reads the relay and writes
+# decisions.json. A gauge that 1 evaluation sets can therefore stay for up to
+# 15 minutes. The rules on such a gauge wait 20 minutes, which needs 2
+# evaluations in a row. With 15 minutes, 1 bad evaluation can fire the rule,
+# because the next evaluation and the next scrape come about 15 minutes later.
+#
+# The ServiceMonitor drops the labels `pod` and `instance`, so a new pod
+# continues the same series. `max by` and `min by` remove the labels
+# `container`, `endpoint` and `service`.
+#
+# The release label is required. Prometheus ignores a PrometheusRule without
+# it and gives no error. See
+# docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+#
+# A backtest on 2026-10-26 ran each expression on all data of the service
+# in Prometheus, from 09:51 to 17:42 UTC. The step was 30 s, the rule
+# interval. The service ran in shadow mode until 16:54 UTC. The text says
+# what each rule would have done.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: shelly-control-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: shelly-control
+      rules:
+        # The counter grows for each failed Switch.Set, and for each switch
+        # that the relay did not follow (reason `not_confirmed`). The service
+        # tries again after 60 s. The relay switches about 1 time a day: the
+        # Pi made 5 switches from 2026-10-20 to 2026-10-24. So 1 failure is
+        # worth an e-mail. The Shelly bridge read the same relay every 15 s
+        # for 27 hours up to 2026-10-26. No read failed, so a failure is not
+        # normal noise. Each reason exists from the start at 0, and
+        # `increase` handles the reset when a new pod starts. The alert clears
+        # 15 minutes after the last failure. The rule does not fire in the
+        # backtest: no switch failed.
+        - alert: ShellyControlSwitchFailed
+          expr: |-
+            sum by (namespace, job, reason) (
+              increase(shelly_control_switch_failures_total{namespace="shelly-control", job="shelly-control"}[15m])
+            ) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: shelly-control could not switch the boiler relay. Reason {{ $labels.reason }}.
+            description: >-
+              A switch command failed, or the relay did not follow it. The service
+              tries again after 60 s. Until a switch works, the boiler can stay off
+              at a cheap price or stay on at an expensive price. Follow the section
+              "ShellyControlSwitchFailed" in docs/runbooks/shelly-control.md.
+
+        # The gauge reads 0 when an evaluation could not read the relay. It
+        # stays 0 until the next evaluation. While the service cannot read the
+        # relay, it sends no switch command, so ShellyControlSwitchFailed
+        # stays silent. The rule does not fire in the backtest: the gauge read
+        # 1 at each step.
+        - alert: ShellyControlRelayUnreadable
+          expr: |-
+            max by (namespace, job) (
+              shelly_control_relay_read_success{namespace="shelly-control", job="shelly-control"}
+            ) == 0
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: shelly-control has not read the boiler relay for 2 evaluations in a row.
+            description: >-
+              The service cannot read the state of the relay, so it does not switch
+              it. The relay keeps its last state. The cause can be the relay, its
+              Wi-Fi, the LAN or a password on the device. Follow the section
+              "ShellyControlRelayUnreadable" in docs/runbooks/shelly-control.md.
+
+        # The service works out the gauge at each scrape. It reads 0 when the
+        # known prices do not cover the current quarter and the whole local
+        # day of that quarter. The service keeps the last good prices on its
+        # volume. While the prices of today are known, an outage of
+        # tibber-exporter or a restart does not change the gauge. The prices of
+        # tomorrow arrived at 12:15 UTC on 2026-10-26, so the gauge stays 1
+        # across a normal midnight. It turns 0 at midnight when the prices of
+        # the new day did not arrive. The code finds a slot by its start time,
+        # so the days with 23 and 25 hours count as complete. While the gauge
+        # reads 0, the rules switch nothing. 30 minutes is 2 quarters. The
+        # rule does not fire in the backtest. The data holds no midnight.
+        - alert: ShellyControlNoUsablePrice
+          expr: |-
+            max by (namespace, job) (
+              shelly_control_prices_usable{namespace="shelly-control", job="shelly-control"}
+            ) == 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: shelly-control has had no usable price for 30 minutes. The rules switch nothing.
+            description: >-
+              The known prices do not cover this quarter and all of its day, so the
+              service cannot work out the lines. The relay keeps its last state. An
+              override still switches. Follow the section "ShellyControlNoUsablePrice"
+              in docs/runbooks/shelly-control.md.
+
+        # Each quarter hour starts an evaluation, so the age stays below 15
+        # minutes plus the time of 1 evaluation. 20 minutes is the limit of
+        # /readyz in the service. The age only grows while the service makes
+        # no decision, so `for` would only add delay. A process that stops
+        # answering /metrics fires TargetDown instead.
+        #
+        # The service exports the time of the last decision only after its
+        # first decision. A pod whose evaluations all fail has no such series.
+        # The rule then measures the age from process_start_time_seconds. A
+        # decision always comes after the start of its process, so `max`
+        # takes the last decision when one exists. So the rule also fires 20
+        # minutes after a restart when each evaluation still fails.
+        #
+        # A new pod decides at once: on 2026-10-26 the pod that started at
+        # 16:27:51 UTC decided at 16:27:55. The rule does not fire in the
+        # backtest. The largest age was 895 s.
+        - alert: ShellyControlDecisionsStalled
+          expr: |-
+            time() - max by (namespace, job) (
+              {__name__=~"shelly_control_last_evaluation_timestamp_seconds|process_start_time_seconds", namespace="shelly-control", job="shelly-control"}
+            ) > 1200
+          labels:
+            severity: warning
+          annotations:
+            summary: shelly-control has made no decision for 20 minutes.
+            description: >-
+              The process answers /metrics, but it makes no decisions, or it has
+              made none since it started. Nothing switches the boiler by price.
+              Follow the section "ShellyControlDecisionsStalled" in
+              docs/runbooks/shelly-control.md.
+
+        # Each evaluation writes decisions.json. After a failed write, the
+        # gauge reads 0 until the next write works, up to 15 minutes later.
+        # The cause is a full or read-only volume. The service then runs on
+        # with its state in memory, and a restart loses the changes since the
+        # last good write. The volume is NFS (truenas-ssd), and
+        # VolumeRemountedReadOnly skips NFS mounts. The rule does not fire in
+        # the backtest: no write failed.
+        - alert: ShellyControlStateNotSaved
+          expr: |-
+            max by (namespace, job) (
+              shelly_control_state_saved{namespace="shelly-control", job="shelly-control"}
+            ) == 0
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: shelly-control could not write its state for 2 evaluations in a row.
+            description: >-
+              The service runs on with its settings in memory. A restart loses each
+              change since the last good write. The volume can be full or read-only.
+              Follow the section "ShellyControlStateNotSaved" in
+              docs/runbooks/shelly-control.md.
+
+        # In live mode a decision that keeps the state, between the lines or
+        # without a usable price, takes the relay as read for its target. So it
+        # does not differ from the relay. A press on the relay button shows at
+        # the next evaluation only, which then keeps the new state or switches
+        # it back. A switch that the device does not confirm leaves the old
+        # state in shelly_control_relay_on until the next evaluation. So a
+        # normal difference ends within 15 minutes. The rule catches a switch
+        # that the service holds back, for example for a protection error on
+        # the device, and switches that keep failing. It needs live mode,
+        # ALLOW_SWITCHING and a good read of the relay.
+        # ShellyControlNotLive and ShellyControlRelayUnreadable cover the
+        # other cases. The relay differed from the target from 15:30 to 16:54
+        # UTC in the backtest, in shadow mode. The rule does not fire.
+        - alert: ShellyControlRelayNotAtTarget
+          expr: |-
+            (
+              max by (namespace, job) (shelly_control_relay_on{namespace="shelly-control", job="shelly-control"})
+              != max by (namespace, job) (shelly_control_target_on{namespace="shelly-control", job="shelly-control"})
+            )
+            and (
+              min by (namespace, job) (
+                {__name__=~"shelly_control_(live|switching_allowed|relay_read_success)", namespace="shelly-control", job="shelly-control"}
+              ) == 1
+            )
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: The boiler relay has not been at the target of shelly-control for 20 minutes, in live mode.
+            description: >-
+              The service reads the relay and wants another state, but the relay
+              does not change. The service holds a switch back while the device
+              reports a protection error. Failed switches also fire
+              ShellyControlSwitchFailed. Follow the section
+              "ShellyControlRelayNotAtTarget" in docs/runbooks/shelly-control.md.
+
+        # The owner chose live mode, and the service is the only controller of
+        # the boiler. In shadow mode, or with ALLOW_SWITCHING "false", the
+        # rules switch nothing, and the relay keeps its last state. The service
+        # goes back to shadow mode by itself when it cannot read or use
+        # state.json. It then uses the defaults, and it moves an unusable file
+        # aside. Only a banner on the page shows it. 30 minutes lets a short
+        # test in shadow mode pass. The expression matches from 09:51 to 16:54
+        # UTC in the backtest. Those are the shadow hours before the owner
+        # chose live, so the rule fires at 10:21. From 16:55 UTC it matches
+        # nothing.
+        - alert: ShellyControlNotLive
+          expr: |-
+            min by (namespace, job) (
+              {__name__=~"shelly_control_(live|switching_allowed)", namespace="shelly-control", job="shelly-control"}
+            ) == 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: shelly-control has not switched the boiler by price for 30 minutes. It is in shadow mode, or switching is off.
+            description: >-
+              shelly_control_live or shelly_control_switching_allowed reads 0. The
+              rules switch nothing, and the relay keeps its last state. If you went
+              back to the Pi on purpose, silence this alert. Follow the section
+              "ShellyControlNotLive" in docs/runbooks/shelly-control.md.
+
+        # The rules above return nothing when the series are missing. That
+        # happens when Prometheus does not scrape the service: the
+        # ServiceMonitor lost its release label, the name of the port changed,
+        # or no pod runs. TargetDown needs an `up` series, and a target that
+        # Prometheus does not know has none. A new pod leaves a gap of about 2
+        # minutes. On 2026-10-26 the last sample of the old pod was at
+        # 16:27:06 UTC. The first sample of the new pod was at 16:28:52 UTC.
+        # The rule does not fire in the backtest.
+        - alert: ShellyControlMetricsAbsent
+          expr: |-
+            absent(shelly_control_live{namespace="shelly-control", job="shelly-control"})
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Prometheus has no metrics of shelly-control. The other shelly-control alerts cannot fire.
+            description: >-
+              No pod runs, or Prometheus does not scrape it. Follow the section
+              "ShellyControlMetricsAbsent" in docs/runbooks/shelly-control.md.
