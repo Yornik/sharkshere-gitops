@@ -24,6 +24,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-10-23 | [argocd-drops-endpointslice-from-git.md](2026-10-23-argocd-drops-endpointslice-from-git.md) | ArgoCD skips an `EndpointSlice` from git, so the first design for the TrueNAS web interface on the tailnet would have shown nothing |
 | 2026-10-23 | [qbittorrent-dns-search-domain.md](2026-10-23-qbittorrent-dns-search-domain.md) | qBittorrent resolved no host names, so DHT had 0 nodes and magnet links never got their metadata |
 | 2026-10-23 | [truenas-smb-proxy-default-tag.md](2026-10-23-truenas-smb-proxy-default-tag.md) | The SMB proxy device joined the tailnet with the shared tag `tag:k8s`, so each rule for that tag would cover the NAS login after a signature |
+| 2026-10-26 | [bootstrap-bump-without-apply-note.md](2026-10-26-bootstrap-bump-without-apply-note.md) | A Redis bump to `bootstrap/` merged with the `automerge` label and no apply note, so git moved and the cluster did not |
 
 ## How to add an incident
 

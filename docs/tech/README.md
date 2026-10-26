@@ -394,7 +394,7 @@ Average run: ~20 seconds.
 
 ## Dependency updates
 
-Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). A person also merges each bump of the shelly-control image, because it switches the boiler. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A KSOPS bump also needs the manual bootstrap apply and an updated `KSOPS_SHA256`. See `renovate.json5`.
+Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). A person also merges each bump of the shelly-control image, because it switches the boiler. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A bump of any image under `bootstrap/` waits for a person too, because ArgoCD does not manage that directory. Renovate labels it `manual-apply` and puts the apply command in the pull request body. A KSOPS bump also needs an updated `KSOPS_SHA256`. See `renovate.json5` and `docs/incidents/2026-10-26-bootstrap-bump-without-apply-note.md`.
 
 ## Homelab constraints
 
