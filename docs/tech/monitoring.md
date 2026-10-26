@@ -10,6 +10,7 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md) | You need to reach Grafana or Alertmanager, or you change their tailnet address. |
 | [`../runbooks/mazda6e-bridge.md`](../runbooks/mazda6e-bridge.md) | You activate the Mazda exporter or replace its credentials. |
 | [`../runbooks/shelly-bridge.md`](../runbooks/shelly-bridge.md) | You add the password of the Shelly exporter, or it reads no data. |
+| [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md) | You read the "Shelly control" dashboard, or the boiler does not switch by price. |
 | [`../runbooks/tibber-exporter.md`](../runbooks/tibber-exporter.md) | You get a Tibber alert, or the Tibber dashboard shows no live data. |
 | [`../incidents/grafana-rwo-multi-attach.md`](../incidents/grafana-rwo-multi-attach.md) | You change the rollout strategy of Grafana. |
 | [`../incidents/2026-09-09-prometheus-release-label-selector.md`](../incidents/2026-09-09-prometheus-release-label-selector.md) | A monitor or a rule does not appear in Prometheus. |
@@ -19,6 +20,7 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | [`Yornik/dirigera-exporter`](https://github.com/Yornik/dirigera-exporter) | You change the DIRIGERA exporter. |
 | [`Yornik/mazda6e-grafana-bridge`](https://github.com/Yornik/mazda6e-grafana-bridge) | You change the Mazda exporter or its dashboard. |
 | [`Yornik/shelly-bridge`](https://github.com/Yornik/shelly-bridge) | You change the Shelly exporter or its dashboard. |
+| [`Yornik/Shelly-control`](https://github.com/Yornik/Shelly-control) | You change the service that switches the boiler, or its dashboard. |
 | [`Yornik/tibber-exporter`](https://github.com/Yornik/tibber-exporter) | You change the Tibber exporter. |
 
 ## At a glance
@@ -29,7 +31,7 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | Namespace | `monitoring`, with Pod Security level `privileged`. |
 | Metrics | Prometheus, 1 replica. Retention is 60 days or 45 GiB, on a 50 Gi volume. |
 | Logs | Alloy on each node, then Loki. Loki keeps 60 days on a 30 Gi volume. |
-| Dashboards | Grafana. 25 from the chart, 1 for Postgres, 4 in this repository. |
+| Dashboards | Grafana. 25 from the chart, 1 for Postgres, 5 in this repository. |
 | Alerts | Prometheus rules, then Alertmanager, then e-mail through Resend SMTP. |
 | Access | The web interfaces are on the tailnet only. Grafana and Alertmanager each have a Tailscale Ingress. Prometheus has no address outside the cluster. The 2 NAS push ports are NodePorts without authentication. |
 | Storage | All 4 stateful components use the `truenas-ssd` class. They store their data on the NAS that they monitor. |
@@ -49,7 +51,7 @@ flowchart LR
     direction TB
     K8s["Kubernetes<br/>kubelet, cAdvisor, kube-state-metrics,<br/>node-exporter, API server, CoreDNS"]
     PG["CloudNativePG<br/>4 Postgres clusters + operator"]
-    Apps["soiree, go-practice<br/>web + runner"]
+    Apps["soiree, go-practice<br/>web + runner, shelly-control"]
     Logs["Pod logs<br/>/var/log/pods"]
     TibberAPI(["Tibber API"])
     Hub(["DIRIGERA hub<br/>on the LAN"])
@@ -154,6 +156,7 @@ The chart creates 9 ServiceMonitors: Alertmanager, API server, CoreDNS, kubelet,
 | dirigera-exporter | ServiceMonitor | 30 s | `manifests/dirigera-exporter/servicemonitor.yaml` |
 | mazda6e-bridge | ServiceMonitor | 60 s | `manifests/mazda6e-bridge/servicemonitor.yaml` |
 | shelly-bridge | ServiceMonitor | 30 s | `manifests/shelly-bridge/servicemonitor.yaml` |
+| shelly-control | ServiceMonitor | 30 s | `manifests/shelly-control/servicemonitor.yaml`, in the namespace `shelly-control` |
 | graphite-exporter | ServiceMonitor | 30 s | `manifests/truenas-monitoring/servicemonitor.yaml` |
 | soiree | ServiceMonitor | 30 s | `manifests/soiree/servicemonitor.yaml` |
 | go-practice web | ServiceMonitor | 30 s | `manifests/go-practice/servicemonitor-web.yaml` |
@@ -234,6 +237,8 @@ NOTE: `up` stays 1 for the 3 exporters when the hub, the Mazda cloud or the rela
 NOTE: The ServiceMonitors of the 4 home exporters drop the labels `pod` and `instance`, so the series continue after a pod change. The `up` series keeps both labels.
 
 WARNING: The Shelly bridge only reads, and its CI enforces that. The relay itself accepts writes. With authentication off, any device on the LAN can switch the boiler on or off. See [`../runbooks/shelly-bridge.md`](../runbooks/shelly-bridge.md).
+
+NOTE: `shelly-control` is not an exporter. It switches the same relay by the Tibber price, in its own namespace. It reads the prices from `tibber-exporter`, and its dashboard reads `shelly_switch_output` from the Shelly bridge. Its ServiceMonitor drops `pod` and `instance` too. See [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md).
 
 NOTE: The Tibber exporter is a fork of `terjesannum/tibber-exporter` with 15-minute prices. Alloy drops its live-measurement lines, the lines with the API token, and its `Updating prices`, `Updating HOURLY data` and `Updating DAILY data` lines.
 
@@ -332,7 +337,7 @@ flowchart LR
   classDef ui fill:#f3e8ff,stroke:#8a4fd1,color:#2d1250
 
   Chart["kube-prometheus-stack chart<br/>25 default dashboards"]:::src
-  CM["ConfigMaps with the label<br/>grafana_dashboard: '1'<br/>Tibber, DIRIGERA,<br/>Mazda 6e, Shelly relay"]:::src
+  CM["ConfigMaps with the label<br/>grafana_dashboard: '1'<br/>Tibber, DIRIGERA,<br/>Mazda 6e, Shelly relay,<br/>Shelly control"]:::src
   URL["GitHub raw URL<br/>pinned commit, no hash check<br/>CloudNativePG cluster"]:::src
 
   Side["Dashboard sidecar<br/>watches ConfigMaps"]:::mech
@@ -356,8 +361,9 @@ flowchart LR
 | DIRIGERA Air Quality | `manifests/dirigera-exporter/grafana-dashboard.yaml` | UID `dirigera-air`. Refresh 30 s, range 24 h. |
 | Mazda 6e | The source repository, `dashboards/mazda6e.json` | UID `mazda6e-bridge`. Refresh 5 m, range 7 days. This copy differs from the source. The file header lists the differences. |
 | Shelly relay | The source repository, `dashboards/shelly.json` | UID `shelly-bridge`. Refresh 1 m, range 7 days. This copy differs from the source in 1 place, the data source variable. The cost panels read `tibber_power_price{type="total"}` from `tibber-exporter`. |
+| Shelly control | The source repository [`Yornik/Shelly-control`](https://github.com/Yornik/Shelly-control), `dashboards/shelly-control.json` | UID `shelly-control`. Refresh 1 m, range 2 days. This copy differs from the source in 1 place, the data source variable. The ConfigMap is in `monitoring`, and the Application `shelly-control` owns it. The panel "Rules want, relay is" also reads `shelly_switch_output` from `shelly-bridge`. |
 
-Make each change to the Tibber, the Mazda or the Shelly dashboard in the source repository first. The CI of the Mazda and the Shelly repositories parses every panel query with `promtool`; the Tibber repository has no CI. No source CI checks the copy in this repository. CI in this repository does not parse dashboard queries.
+Make each change to the Tibber, the Mazda or a Shelly dashboard in the source repository first. The CI of the Mazda, the Shelly bridge and the Shelly control repositories parses every panel query with `promtool`; the Tibber repository has no CI. No source CI checks the copy in this repository. CI in this repository does not parse dashboard queries.
 
 A dashboard that you build in the Grafana UI exists only on the Grafana volume. Git does not hold it.
 
@@ -429,6 +435,7 @@ flowchart TB
   H2["Partial<br/>data but no alert"]
   B1["Exporter health<br/>no rule on scrape_success<br/>G2"]
   B3["TrueNAS<br/>metrics, no dashboard<br/>G10"]
+  B4["shelly-control<br/>metrics + dashboard,<br/>no service alert<br/>G17"]
 
   H3["Blind to app metrics<br/>not scraped"]
   C1["Loki, Alloy<br/>G6"]
@@ -439,14 +446,14 @@ flowchart TB
   C6["etcd, scheduler,<br/>controller manager,<br/>kube-proxy<br/>scrape and rules off"]
 
   H1 ~~~ A1 ~~~ A2 ~~~ A3 ~~~ A4 ~~~ A5
-  H2 ~~~ B1 ~~~ B3
+  H2 ~~~ B1 ~~~ B3 ~~~ B4
   H3 ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4 ~~~ C5 ~~~ C6
 
   class H1 okh
   class H2 parth
   class H3 noneh
   class A1,A2,A3,A4,A5 ok
-  class B1,B3 part
+  class B1,B3,B4 part
   class C1,C2,C3,C4,C5,C6 none
 ```
 
@@ -470,9 +477,10 @@ NOTE: Gap G1 is closed, because the 12 Postgres alerts are live. Gap G4 is close
 | G10 | Low | The TrueNAS metrics have no dashboard in git, and the labels differ from the mapping file. | Live: 551 series and 113 metric names with `exported_job="truenas"`. Prometheus also renames the mapped label `instance` to `exported_instance`. No ConfigMap dashboard mentions TrueNAS. | Add a dashboard that queries `exported_job` and `exported_instance`. Or confirm that one lives in the UI only. |
 | G12 | Low | The comments in the DIRIGERA and Tibber Deployments call the DIRIGERA exporter a Go exporter, and the DIRIGERA comment blames `GOMAXPROCS` for the CPU throttling. The exporter is Python. | `dirigera_exporter.py` uses `prometheus_client`, and the Dockerfile builds on a `python` image. The Tibber comment says "same Go-exporter shape as dirigera/graphite". | Correct the cause in both comments. Measure the throttling again, because the Go explanation does not apply to Python. |
 | G13 | Low | CI does not parse dashboard queries. A typo shows as an empty panel. | `.github/workflows/validate.yaml` has no `promtool` step. | Adapt the `promtool` check from the Shelly repository, `scripts/dashboard_rules.py`. It reads dashboard JSON, including the panels inside a collapsed row, so extract the JSON from each ConfigMap. Also extract the `expr` of each annotation, which the script skips. The Mazda script also skips collapsed rows: on the Tibber dashboard it finds 27 of the 36 queries. Replace `$__interval`, `$__range`, `$__range_s`, `${__from:date:seconds}` and `${__to:date:seconds}` too, or the Tibber dashboard fails. |
-| G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 4 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
+| G14 | Low | The CloudNativePG dashboard is downloaded without any check. | The Grafana init container runs `curl -skf`, and `-k` turns off TLS certificate checks. The chart does not read the `sha256` key in `apps/values.yaml`. The value `292cdeb3…` is not the hash of the file at the pinned commit, which is `89290731…`. | Provision the dashboard from a ConfigMap in git, as the 5 other dashboards. Or remove the unused `sha256` line, so that it does not suggest a check. |
 | G15 | Low | The `tolerations` value for Alloy is ignored. | In `apps/values.yaml` the key sits beside `controller`. The `alloy` chart reads only `controller.tolerations`, and the render has no toleration. All 4 nodes accept pods today, so there is no effect now. | Move `tolerations` under `controller`. A tainted node then keeps a log shipper. |
 | G16 | Low | 2 Alloy stages do nothing: the Traefik probe drop and the `warning` to `warn` replace. | The Traefik expression looks for the field `UserAgent`, and Traefik drops request headers by default. The expression `^warning$` of `stage.replace` has no capture group, and the stage replaces only capture groups. | Match the field that Traefik writes, or remove the stage. Change the expression to `^(warning)$`. The label `level` then reads `warn` instead of `warning` for every app, so check the queries that use `level="warning"` first. The drops of ArgoCD and democratic-csi list both values, so they do not change. |
+| G17 | Medium | Only the chart alerts for the pod cover `shelly-control`. A failed switch, a relay that the service cannot read, or prices that stop raise nothing. | No rule uses a `shelly_control_` metric. The service is new on 2026-10-26, in shadow mode until the switch-over. `up` stays 1 while the relay or the exporter is away, because `/metrics` still answers. | Before the switch-over, add 4 alerts. Alert on an increase of `shelly_control_switch_failures_total`. Alert on `shelly_control_relay_read_success` at 0 for 15 minutes. Alert on `shelly_control_prices_usable` at 0 for 30 minutes. Alert on a `shelly_control_last_evaluation_timestamp_seconds` older than 20 minutes. Follow `manifests/monitoring/prometheusrule-tibber.yaml`. |
 
 ## Procedures
 
@@ -530,6 +538,7 @@ Expected result: the rule appears on `/rules` in Prometheus.
 - Chart facts come from `helm template` of `kube-prometheus-stack` 92.11.0, `loki` 7.5.0 and `alloy` 1.14.3 with the inline values of `apps/values.yaml`, run on 2026-10-23. Every other Helm app was rendered the same way to count its monitors.
 - Exporter facts come from the source of `Yornik/dirigera-exporter` and `Yornik/mazda6e-grafana-bridge`, read on 2026-10-23. They hold for tag `v0.3.0` of the first and for tags `v1.0.0` and `v1.1.0` of the second.
 - Facts on the Shelly bridge come from tag `v1.0.0` of `Yornik/shelly-bridge`, read on 2026-10-25. On that day, GHCR served `ghcr.io/yornik/shelly-bridge:v1.0.0` without a login, with an `amd64` image. Prometheus held 1 series of `tibber_power_price{type="total"}`, which the cost panels read.
+- Facts on `shelly-control` come from tag `v1.0.0` of `Yornik/Shelly-control`, read on 2026-10-26. On that day, GHCR served `ghcr.io/yornik/shelly-control:v1.0.0` without a login, with an `amd64` image. Through the API server service proxy, `tibber-exporter` answered `GET /homes/<id>/prices` on port 8080 with 96 quarter-hour prices for the day. Prometheus held `shelly_switch_output`, which the dashboard reads.
 - Cluster facts come from read-only queries on 2026-10-23, through the Omni Kubernetes endpoint. The queries read Prometheus targets, rules and alerts, Loki counts, the Alertmanager status, and pod and ArgoCD state. 49 targets were up, 174 pods were Running or Succeeded, and 55 ArgoCD Applications existed: the 54 in `apps/values.yaml` and `root`.
 - The Postgres alerts were checked against the live Prometheus on 2026-10-23 and 2026-10-24. Each expression ran without an error, and none returned a series on the healthy state. Each threshold was run against 30 days of history. After the merge of [PR 578](https://github.com/Yornik/sharkshere-gitops/pull/578), `/rules` showed the group `cloudnative-pg` with 12 rules, all `inactive` with health `ok`. `/alerts` held no Postgres alert. Prometheus held 147 alerting rules in 33 rule objects, and every object carried the label `release: kube-prometheus-stack`.
 - The log fix for ArgoCD and democratic-csi was checked on the live cluster on 2026-10-24, after the merge of [PR 577](https://github.com/Yornik/sharkshere-gitops/pull/577). ArgoCD synced `alloy` at 07:33 UTC, and the 4 Alloy pods reloaded by 07:35. In the next 6 minutes Loki held 4 `warning` lines of ArgoCD. For democratic-csi it held only `csi-proxy` access lines for `NodeGetCapabilities`: 189 in 15 minutes, all with `level="error"` on `stderr`. A second change drops these lines.

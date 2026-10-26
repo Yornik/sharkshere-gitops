@@ -1,7 +1,8 @@
 # Tailnet-only admin interfaces
 
 ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the
-Vaultwarden admin panel and the TrueNAS web interface are reachable on the tailnet only, over HTTPS. This file
+Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control are reachable on
+the tailnet only, over HTTPS. This file
 says how to reach them, how to activate a new proxy device, what changed, and
 how to undo the change.
 
@@ -18,6 +19,7 @@ how to undo the change.
 | Prowlarr | `https://prowlarr.hedgehog-wage.ts.net` | none |
 | Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
 | TrueNAS | `https://nas.hedgehog-wage.ts.net` | none |
+| Shelly control (boiler) | `https://boiler.hedgehog-wage.ts.net` | none |
 
 ## How to reach them
 
@@ -87,7 +89,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|radarr|prowlarr|vaultwarden-admin| nas(-[0-9]+)? '
+   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|radarr|prowlarr|vaultwarden-admin|boiler| nas(-[0-9]+)? '
    ```
 
 Expected result: each name is as in the table above, without a suffix.
@@ -130,6 +132,11 @@ The proxy follows the new name and gets a certificate for it.
   the cluster, so the Ingress points at a small nginx pod that relays TCP to
   `192.168.1.42:443`. It has no public route and no public DNS record. See
   [`truenas-ui.md`](truenas-ui.md).
+- The boiler page of shelly-control uses
+  `manifests/shelly-control/ingress-tailnet.yaml`. It has no public route
+  and no public DNS record. The page has no login. The proxy has the tag
+  `tag:boiler`, not `tag:k8s`. See
+  [`shelly-control.md`](shelly-control.md).
 
 The public DNS records for `grafana.`, `asf.` and `qbittorrent.fedishark.eu`
 still exist. ExternalDNS runs with `--policy=upsert-only`: it never deletes a
@@ -159,7 +166,7 @@ boundary instead. Traffic is encrypted by WireGuard.
 
 The middleware still applies to the public ArgoCD webhook route.
 
-Each application keeps its own login, except Alertmanager:
+Each application keeps its own login, except Alertmanager and Shelly control:
 
 | Application | Gate on the tailnet |
 |---|---|
@@ -172,10 +179,18 @@ Each application keeps its own login, except Alertmanager:
 | Vaultwarden admin | The admin token |
 | Alertmanager | None. The tailnet is the only gate. A tailnet device can read alerts and create silences. |
 | TrueNAS | The TrueNAS login. See [`truenas-ui.md`](truenas-ui.md) for the settings that keep it safe. |
+| Shelly control | None. The tailnet policy grant for `tag:boiler` is the only gate. A device that the grant allows can change the rules and switch the boiler. The service answers only to its ts.net name, so a page from another site in the browser cannot use it. See [`shelly-control.md`](shelly-control.md). |
 
 CAUTION: Alertmanager has no login. A device on the tailnet can silence every
 alert. Keep the tailnet limited to your own devices. To add a gate, use
 `alertmanagerSpec.web` basic auth or a Tailscale ACL on the proxy device.
+
+CAUTION: The boiler page has no login. A device that reaches it can switch a
+1.1 kW boiler. The 2 jump hosts on the internet are tailnet devices. A rule
+for `tag:k8s` lets them reach other proxies. The boiler proxy therefore has a
+tag of its own, `tag:boiler`. Only the tailnet policy grant for `tag:boiler`
+decides who reaches it. See
+[`shelly-control.md`](shelly-control.md#1-the-tailnet-policy).
 
 ## How to undo the change
 
@@ -307,6 +322,7 @@ curl -sSI https://sonarr.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://radarr.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://prowlarr.hedgehog-wage.ts.net/ | head -1
 curl -sSI https://nas.hedgehog-wage.ts.net/ | head -1
+curl -sSI https://boiler.hedgehog-wage.ts.net/ | head -1
 ```
 
 Each command returns `200`, or a redirect to a login page. The first request after a new device can take

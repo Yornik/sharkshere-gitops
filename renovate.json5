@@ -363,6 +363,31 @@
         'dependencies',
       ],
     },
+    {
+      matchPackageNames: [
+        'ghcr.io/yornik/shelly-control',
+      ],
+      // shelly-control switches the relay of the boiler. A new release can
+      // change a rule, a default or the state format, and the pod applies it
+      // at the next quarter hour. A person reads the release notes and the
+      // diff before the bump reaches the cluster. The home exporters, for
+      // example ghcr.io/yornik/shelly-bridge, only read. They keep the
+      // automerge of the first 2 rules.
+      // Same split as for Sonarr: a major keeps the `major` label from the
+      // rule near the top of this list.
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: false,
+      // `null` keeps this package out of the patch group, so a sibling bump
+      // does not bring the `automerge` label and skip the review.
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
   ],
   kubernetes: {
     managerFilePatterns: [

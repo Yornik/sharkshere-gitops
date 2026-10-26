@@ -1,6 +1,6 @@
 # Tibber exporter
 
-The `tibber-exporter` Application reads the live power measurements and the prices of the home from the Tibber API. It exports them to Prometheus. Grafana shows them on the "Tibber" dashboard, and the cost panels of the "Shelly relay" dashboard use the price. This file says what the 3 Tibber alerts mean and what to do when one fires.
+The `tibber-exporter` Application reads the live power measurements and the prices of the home from the Tibber API. It exports them to Prometheus. Grafana shows them on the "Tibber" dashboard, and the cost panels of the "Shelly relay" dashboard use the price. `shelly-control` reads the prices from `/homes/<id>/prices` to switch the boiler. This file says what the 3 Tibber alerts mean and what to do when one fires.
 
 | Item | Value |
 |---|---|
@@ -23,6 +23,7 @@ The `tibber-exporter` Application reads the live power measurements and the pric
 | [`Yornik/tibber-exporter`](https://github.com/Yornik/tibber-exporter) | You change the exporter. The README lists every metric and every reconnect reason. |
 | [`tailnet-only-admin-uis.md`](tailnet-only-admin-uis.md) | You need Grafana or Alertmanager, for example to silence an alert. |
 | [`shelly-bridge.md`](shelly-bridge.md) | The cost panels of the Shelly dashboard show no data. |
+| [`shelly-control.md`](shelly-control.md) | The boiler page says that it has no prices. Without the prices of today, its rules switch nothing. |
 
 ## How the live feed works
 

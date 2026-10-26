@@ -2,11 +2,11 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 56 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 57 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
-The admin interfaces do not take that path. The ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the Vaultwarden admin panel and the TrueNAS web interface are reachable from a tailnet device only, through Tailscale Ingress proxies that terminate TLS with a `ts.net` certificate. See [Tailnet only](#tailnet-only).
+The admin interfaces do not take that path. The ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control are reachable from a tailnet device only, through Tailscale Ingress proxies that terminate TLS with a `ts.net` certificate. See [Tailnet only](#tailnet-only).
 
 This repo is one of three:
 
@@ -21,10 +21,10 @@ This repo is one of three:
 | Metric | Value |
 |---|---|
 | Nodes | 4× Intel N150 (3 control-plane + 1 worker, all schedulable), Talos Linux |
-| CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice` and `go-practice-runner` have no effect. Checked on 2026-10-17. |
+| CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice`, `go-practice-runner` and `shelly-control` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
-| Workloads | 56 ArgoCD Applications, 15 public HTTPS domains, 11 tailnet-only web interfaces, 1 tailnet-only SMB service |
+| Workloads | 57 ArgoCD Applications, 15 public HTTPS domains, 12 tailnet-only web interfaces, 1 tailnet-only SMB service |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
@@ -200,7 +200,7 @@ NOTE: Sonarr numbers anime episodes by absolute number only when the series type
 - **Valkey, not Bitnami Redis.** GitLab chart 10.0 dropped its bundled Redis subchart, and the Bitnami chart went paid in Sept 2025. The cache + queue tier runs the official Valkey chart from `valkey.io` (Linux Foundation Redis fork) with iSCSI persistence.
 - **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains. Hosted repo data (gitaly on an iSCSI zvol, invisible to NAS file-level backup) is covered by the toolbox backup CronJob — 03:30 daily, `--skip db`, uploading tarballs to `yornik-gitlab-backups`; the database is already protected by CNPG barman base backups + continuous WAL archive.
 - **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
-- **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the Vaultwarden admin panel and the TrueNAS web interface to tailnet devices, with Tailnet Lock signing each new proxy device. The NAS is outside the cluster, so a small nginx pod relays TCP to it. The SMB service of the NAS has its own relay pod and its own tailnet address, `nas-smb`. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
+- **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control to tailnet devices, with Tailnet Lock signing each new proxy device. The NAS is outside the cluster, so a small nginx pod relays TCP to it. The SMB service of the NAS has its own relay pod and its own tailnet address, `nas-smb`. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there. Alertmanager and the boiler page have no login, so the tailnet is their only gate — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 - **Media request pipeline.** A request starts in the Jellyfin web UI, through the Jellyfin Enhanced plugin, or in Seerr. Seerr sends a series to Sonarr and a film to Radarr. Prowlarr holds the indexers and syncs them to both. qBittorrent downloads behind the gluetun Mullvad sidecar into `downloads/` on the series or movies share. Each `downloads/` folder has a `.ignore` file, so Jellyfin skips unfinished files. Sonarr and Radarr copy a finished download into the library and tell Jellyfin to scan. Prowlarr searches from the home address, because public indexers block VPN exit addresses. The qBittorrent pod sets `ndots:1`, because gluetun's DNS answers a missing name with an empty NOERROR and the musl resolver then gave up — see [the incident](../incidents/2026-10-23-qbittorrent-dns-search-domain.md). Jellyfin Enhanced, the qBittorrent categories and the app settings live in each app's config volume, not in git — see [the runbook](../runbooks/seerr-sonarr.md).
 - **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu` and `vesper-labs.org`, and a reject-all SPF and DMARC policy for the 3 zones that send no mail.
 - **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
@@ -235,6 +235,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
 | `mazda6e-bridge` | `monitoring` | read-only Mazda 6e car metrics exporter (Mazda cloud API) — see [runbook](../runbooks/mazda6e-bridge.md) |
 | `shelly-bridge` | `monitoring` | read-only Shelly relay metrics exporter for the boiler (local device API) — see [runbook](../runbooks/shelly-bridge.md) |
+| `shelly-control` | `shelly-control` | **switches** the boiler's Shelly relay by the Tibber price from `tibber-exporter`; web page on the tailnet only (`boiler.hedgehog-wage.ts.net`), no login; switches nothing while `ALLOW_SWITCHING` is `"false"`; the rules switch only in Live mode, which needs `ALLOW_SWITCHING` `"true"` and a confirmation on the page; dashboard ConfigMap in `monitoring` — see [runbook](../runbooks/shelly-control.md) |
 | `gotosocial` | `gotosocial` | fediverse service (`pub.fedishark.eu`) |
 | `jellyfin` | `jellyfin` | media service (`jelly.yornik.eu`) |
 | `intel-gpu-plugin` | `kube-system` | Intel GPU device plugin DaemonSet; offers each node's iGPU as `gpu.intel.com/i915`, so a pod can use it without a hostPath mount of `/dev/dri` |
@@ -341,6 +342,7 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 | `vaultwarden-admin.hedgehog-wage.ts.net` | Vaultwarden admin panel |
 | `nas.hedgehog-wage.ts.net` | TrueNAS web interface, through a TCP relay pod; see [`../runbooks/truenas-ui.md`](../runbooks/truenas-ui.md) |
 | `nas-smb.hedgehog-wage.ts.net` | TrueNAS SMB service on port 445, through a TCP relay pod; see [`../runbooks/truenas-smb.md`](../runbooks/truenas-smb.md) |
+| `boiler.hedgehog-wage.ts.net` | shelly-control, the page that sets the rules that switch the boiler. No login: the tailnet policy grant for `tag:boiler` is the only gate. See [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md) |
 
 ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party` and `vesper-labs.org` — the last 3 are zones of their own, so each needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
@@ -392,7 +394,7 @@ Average run: ~20 seconds.
 
 ## Dependency updates
 
-Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A KSOPS bump also needs the manual bootstrap apply and an updated `KSOPS_SHA256`. See `renovate.json5`.
+Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). A person also merges each bump of the shelly-control image, because it switches the boiler. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A KSOPS bump also needs the manual bootstrap apply and an updated `KSOPS_SHA256`. See `renovate.json5`.
 
 ## Homelab constraints
 

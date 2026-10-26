@@ -9,6 +9,7 @@ metadata:
     # The web pod meets the restricted profile: UID 65532, no privilege
     # escalation, all capabilities dropped, seccomp RuntimeDefault, and only
     # PVC and emptyDir volumes. With the label, the API server refuses a later
-    # pod spec that weakens one of these settings. The other namespaces in this
+    # pod spec that weakens one of these settings. go-practice-runner and
+    # shelly-control set `restricted` too. The other namespaces in this
     # repository that set the label set `privileged`, because their pods need it.
     pod-security.kubernetes.io/enforce: restricted

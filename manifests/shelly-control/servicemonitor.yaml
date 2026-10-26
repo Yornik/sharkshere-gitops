@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: shelly-control
+  namespace: shelly-control
+  labels:
+    app.kubernetes.io/name: shelly-control
+    app.kubernetes.io/instance: shelly-control
+    # Without this label Prometheus ignores the monitor, with no error. See
+    # docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: shelly-control
+      app.kubernetes.io/instance: shelly-control
+  namespaceSelector:
+    matchNames:
+      - shelly-control
+  endpoints:
+    # The same interval as shelly-bridge. The dashboard compares the target
+    # of shelly-control with shelly_switch_output of the bridge, so both
+    # series have the same resolution. The service decides once each quarter
+    # hour.
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Every new pod gets a new name and IP. With these labels, each pod
+        # change starts new series. Without them, the series continue, and a
+        # new pod looks like a restart: the counters go back to 0 in the same
+        # series, which increase() handles. The Deployment uses Recreate, so
+        # a rollout does not run 2 pods. The `up` series keeps both labels.
+        # The ServiceMonitors of the 4 home exporters drop the same labels.
+        - action: labeldrop
+          regex: pod|instance

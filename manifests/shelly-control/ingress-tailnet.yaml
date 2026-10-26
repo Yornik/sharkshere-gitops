@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shelly-control-tailnet
+  namespace: shelly-control
+  annotations:
+    # The proxy serves port 443 only. Without the redirect, an http://
+    # address times out instead of reaching the HTTPS one.
+    tailscale.com/http-redirect: "true"
+    # A tag of its own, not the default tag:k8s. The jump hosts on the
+    # internet reach tag:k8s devices (Traefik, gitlab-shell), so a rule for
+    # tag:k8s would also reach this page. The operator sets the tags only when
+    # it creates the proxy, so the tag is in the first merge. tag:boiler must
+    # be in tagOwners before the merge, or no device appears. See
+    # docs/incidents/2026-10-23-truenas-smb-proxy-default-tag.md and
+    # docs/runbooks/shelly-control.md.
+    tailscale.com/tags: "tag:boiler"
+spec:
+  # The Tailscale operator runs 1 proxy device for this Ingress. The proxy
+  # ends TLS with a certificate for the ts.net name and sends plain HTTP to
+  # the service. There is no public route.
+  #
+  # WARNING: The page has no login. The tailnet policy grant for tag:boiler
+  # is the only gate. A device that the grant allows can change the rules and
+  # switch the boiler. Do not add a public route. See
+  # docs/runbooks/shelly-control.md.
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: shelly-control
+      port:
+        number: 9123
+  tls:
+    # The first label is the device name: boiler.hedgehog-wage.ts.net. It is
+    # also ALLOWED_HOSTS in deployment.yaml. Change both together.
+    - hosts:
+        - boiler

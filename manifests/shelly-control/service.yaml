@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: shelly-control
+  namespace: shelly-control
+  labels:
+    app.kubernetes.io/name: shelly-control
+    app.kubernetes.io/instance: shelly-control
+# No external-dns annotation. The page has no login, so it is on the tailnet
+# only, through ingress-tailnet.yaml. The same port serves the page, the API
+# and /metrics.
+spec:
+  selector:
+    app.kubernetes.io/name: shelly-control
+    app.kubernetes.io/instance: shelly-control
+  ports:
+    - name: http
+      port: 9123
+      targetPort: http
+      protocol: TCP
