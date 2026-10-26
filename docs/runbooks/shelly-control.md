@@ -175,7 +175,7 @@ Expected result: the Mode panel shows Shadow, and the Prices panel shows Usable.
 
 ## How to move the switching from the Pi
 
-The owner removed the cron job on the Pi on 2026-10-26, before the first deploy. The shadow phase was skipped. Until someone chooses Live on the page, nothing switches the boiler. The relay keeps its state, and the boiler thermostat still protects the boiler.
+The owner removed the cron job on the Pi on 2026-10-26, before the first deploy. The shadow phase was skipped. The owner chose Live on 2026-10-26 at about 16:54 UTC. The first live switch, off at 45.4 ct, followed at once.
 
 WARNING: 2 controllers of 1 relay work against each other. If the cron job on the Pi comes back, choose Shadow on the page first.
 
