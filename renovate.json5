@@ -179,6 +179,59 @@
         'Rollback (if needed): revert the commit on `main`, run the same `kubectl apply --server-side --force-conflicts -k bootstrap/argocd/` again to restore the previous version.',
       ],
     },
+    // Every other image under bootstrap/ needs the same manual apply as
+    // ArgoCD. ArgoCD does not manage bootstrap/, so a merge changes git and
+    // leaves the cluster on the old image. The generic rules above gave the
+    // Redis, dex and haproxy bumps the `automerge` label and no note, so the
+    // cluster fell behind git with no sign. See
+    // docs/incidents/2026-10-26-bootstrap-bump-without-apply-note.md.
+    //
+    // The `!` patterns keep the 2 packages with their own rule above out of
+    // this one, so each keeps its own note.
+    //
+    // `groupName: null` keeps these images out of the patch group. A sibling
+    // bump then does not wait for a person, and this note stays in a pull
+    // request of its own.
+    //
+    // NOTE: a later rule replaces `labels`, it does not merge them. These
+    // labels leave out `automerge` on purpose, as for the rules above. The
+    // rule comes after the major rule, so a major bump of these images has
+    // `manual-apply` and not `major`. Both labels make the review run.
+    {
+      matchFileNames: [
+        'bootstrap/**',
+      ],
+      matchPackageNames: [
+        '!quay.io/argoproj/argocd',
+        '!viaduct-ai/kustomize-sops',
+      ],
+      automerge: false,
+      groupName: null,
+      labels: [
+        'renovate',
+        'bootstrap',
+        'manual-apply',
+      ],
+      prBodyNotes: [
+        '> :warning: **Manual apply required.** This bump changes a file under `bootstrap/`. ArgoCD does not manage that directory, so merging this pull request does not change the cluster.',
+        '',
+        'After merging, pull `main` and apply from that current checkout. A stale checkout rolls the cluster backwards.',
+        '',
+        '```bash',
+        'git checkout main && git pull',
+        'kubectl --context yornik-sharkshere apply --server-side --force-conflicts -k bootstrap/argocd/',
+        '```',
+        '',
+        'Then compare the running images with git:',
+        '',
+        '```bash',
+        'kubectl --context yornik-sharkshere -n argocd get deploy,statefulset -o wide',
+        'grep -h \'image:\' bootstrap/argocd/*.yaml | sort -u',
+        '```',
+        '',
+        'See [AGENTS.md](https://github.com/Yornik/sharkshere-gitops/blob/main/AGENTS.md) and [the stale checkout incident](https://github.com/Yornik/sharkshere-gitops/blob/main/docs/incidents/2026-09-17-stale-checkout-bootstrap-apply.md).',
+      ],
+    },
     {
       matchPackageNames: [
         'jellyfin/jellyfin',
