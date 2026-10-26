@@ -83,16 +83,17 @@ spec:
             # `host_refused` log line shows the Host that the proxy sent.
             - name: ALLOWED_HOSTS
               value: "boiler.hedgehog-wage.ts.net"
-            # The master switch. "false" sends no switch command (Switch.Set)
-            # to the relay in any mode, an override included. The service
-            # still reads the relay's status. It decides and logs only. The
-            # cron job on the Pi still switches the boiler. Set "true" only at
-            # the switch-over, after the cron job is gone. 2 controllers of 1
-            # relay work against each other. "false" keeps the saved mode: if
-            # it is Live, "true" again switches at once, without the
-            # confirmation on the page. See docs/runbooks/shelly-control.md.
+            # The master switch. "true" lets the service send switch commands
+            # (Switch.Set). The mode on the page decides when. In Shadow, the
+            # first mode, the rules switch nothing, but an override does. Live
+            # needs a confirmation on the page. The owner removed the cron job
+            # on the Pi on 2026-10-26, so this service is the only controller.
+            # "false" is the hard stop: no switch command in any mode, an
+            # override included. It keeps the saved mode: if that is Live,
+            # "true" again switches at once, without the confirmation on the
+            # page. See docs/runbooks/shelly-control.md.
             - name: ALLOW_SWITCHING
-              value: "false"
+              value: "true"
             # Not set, because the defaults are correct: TIBBER_EXPORTER_URL
             # (http://tibber-exporter.monitoring.svc:8080), DISPLAY_NAME
             # (Boiler) and MIN_SWITCH_INTERVAL_SECONDS (60).

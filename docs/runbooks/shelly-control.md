@@ -1,6 +1,6 @@
 # Shelly control
 
-The `shelly-control` Application switches the Shelly Plus 1PM relay of the electric water boiler by the Tibber electricity price. It decides every quarter hour with rules that a person sets on its web page. It takes over from a cron job on a Raspberry Pi. This file says how to deploy it, how to move the switching from the Pi to it, how to go back, and what to watch.
+The `shelly-control` Application switches the Shelly Plus 1PM relay of the electric water boiler by the Tibber electricity price. It decides every quarter hour with rules that a person sets on its web page. It replaces a cron job on a Raspberry Pi, which the owner removed on 2026-10-26. This file says how to deploy it, how to move the switching from the Pi to it, how to go back, and what to watch.
 
 | Item | Value |
 |---|---|
@@ -12,7 +12,7 @@ The `shelly-control` Application switches the Shelly Plus 1PM relay of the elect
 | Source | [`Yornik/Shelly-control`](https://github.com/Yornik/Shelly-control). Facts in this file hold for tag `v1.0.0`. |
 | Device | The relay that `shelly-bridge` reads. The address is `SHELLY_URL` in `manifests/shelly-control/deployment.yaml`. Authentication is off on the device. |
 | Prices | `GET /homes/<id>/prices` on `tibber-exporter` in `monitoring`, port 8080. The service has no Tibber token. |
-| Master switch | `ALLOW_SWITCHING` in `deployment.yaml`. While it is `"false"`, the service sends no switch command (`Switch.Set`) to the relay. It still reads the relay's status. |
+| Master switch | `ALLOW_SWITCHING` in `deployment.yaml`, set to `"true"`. The mode on the page decides when the rules switch. Set `"false"` to stop all switch commands (`Switch.Set`), an override included. The service always reads the relay's status. |
 | Secret | none. The device has no password, and the home id is not a secret: Prometheus holds it as a label. |
 | State | The PVC `shelly-control-state-ssd`, 1Gi, `truenas-ssd`, at `/data`. ArgoCD does not prune it. |
 | Metrics | `:9123/metrics`, scraped every 30 s. The scrape removes the `pod` and `instance` labels. |
@@ -46,7 +46,7 @@ WARNING: The page has no login. Each tailnet device that the tailnet policy lets
 
 | Setting | Where | Value at the first deploy |
 |---|---|---|
-| `ALLOW_SWITCHING` | `deployment.yaml` | `"false"`. No switch command reaches the relay, an override included. The service still reads the relay. |
+| `ALLOW_SWITCHING` | `deployment.yaml` | `"true"`. In the mode Shadow the rules switch nothing, but an override switches. |
 | Mode | The page, stored in `state.json` | Shadow. `DEFAULT_MODE` is not set. |
 | Factors, morning window | The page, stored in `state.json` | The defaults of `v1.0.0`. |
 
@@ -95,7 +95,7 @@ A new device joins as `boiler-1` if a device named `boiler` already exists.
 
 1. In the Tailscale admin console, search for a device named `boiler`.
 2. If a device named `boiler` exists, remove it.
-3. Make sure that the cron job on the Pi still runs. It keeps switching the boiler during the shadow phase.
+3. Leave the cron job on the Pi off. The owner removed it on 2026-10-26. 2 controllers of 1 relay work against each other.
 
 ### After the merge
 
@@ -123,7 +123,7 @@ WARNING: Do not sign a device that has the tag `tag:k8s`. Each rule for that tag
    kubectl --context yornik-sharkshere -n shelly-control logs deploy/shelly-control | head -8
    ```
 
-   Expected result: a `start` line with `"switching_allowed": false`, a `device_found` line and a `device_auth_off` warning. The warning is expected, because authentication is off on the device.
+   Expected result: a `start` line with `"switching_allowed": true`, a `device_found` line and a `device_auth_off` warning. The warning is expected, because authentication is off on the device.
 
 4. In the Tailscale admin console, find the device `boiler`.
 5. Make sure that it has the tag `tag:boiler`. If it has `tag:k8s`, do [Replace a proxy that has the wrong tag](#replace-a-proxy-that-has-the-wrong-tag) first.
@@ -175,20 +175,30 @@ Expected result: the Mode panel shows Shadow, and the Prices panel shows Usable.
 
 ## How to move the switching from the Pi
 
-Do the parts in this order. The Pi keeps switching the boiler until part 3.
+The owner removed the cron job on the Pi on 2026-10-26, before the first deploy. The shadow phase was skipped. Until someone chooses Live on the page, nothing switches the boiler. The relay keeps its state, and the boiler thermostat still protects the boiler.
 
-WARNING: 2 controllers of 1 relay work against each other. Do not merge `ALLOW_SWITCHING="true"` while the cron job on the Pi runs.
+WARNING: 2 controllers of 1 relay work against each other. If the cron job on the Pi comes back, choose Shadow on the page first.
 
-### 1. Run in shadow mode
+NOTE: The live cron script on the Pi, `boiler2.sh` (read on 2026-10-25), switches on below 1.05 times the day's average and off above 1.25 times. Its morning rule applies only in the 05:00 quarter, with the 1.25 line. These are the defaults of `v1.0.0`. The source repository replays 5 days of prices against the switches of the Pi, and these factors reproduce them.
 
-1. Leave `ALLOW_SWITCHING="false"` and the mode Shadow.
-2. Let the service run for some days. Include at least 1 evening peak from 17:00 to 20:00 and 1 morning with the 05:00 quarter.
+### 1. Check the tailnet policy
 
-### 2. Compare the decisions
+1. Read the tailnet policy in the Tailscale admin console.
+2. Make sure that no rule with a jump host as source, or with a wildcard destination, covers `tag:boiler`.
 
-NOTE: In shadow mode, the rules can want a state that the relay does not have. The Decisions list on the page then shows "Would switch on" or "Would switch off". In Loki, the field `outcome` of that quarter is `would_switch`.
+### 2. Go live
 
-NOTE: The live cron script on the Pi, `boiler2.sh` (read on 2026-10-25), switches on below 1.05 times the day's average and off above 1.25 times. Its morning rule applies only in the 05:00 quarter, with the 1.25 line. These are the defaults of `v1.0.0`. The source repository replays 5 days of prices against the switches of the Pi, and these factors reproduce them. An older published copy of the script says 1.20 and 1.50. The replay rules those values out.
+1. Open the page.
+2. Check that the factors are 1.05 and 1.25, and that the morning window is the 05:00 quarter.
+3. Choose Live.
+4. Tick the confirmation.
+5. Save.
+
+Expected result: the page shows the mode Live. `shelly_control_live` and `shelly_control_switching_allowed` read 1.
+
+### 3. Compare the first decisions
+
+NOTE: The Decisions list on the page shows each quarter. In Loki, the field `outcome` of a quarter is `switched`, `unchanged`, `held_back` or `failed`.
 
 1. In Grafana Explore, use the data source `Loki`. Read the decisions:
 
@@ -196,39 +206,7 @@ NOTE: The live cron script on the Pi, `boiler2.sh` (read on 2026-10-25), switche
    {namespace="shelly-control", app="shelly-control"} | json | event="evaluation"
    ```
 
-2. Compare the `action` of each quarter with the switches of the Pi. The "Rules want, relay is" panel shows both: `shelly_control_target_on` and `shelly_switch_output` of `shelly-bridge`.
-3. Read `shelly_control_shadow_disagreements_total`. It counts the quarters where the relay still differed from the rules 1 minute in.
-4. For each counted quarter, find the cause in the Decisions list on the page.
-5. Check that the cron script on the Pi still uses 1.05, 1.25 and the 05:00 quarter.
-6. If the script or the page differs, set the values of the script on the page.
-
-Expected result: the counter grows only in quarters where the 2 rule sets really differ.
-
-### 3. Switch over
-
-NOTE: Prepare the pull request first. Then start right after a quarter hour begins. If steps 7 to 14 finish within that quarter, the relay keeps its state for at most 1 quarter without a controller. If they take longer, it keeps its state until step 14. The boiler thermostat still protects the boiler.
-
-1. Read the tailnet policy in the Tailscale admin console.
-2. Make sure that no rule with a jump host as source, or with a wildcard destination, covers `tag:boiler`.
-3. In `manifests/shelly-control/deployment.yaml`, set `ALLOW_SWITCHING` to `"true"`.
-4. Open a pull request with the change. Do not merge it yet.
-5. Wait until the checks of the pull request pass.
-6. Wait until a quarter hour begins.
-7. On the Pi, remove the cron job, or put it in a comment.
-8. Make sure that the cron job does not run. For example, run `crontab -l` as the user of the job.
-9. Merge the pull request. ArgoCD replaces the pod.
-10. Wait for the new pod:
-
-    ```sh
-    kubectl --context yornik-sharkshere -n shelly-control rollout status deploy/shelly-control
-    ```
-
-11. Open the page.
-12. Choose Live.
-13. Tick the confirmation.
-14. Save.
-
-Expected result: the page shows the mode Live. `shelly_control_live` and `shelly_control_switching_allowed` read 1.
+2. Compare the decisions with the switches of the Pi in the days before. The "Rules want, relay is" panel shows `shelly_control_target_on` and `shelly_switch_output` of `shelly-bridge`.
 
 ### 4. Watch the next switches
 
