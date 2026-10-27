@@ -118,7 +118,7 @@ spec:
               mountPath: /config
       containers:
         - name: jellyfin
-          image: jellyfin/jellyfin:12.3
+          image: jellyfin/jellyfin:12.4
           securityContext:
             # Not privileged: QSV transcoding gets the iGPU from the
             # gpu.intel.com/i915 resource (manifests/intel-gpu-plugin/), which
