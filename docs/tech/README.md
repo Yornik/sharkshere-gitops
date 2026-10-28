@@ -264,7 +264,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `truenas-monitoring` | `monitoring` | TrueNAS metrics (Graphite exporter) and a syslog NodePort (`alloy-syslog`) that feeds Alloy |
 | `truenas-ui` | `truenas-ui` | TCP relay pod and tailnet Ingress for the TrueNAS web interface (`nas.hedgehog-wage.ts.net`) — see [runbook](../runbooks/truenas-ui.md) |
 | `truenas-smb` | `truenas-smb` | TCP relay pod and tailnet Service for the TrueNAS SMB service (`nas-smb.hedgehog-wage.ts.net`, port 445) — see [runbook](../runbooks/truenas-smb.md) |
-| `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster |
+| `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster; app roles are managed roles in `cluster.yaml`, their databases are `Database` resources in `databases.yaml` (Prowlarr) |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 | `gitlab-pg` | `gitlab` | GitLab CE supporting resources — CNPG `gitlab-pg` Cluster (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS), IngressRoutes for `git.yornik.eu` + `registry.git.yornik.eu`, Tailscale-exposed `gitlab-shell` Service for SSH on `:2222`, and the SOPS Secrets the chart consumes (S3 buckets, registry storage, SMTP, initial root password) |
 

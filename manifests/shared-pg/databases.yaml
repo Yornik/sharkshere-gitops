@@ -1,0 +1,30 @@
+# Databases of the apps on shared-pg. Each app owns its databases through its
+# managed role in cluster.yaml.
+#
+# NOTE: databaseReclaimPolicy is retain. Deleting a Database resource does not
+# drop the database and its data.
+#
+# Prowlarr uses 2 databases: main (indexers, apps, history) and log.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: prowlarr-main
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: prowlarr-main
+  owner: prowlarr
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: prowlarr-log
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: prowlarr-log
+  owner: prowlarr
+  databaseReclaimPolicy: retain

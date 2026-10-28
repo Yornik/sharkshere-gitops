@@ -32,6 +32,16 @@ spec:
     initdb:
       database: app
       owner: app
+  # App roles. Each role's password is in a basic-auth Secret next to this
+  # Cluster (role-<app>.enc.yaml). Its databases are Database resources in
+  # databases.yaml.
+  managed:
+    roles:
+      - name: prowlarr
+        ensure: present
+        login: true
+        passwordSecret:
+          name: shared-pg-role-prowlarr
   monitoring:
     # Deprecated in CNPG; will be removed. We ship our own PodMonitor in
     # podmonitor.yaml so we control the release label Prometheus filters on.
