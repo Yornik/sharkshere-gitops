@@ -42,6 +42,21 @@ spec:
         login: true
         passwordSecret:
           name: shared-pg-role-prowlarr
+      - name: radarr
+        ensure: present
+        login: true
+        passwordSecret:
+          name: shared-pg-role-radarr
+      - name: sonarr
+        ensure: present
+        login: true
+        passwordSecret:
+          name: shared-pg-role-sonarr
+      - name: seerr
+        ensure: present
+        login: true
+        passwordSecret:
+          name: shared-pg-role-seerr
   monitoring:
     # Deprecated in CNPG; will be removed. We ship our own PodMonitor in
     # podmonitor.yaml so we control the release label Prometheus filters on.

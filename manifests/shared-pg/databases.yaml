@@ -4,7 +4,7 @@
 # NOTE: databaseReclaimPolicy is retain. Deleting a Database resource does not
 # drop the database and its data.
 #
-# Prowlarr uses 2 databases: main (indexers, apps, history) and log.
+# Prowlarr, Radarr and Sonarr use 2 databases each: main and log. Seerr uses 1.
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
@@ -27,4 +27,64 @@ spec:
     name: shared-pg
   name: prowlarr-log
   owner: prowlarr
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: radarr-main
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: radarr-main
+  owner: radarr
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: radarr-log
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: radarr-log
+  owner: radarr
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: sonarr-main
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: sonarr-main
+  owner: sonarr
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: sonarr-log
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: sonarr-log
+  owner: sonarr
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: seerr
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: seerr
+  owner: seerr
   databaseReclaimPolicy: retain
