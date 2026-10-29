@@ -43,6 +43,28 @@ spec:
             # login fails.
             - name: PROWLARR__AUTH__REQUIRED
               value: Enabled
+            # The databases are on shared-pg (manifests/shared-pg/databases.yaml),
+            # not in SQLite on /config. SQLite takes an NFS lock for every
+            # transaction, and those locks made the Servarr apps freeze for 25
+            # to 30 seconds at a time (found 2026-10-28).
+            #
+            # NOTE: The old prowlarr.db and logs.db stay on /config as a
+            # fallback. Remove these variables to go back to them.
+            - name: PROWLARR__POSTGRES__HOST
+              value: shared-pg-rw.shared-pg.svc.cluster.local
+            - name: PROWLARR__POSTGRES__PORT
+              value: "5432"
+            - name: PROWLARR__POSTGRES__USER
+              value: prowlarr
+            - name: PROWLARR__POSTGRES__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prowlarr-postgres
+                  key: PROWLARR__POSTGRES__PASSWORD
+            - name: PROWLARR__POSTGRES__MAINDB
+              value: prowlarr-main
+            - name: PROWLARR__POSTGRES__LOGDB
+              value: prowlarr-log
           ports:
             - containerPort: 9696
               name: http
