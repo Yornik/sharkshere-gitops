@@ -32,7 +32,7 @@ spec:
             fsGroup: 1000
           containers:
             - name: recyclarr
-              image: ghcr.io/recyclarr/recyclarr:8.8.0
+              image: ghcr.io/recyclarr/recyclarr:8.8.1
               # The image entrypoint runs its own cron loop. The CronJob is the
               # schedule here, so run 1 sync and exit.
               command: ["recyclarr", "sync", "--config", "/etc/recyclarr/recyclarr.yml"]
