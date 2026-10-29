@@ -1,0 +1,100 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: jellyfin-backup
+  namespace: jellyfin
+  labels:
+    app: jellyfin-backup
+spec:
+  # jellyfin-config is local-path on 1 node, with reclaimPolicy Delete. It
+  # holds what a library scan cannot recreate: the users and their passwords,
+  # watch history and resume points, API keys (Seerr, Sonarr, Radarr), the
+  # known devices, the server settings, the libraries and the plugins. This
+  # job copies them to jellyfin-backup-ssd on the NAS each night.
+  #
+  # 23:00 NAS-local time, before the 00:00 ZFS snapshot on the NAS and its
+  # cloudsync runs, and 30 minutes before the Vaultwarden backup.
+  schedule: "0 23 * * *"
+  timeZone: "Europe/Amsterdam"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app: jellyfin-backup
+        spec:
+          restartPolicy: OnFailure
+          # No affinity is needed. The local-path volume has node affinity,
+          # so the scheduler puts this pod on the node of jellyfin-config.
+          #
+          # Run as root: the files in jellyfin-config are root-owned, and
+          # opening a WAL-mode database needs write access to the -shm file.
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          containers:
+            - name: backup
+              # Statically linked sqlite3 CLI on Alpine, with busybox tar and
+              # gzip. The same image as the Vaultwarden backup.
+              image: keinos/sqlite3:3.54.1
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  DAY="$(date +%a)"
+                  OUT=/backup
+                  TMP="${OUT}/.tmp-${DAY}"
+                  rm -rf "${TMP}"
+                  mkdir -p "${TMP}"
+
+                  # 1. The database. The online backup API takes a shared
+                  # lock only and includes the WAL, so the copy is
+                  # consistent while Jellyfin runs.
+                  /usr/bin/sqlite3 /config/data/jellyfin.db ".backup '${TMP}/jellyfin.db'"
+                  RESULT="$(/usr/bin/sqlite3 "${TMP}/jellyfin.db" 'PRAGMA integrity_check;')"
+                  if [ "${RESULT}" != "ok" ]; then
+                    echo "integrity_check failed: ${RESULT}" >&2
+                    exit 1
+                  fi
+                  gzip -6 "${TMP}/jellyfin.db"
+
+                  # 2. The settings, libraries, plugins and scheduled tasks.
+                  # Left out, because Jellyfin recreates them: metadata/
+                  # (images), data/subtitles (extracted subtitles),
+                  # data/introskipper (fingerprint cache), cache/ and log/.
+                  tar -czf "${TMP}/config.tar.gz" -C /config \
+                    config root plugins data/ScheduledTasks data/playlists
+
+                  # 3. Replace the copy of the same weekday. This keeps 7
+                  # days, and a failed run leaves the old copy in place.
+                  rm -rf "${OUT:?}/${DAY}"
+                  mv "${TMP}" "${OUT}/${DAY}"
+                  echo "backup OK: ${OUT}/${DAY}"
+                  ls -l "${OUT}/${DAY}"
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                - name: backup
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+          volumes:
+            - name: config
+              persistentVolumeClaim:
+                claimName: jellyfin-config
+            - name: backup
+              persistentVolumeClaim:
+                claimName: jellyfin-backup-ssd

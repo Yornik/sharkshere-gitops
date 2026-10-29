@@ -27,6 +27,7 @@ This file describes the Postgres databases of the cluster. It covers the 4 CNPG 
 | Backups | WAL archive all the time, and a base backup every 3 hours. Both go to `s3://cnpg-wal/` in Hetzner Object Storage. Retention is 14 days. |
 | Monitoring | 1 PodMonitor per cluster, 12 alert rules in `manifests/monitoring/prometheusrule-cnpg.yaml`. |
 | Connection pooler | None. |
+| Jellyfin | SQLite on its own `local-path` volume, not on CNPG. A nightly copy goes to the NAS. See [Jellyfin](#jellyfin). |
 
 ## How the parts connect
 
@@ -200,6 +201,63 @@ On 2026-10-28 and 2026-10-29, Prowlarr, Radarr, Sonarr and Seerr moved from SQLi
 4. A pull request set the database variables of the app.
 
 The old SQLite files stay on the volume of each app as a fallback. To go back, remove the database variables from the Deployment.
+
+## Jellyfin
+
+Jellyfin does not use CNPG. It keeps its own SQLite database, `/config/data/jellyfin.db`, on the `local-path` volume `jellyfin-config` on 1 node. A local disk has no NFS locks, so the freezes of Sonarr and Radarr do not apply. On 2026-10-29 the database was 353 MiB, with 68,530 library items, and `integrity_check` returned `ok`.
+
+A library scan recreates the items, the images and the intro markers. It does not recreate:
+
+- the users, their passwords and their settings;
+- the watch history, the resume points and the favourites;
+- the API keys that Seerr, Sonarr and Radarr use;
+- the known devices, so each app must log in again;
+- the server settings, the libraries and the plugins in `/config/config`, `/config/root` and `/config/plugins`.
+
+The CronJob `jellyfin-backup` copies these to the NAS each night at 23:00 Europe/Amsterdam:
+
+| Item | Value |
+|---|---|
+| Destination | PVC `jellyfin-backup-ssd`, class `truenas-ssd`. The NAS takes a ZFS snapshot at 00:00 and copies the dataset to Hetzner. |
+| Content | `jellyfin.db.gz`, from the SQLite online backup API and checked with `integrity_check`. `config.tar.gz` with `config/`, `root/`, `plugins/`, `data/ScheduledTasks` and `data/playlists`. |
+| Retention | 1 folder for each weekday, `Mon` to `Sun`. A run replaces the folder of its weekday. |
+| Left out | `metadata/`, `data/subtitles`, `data/introskipper`, `cache/` and `log/`. Jellyfin recreates them. |
+| Failure | The Job fails, and `KubeJobFailed` sends an e-mail. |
+
+### How to restore Jellyfin
+
+WARNING: The restore replaces the database and the settings. Changes made after the backup are lost.
+
+1. Scale Jellyfin down:
+
+   ```sh
+   kubectl -n jellyfin scale deploy/jellyfin --replicas=0
+   ```
+
+2. Start a pod that mounts `jellyfin-config` and `jellyfin-backup-ssd`, with the image of the CronJob.
+3. In that pod, remove `jellyfin.db-wal` and `jellyfin.db-shm` from `/config/data`.
+4. Unpack the database of the chosen day into `/config/data/jellyfin.db`:
+
+   ```sh
+   gunzip -c /backup/Mon/jellyfin.db.gz > /config/data/jellyfin.db
+   ```
+
+5. Unpack the settings over `/config`:
+
+   ```sh
+   tar -xzf /backup/Mon/config.tar.gz -C /config
+   ```
+
+6. Delete the restore pod.
+7. Scale Jellyfin up:
+
+   ```sh
+   kubectl -n jellyfin scale deploy/jellyfin --replicas=1
+   ```
+
+Expected result: the users can log in with their old passwords, and the watch history is back. Jellyfin fills `metadata/` again at its next library scan.
+
+NOTE: If the node of `jellyfin-config` is gone, the new volume is empty. Restore into it with the same steps.
 
 ## How to check
 
