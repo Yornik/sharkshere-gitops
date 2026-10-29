@@ -457,7 +457,7 @@
       ],
       automerge: false,
       prBodyNotes: [
-        '> :warning: **Postgres image catalog.** Merging this moves the ClusterImageCatalog `postgresql-system-trixie` to a new commit of cloudnative-pg/artifacts. If the image of major 18 changed, every CNPG cluster restarts once: the replicas one at a time, then the primary in place, so writes stop for a few seconds per cluster. If the catalog file did not change in the new commit, nothing restarts.',
+        '> :warning: **Postgres image catalog.** Merging this moves the ClusterImageCatalog `postgresql-system-trixie` to a new commit of cloudnative-pg/artifacts. If the image of major 18 changed, every CNPG cluster restarts once: the replicas one at a time, then the primary in place. The primary waits up to 180 seconds for its connections to close, so writes stop for about 3.5 minutes per cluster. Radarr and Sonarr restart once during the outage of shared-pg. If the catalog file did not change in the new commit, nothing restarts.',
         '',
         'A major upgrade is not done here. It is a change of `imageCatalogRef.major` in 1 `cluster.yaml`. See docs/incidents/2026-10-29-cnpg-image-frozen-at-creation.md.',
       ],

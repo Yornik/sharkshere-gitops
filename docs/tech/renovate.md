@@ -139,7 +139,7 @@ flowchart LR
 | What moves | Where | Renovate | Effect of the merge |
 |---|---|---|---|
 | CNPG operator | `apps/values.yaml`, chart `cloudnative-pg` | Yes, label `helm`. | The operator restarts. It can restart the pods of each cluster, to update the instance manager. |
-| Postgres minor and image rebuild | `manifests/cnpg-catalog/kustomization.yaml` | Yes, once a week. | Each cluster on that major restarts once. The replicas go first, then the primary. Writes stop for a few seconds per cluster. |
+| Postgres minor and image rebuild | `manifests/cnpg-catalog/kustomization.yaml` | Yes, once a week. | Each cluster on that major restarts once. The replicas go first, then the primary. Writes stop for about 3.5 minutes per cluster. |
 | Postgres major | `imageCatalogRef.major` in 1 `cluster.yaml` | No. | An offline in-place upgrade with `pg_upgrade`. The cluster is down until it ends. |
 
 NOTE: If a catalog pull request comes from a commit that did not change the catalog file, the merge restarts nothing.

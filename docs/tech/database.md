@@ -113,8 +113,11 @@ flowchart LR
 
 - The apps connect to the `-rw` Service. It always points to the primary. After a failover, CNPG moves it to the new primary.
 - A replica streams the WAL from the primary. If the primary fails, CNPG promotes a replica.
-- `primaryUpdateStrategy` is `unsupervised` and `primaryUpdateMethod` is `restart`. On an image change, CNPG updates the replicas first, then restarts the primary in place. Writes stop for a few seconds.
+- `primaryUpdateStrategy` is `unsupervised` and `primaryUpdateMethod` is `restart`. On an image change, CNPG updates the replicas first, then restarts the primary in place.
+- Before the restart, the primary waits for the client connections to close, up to `smartShutdownTimeout` (180 seconds). On 2026-10-29 each primary was down for about 3.5 minutes. Radarr and Sonarr check the database in their liveness probe, so each restarted during that time and came back.
 - Each cluster carries the annotation `Prune=false`. ArgoCD does not delete a cluster when its Application goes.
+
+NOTE: `primaryUpdateMethod: switchover` would shorten the outage to seconds. CNPG then promotes a replica that already runs the new image. It is not set on 2026-10-29.
 
 ## Storage
 
@@ -163,7 +166,7 @@ See the file for the exact thresholds.
 | What | How it moves | Effect |
 |---|---|---|
 | Operator | Renovate pull request for the chart `cloudnative-pg`, a person merges. | The operator restarts. It can also restart the pods of each cluster. |
-| Postgres minor and image rebuild | Renovate pull request for the catalog, each Monday, a person merges. | Each cluster restarts once. |
+| Postgres minor and image rebuild | Renovate pull request for the catalog, each Monday, a person merges. | Each cluster restarts once. Writes stop for about 3.5 minutes per cluster. |
 | Postgres major | A person changes `imageCatalogRef.major` in 1 `cluster.yaml`. | An offline in-place upgrade with `pg_upgrade`. The cluster is down until it ends. |
 
 The details and the steps for a major upgrade are in [`renovate.md`](renovate.md#postgres-and-cnpg) and in the incident [`2026-10-29-cnpg-image-frozen-at-creation.md`](../incidents/2026-10-29-cnpg-image-frozen-at-creation.md).
