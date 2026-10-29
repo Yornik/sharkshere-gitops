@@ -54,6 +54,29 @@ spec:
             # login fails.
             - name: SONARR__AUTH__REQUIRED
               value: Enabled
+            # The databases are on shared-pg (manifests/shared-pg/databases.yaml),
+            # not in SQLite on /config. SQLite takes an NFS lock for every
+            # transaction, and those locks made Sonarr freeze for 25 to 30
+            # seconds at a time, and the liveness probe then restarted it
+            # (found 2026-10-28).
+            #
+            # NOTE: The old sonarr.db and logs.db stay on /config as a
+            # fallback. Remove these variables to go back to them.
+            - name: SONARR__POSTGRES__HOST
+              value: shared-pg-rw.shared-pg.svc.cluster.local
+            - name: SONARR__POSTGRES__PORT
+              value: "5432"
+            - name: SONARR__POSTGRES__USER
+              value: sonarr
+            - name: SONARR__POSTGRES__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sonarr-postgres
+                  key: SONARR__POSTGRES__PASSWORD
+            - name: SONARR__POSTGRES__MAINDB
+              value: sonarr-main
+            - name: SONARR__POSTGRES__LOGDB
+              value: sonarr-log
           ports:
             - containerPort: 8989
               name: http
