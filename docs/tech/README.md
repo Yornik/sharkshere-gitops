@@ -2,7 +2,7 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 57 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 58 ArgoCD Applications that serve 15 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
@@ -24,7 +24,7 @@ This repo is one of three:
 | CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice`, `go-practice-runner` and `shelly-control` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
-| Workloads | 57 ArgoCD Applications, 15 public HTTPS domains, 12 tailnet-only web interfaces, 1 tailnet-only SMB service |
+| Workloads | 58 ArgoCD Applications, 15 public HTTPS domains, 12 tailnet-only web interfaces, 1 tailnet-only SMB service |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
@@ -195,7 +195,7 @@ NOTE: Sonarr numbers anime episodes by absolute number only when the series type
 
 ## Engineering highlights
 
-- **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject, GitLab CE and soiree each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All four ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin.
+- **Per-app CloudNativePG pattern.** `shared-pg` hosts multi-tenant app DBs; OpenProject, GitLab CE and soiree each get their own dedicated 3-instance HA Cluster so a runaway migration on one doesn't touch the others. All four ship continuous WAL archive + scheduled base backup to Hetzner Object Storage via the barman-cloud plugin, and all four take their Postgres image from one ClusterImageCatalog (`manifests/cnpg-catalog`).
 - **iSCSI over NFS for Postgres.** Block storage on `ssd_pool` with `sync=standard` gives real per-commit `fsync` durability — pgbench notes in `manifests/shared-pg/` document the comparison that drove the decision.
 - **Valkey, not Bitnami Redis.** GitLab chart 10.0 dropped its bundled Redis subchart, and the Bitnami chart went paid in Sept 2025. The cache + queue tier runs the official Valkey chart from `valkey.io` (Linux Foundation Redis fork) with iSCSI persistence.
 - **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains. Hosted repo data (gitaly on an iSCSI zvol, invisible to NAS file-level backup) is covered by the toolbox backup CronJob — 03:30 daily, `--skip db`, uploading tarballs to `yornik-gitlab-backups`; the database is already protected by CNPG barman base backups + continuous WAL archive.
@@ -264,6 +264,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `truenas-monitoring` | `monitoring` | TrueNAS metrics (Graphite exporter) and a syslog NodePort (`alloy-syslog`) that feeds Alloy |
 | `truenas-ui` | `truenas-ui` | TCP relay pod and tailnet Ingress for the TrueNAS web interface (`nas.hedgehog-wage.ts.net`) — see [runbook](../runbooks/truenas-ui.md) |
 | `truenas-smb` | `truenas-smb` | TCP relay pod and tailnet Service for the TrueNAS SMB service (`nas-smb.hedgehog-wage.ts.net`, port 445) — see [runbook](../runbooks/truenas-smb.md) |
+| `cnpg-catalog` | `cnpg-system` | the ClusterImageCatalog `postgresql-system-trixie` of the CNPG project, pinned to a commit; each CNPG Cluster names only its major (`imageCatalogRef`) and takes its Postgres image from it; Renovate moves the pin once a week |
 | `shared-pg` | `shared-pg` | multi-tenant CNPG Postgres Cluster (3-instance HA, WAL archive to Hetzner OS) — hosts app databases that don't need their own dedicated cluster; app roles are managed roles in `cluster.yaml`, their databases are `Database` resources in `databases.yaml` (Prowlarr, Radarr, Sonarr, Seerr) |
 | `openproject-pg` | `openproject` | dedicated CNPG Postgres Cluster for OpenProject (3-instance HA, WAL archive to Hetzner OS) |
 | `gitlab-pg` | `gitlab` | GitLab CE supporting resources — CNPG `gitlab-pg` Cluster (3-instance HA, 20Gi data + 10Gi WAL, WAL archive to Hetzner OS), IngressRoutes for `git.yornik.eu` + `registry.git.yornik.eu`, Tailscale-exposed `gitlab-shell` Service for SSH on `:2222`, and the SOPS Secrets the chart consumes (S3 buckets, registry storage, SMTP, initial root password) |

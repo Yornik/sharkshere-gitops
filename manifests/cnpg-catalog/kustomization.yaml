@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The ClusterImageCatalog `postgresql-system-trixie` of the CNPG project. It
+# maps each Postgres major to 1 image, pinned by digest. Each CNPG Cluster in
+# this repository names only its major (imageCatalogRef), and the operator
+# takes the image from here.
+#
+# CNPG rebuilds the images and updates this file about once a week. The URL
+# is pinned to a commit, and Renovate moves the pin (the git-refs manager for
+# raw.githubusercontent.com in renovate.json5). A new pin that changes the
+# image of a major restarts every cluster on that major once.
+#
+# NOTE: no `namespace:` here. ClusterImageCatalog is cluster-scoped, and
+# kustomize would add the namespace to a kind it does not know.
+resources:
+  - https://raw.githubusercontent.com/cloudnative-pg/artifacts/e4b09dbc704d1c20030c910802e7b6daf3a54d25/image-catalogs/catalog-system-trixie.yaml
+# Never let a pruned Application take the catalog with it: every cluster
+# would lose its image source. The same guard as on the clusters.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

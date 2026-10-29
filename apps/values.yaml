@@ -1093,6 +1093,15 @@ apps:
         # leader pod dies, not via active-active replicas.
         replicaCount: 1
 
+  # The ClusterImageCatalog of CNPG, from the CNPG project, pinned to a
+  # commit. Each CNPG Cluster takes its Postgres image from it. It syncs after
+  # the operator (wave -10) brings the CRD, and before the clusters.
+  cnpg-catalog:
+    namespace: cnpg-system
+    annotations:
+      argocd.argoproj.io/sync-wave: "-9"
+    path: manifests/cnpg-catalog
+
   shared-pg:
     namespace: shared-pg
     path: manifests/shared-pg
