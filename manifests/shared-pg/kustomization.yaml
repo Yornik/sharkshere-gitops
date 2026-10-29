@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - objectstore.yaml
   - cluster.yaml
+  - databases.yaml
   - scheduled-backup.yaml
   - podmonitor.yaml
 generators:

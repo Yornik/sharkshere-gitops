@@ -5,3 +5,5 @@ resources:
   - service.yaml
   - ingress-tailnet.yaml
   - pvc-config.yaml
+generators:
+  - secret-generator.yaml
