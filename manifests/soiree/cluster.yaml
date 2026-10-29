@@ -8,6 +8,16 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   instances: 3
+  # The Postgres image. Without imageName in git, the CNPG webhook writes the
+  # default image of the operator into the spec at creation, and no later
+  # operator upgrade changes it. Git does not show that image and Renovate
+  # cannot bump it. Renovate reads this line (customManagers in renovate.json5).
+  # See docs/incidents/2026-10-29-cnpg-image-frozen-at-creation.md.
+  # A minor bump updates the replicas one at a time, then restarts the primary
+  # (primaryUpdateMethod: restart), so writes stop for a few seconds. A major
+  # bump (e.g. 19) is an offline in-place upgrade: CNPG stops the cluster and
+  # runs pg_upgrade.
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie
   storage:
     storageClass: truenas-ssd-iscsi
     size: 10Gi

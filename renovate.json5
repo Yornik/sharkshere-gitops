@@ -441,6 +441,27 @@
         'dependencies',
       ],
     },
+    // The Postgres image of the CNPG clusters (imageName in
+    // manifests/*/cluster.yaml, read by a custom manager below). A minor bump
+    // keeps the automerge of the docker rule: CNPG updates the replicas one at
+    // a time, then restarts the primary, so writes stop for a few seconds. A
+    // major bump stops the cluster for pg_upgrade, so it keeps the `major`
+    // label and gets this note.
+    {
+      matchPackageNames: [
+        'ghcr.io/cloudnative-pg/postgresql',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
+      prBodyNotes: [
+        '> :warning: **Postgres major upgrade.** CNPG upgrades in place and offline: it stops every instance of the cluster, runs `pg_upgrade` and starts the new major. The apps on that cluster are down until it finishes.',
+        '',
+        'Before merging, check that a recent backup exists and that every extension in use exists for the new major. Merge 1 cluster at a time if the pull request bumps several.',
+        '',
+        'CNPG does not run ANALYZE after the upgrade. From Postgres 18, `pg_upgrade` keeps most optimizer statistics but not extended statistics. After each cluster is up, run in its primary: `vacuumdb --all --analyze-in-stages --missing-stats-only`. Then take a new base backup: a point-in-time recovery cannot cross the major version.',
+      ],
+    },
   ],
   kubernetes: {
     managerFilePatterns: [
@@ -534,6 +555,19 @@
       currentValueTemplate: 'main',
       datasourceTemplate: 'git-refs',
       packageNameTemplate: 'https://github.com/{{depName}}',
+    },
+    // Track the Postgres image of the CNPG clusters. The kubernetes manager
+    // reads only `image:` keys, and a CNPG Cluster names its image in
+    // `imageName:`.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/manifests/.+/cluster\\.yaml$/',
+      ],
+      matchStrings: [
+        'imageName:\\s*(?<depName>ghcr\\.io/cloudnative-pg/postgresql):(?<currentValue>\\S+)',
+      ],
+      datasourceTemplate: 'docker',
     },
   ],
 }
