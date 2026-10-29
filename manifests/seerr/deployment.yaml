@@ -46,6 +46,32 @@ spec:
               value: Europe/Amsterdam
             - name: LOG_LEVEL
               value: info
+            # The database is on shared-pg (manifests/shared-pg/databases.yaml),
+            # not in SQLite in /app/config/db, the same as Sonarr, Radarr and
+            # Prowlarr. The connection is encrypted but the server certificate
+            # is not checked, the same as the Servarr apps.
+            #
+            # NOTE: The old db.sqlite3 stays in /app/config/db as a fallback.
+            # Remove these variables to go back to it.
+            - name: DB_TYPE
+              value: postgres
+            - name: DB_HOST
+              value: shared-pg-rw.shared-pg.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: seerr
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: seerr-postgres
+                  key: DB_PASS
+            - name: DB_NAME
+              value: seerr
+            - name: DB_USE_SSL
+              value: "true"
+            - name: DB_SSL_REJECT_UNAUTHORIZED
+              value: "false"
           volumeMounts:
             - name: config
               mountPath: /app/config
