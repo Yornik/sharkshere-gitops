@@ -16,10 +16,6 @@ spec:
   # NOTE: a change of `major` is an offline in-place upgrade. CNPG stops the
   # cluster and runs pg_upgrade. Change 1 cluster at a time, and follow the
   # steps in the incident write-up (ANALYZE, new base backup).
-  # NOTE: `null` removes the imageName that the CNPG webhook wrote into the
-  # live spec at creation. An apply does not remove a field that git never
-  # set, and CNPG rejects imageName next to imageCatalogRef.
-  imageName: null
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog

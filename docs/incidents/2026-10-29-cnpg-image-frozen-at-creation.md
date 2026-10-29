@@ -39,10 +39,28 @@ The clusters no longer name an image. Each names its major version, and the oper
 1. Add `manifests/cnpg-catalog`. It loads the ClusterImageCatalog `postgresql-system-trixie` from `cloudnative-pg/artifacts`, pinned to a commit. The catalog maps each major to 1 image, pinned by digest. On 2026-10-29, major 18 maps to 18.6.
 2. Add the Application `cnpg-catalog` in `apps/values.yaml`, in sync wave -9. The operator brings the CRD in wave -10, and the clusters come after.
 3. In the 4 `cluster.yaml` files, set `imageCatalogRef` with `major: 18`.
-4. In the same files, set `imageName: null`. An apply does not remove a field that git never set. CNPG rejects `imageName` next to `imageCatalogRef`, so without the `null` ArgoCD could not sync. A server dry run showed both the rejection and the fix.
+4. Remove the old `imageName` from each live Cluster, once, by hand. See the next section.
 5. Extend the git-refs manager in `renovate.json5` for SHA-pinned raw.githubusercontent.com URLs to `manifests/cnpg-catalog/kustomization.yaml`. A `packageRule` limits it to 1 pull request a week, on Monday after the CNPG rebuild, with no automerge.
 
 The merge of the correction restarts each cluster once on 18.6. CNPG updates the replicas one at a time and then restarts the primary in place (`primaryUpdateMethod: restart`). Writes stop for a few seconds on each cluster.
+
+## Action on the cluster
+
+The webhook wrote `imageName` into each live spec at creation. An apply does not remove a field that git never set, and CNPG rejects `imageName` next to `imageCatalogRef`. So the first ArgoCD sync of each cluster after the merge fails with `imageName and imageCatalogRef are mutually exclusive`. The running instances are not touched.
+
+Git cannot express the removal. `imageName: null` in `cluster.yaml` does remove the field on an apply, but the schema check in CI rejects a `null` for a string field.
+
+After the `cnpg-catalog` Application has synced, run this once for each cluster. 1 JSON patch removes `imageName` and sets `imageCatalogRef` in the same request, so the webhook never sees an empty spec and never writes a new default:
+
+```bash
+patch='[{"op":"remove","path":"/spec/imageName"},{"op":"add","path":"/spec/imageCatalogRef","value":{"apiGroup":"postgresql.cnpg.io","kind":"ClusterImageCatalog","name":"postgresql-system-trixie","major":18}}]'
+kubectl --context yornik-sharkshere -n shared-pg patch cluster shared-pg --type=json -p "$patch"
+kubectl --context yornik-sharkshere -n openproject patch cluster openproject-pg --type=json -p "$patch"
+kubectl --context yornik-sharkshere -n gitlab patch cluster gitlab-pg --type=json -p "$patch"
+kubectl --context yornik-sharkshere -n soiree patch cluster soiree-pg --type=json -p "$patch"
+```
+
+The live spec then matches git, and ArgoCD reports the cluster as synced. A new cluster with `imageCatalogRef` in git needs no such step: the webhook writes no `imageName` when a catalog is set.
 
 ## Upgrades from now on
 
@@ -79,6 +97,7 @@ CAUTION: the upgrade needs the same operating system in the old and the new imag
 - The tag list of `ghcr.io/cloudnative-pg/postgresql` on 2026-10-29: `18.3`, `18.4` and `18.6` with the suffix `-system-trixie`, and `19rc1` as the only Postgres 19 tag.
 - `kubectl get clusters.postgresql.cnpg.io -A`: all 4 clusters use `primaryUpdateStrategy: unsupervised` and `primaryUpdateMethod: restart`.
 - `kubectl apply --dry-run=server` of a `cluster.yaml` with `imageCatalogRef` on 2026-10-29: `imageName and imageCatalogRef are mutually exclusive`. With `imageName: null` the dry run passed, and the result had no `imageName`.
+- The `Validate Kubernetes Schemas` check (kubeconform `-strict`) on the commit with `imageName: null`: `at '/spec/imageName': got null, want string`, for all 4 clusters.
 - The history of `image-catalogs/catalog-system-trixie.yaml` in `cloudnative-pg/artifacts`: a new commit about once a week, on Monday. The branch `main` gets commits almost every day.
 - CNPG documentation, [Image catalog](https://cloudnative-pg.io/docs/1.30/image_catalog): a Cluster selects a catalog and a major with `imageCatalogRef`, and a change of the version in the Cluster or in the catalog starts the upgrade.
 - CNPG documentation, [PostgreSQL upgrades](https://cloudnative-pg.io/docs/1.27/postgres_upgrades): `pg_upgrade` does not transfer optimizer statistics, an ANALYZE afterwards is up to the operator, and a point-in-time recovery does not cross a major version.
