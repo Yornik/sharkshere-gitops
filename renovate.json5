@@ -441,25 +441,25 @@
         'dependencies',
       ],
     },
-    // The Postgres image of the CNPG clusters (imageName in
-    // manifests/*/cluster.yaml, read by a custom manager below). A minor bump
-    // keeps the automerge of the docker rule: CNPG updates the replicas one at
-    // a time, then restarts the primary, so writes stop for a few seconds. A
-    // major bump stops the cluster for pg_upgrade, so it keeps the `major`
-    // label and gets this note.
+    // The ClusterImageCatalog of CNPG (manifests/cnpg-catalog). Its URL is
+    // pinned to a commit of cloudnative-pg/artifacts, and the git-refs
+    // manager below moves the pin to the head of `main`. That branch moves
+    // almost every day, but CNPG rewrites the catalog about once a week, on
+    // Monday morning. The schedule keeps it to 1 pull request a week. A pin
+    // that changes an image restarts every cluster on that major once, so a
+    // person merges it.
     {
-      matchPackageNames: [
-        'ghcr.io/cloudnative-pg/postgresql',
+      matchDepNames: [
+        'cloudnative-pg/artifacts',
       ],
-      matchUpdateTypes: [
-        'major',
+      schedule: [
+        '* 12-23 * * 1',
       ],
+      automerge: false,
       prBodyNotes: [
-        '> :warning: **Postgres major upgrade.** CNPG upgrades in place and offline: it stops every instance of the cluster, runs `pg_upgrade` and starts the new major. The apps on that cluster are down until it finishes.',
+        '> :warning: **Postgres image catalog.** Merging this moves the ClusterImageCatalog `postgresql-system-trixie` to a new commit of cloudnative-pg/artifacts. If the image of major 18 changed, every CNPG cluster restarts once: the replicas one at a time, then the primary in place, so writes stop for a few seconds per cluster. If the catalog file did not change in the new commit, nothing restarts.',
         '',
-        'Before merging, check that a recent backup exists and that every extension in use exists for the new major. Merge 1 cluster at a time if the pull request bumps several.',
-        '',
-        'CNPG does not run ANALYZE after the upgrade. From Postgres 18, `pg_upgrade` keeps most optimizer statistics but not extended statistics. After each cluster is up, run in its primary: `vacuumdb --all --analyze-in-stages --missing-stats-only`. Then take a new base backup: a point-in-time recovery cannot cross the major version.',
+        'A major upgrade is not done here. It is a change of `imageCatalogRef.major` in 1 `cluster.yaml`. See docs/incidents/2026-10-29-cnpg-image-frozen-at-creation.md.',
       ],
     },
   ],
@@ -542,12 +542,14 @@
       datasourceTemplate: 'github-releases',
     },
     // Track SHA-pinned raw.githubusercontent.com URLs (e.g. the upstream
-    // CNPG Grafana dashboard JSON we import at Grafana pod startup).
+    // CNPG Grafana dashboard JSON we import at Grafana pod startup, and the
+    // CNPG image catalog in manifests/cnpg-catalog).
     // Renovate proposes PRs when the tracked branch advances.
     {
       customType: 'regex',
       managerFilePatterns: [
         '/apps/values\\.yaml$/',
+        '/manifests/cnpg-catalog/kustomization\\.yaml$/',
       ],
       matchStrings: [
         'https://raw\\.githubusercontent\\.com/(?<depName>[^/]+/[^/]+)/(?<currentDigest>[a-f0-9]{40})/',
@@ -555,19 +557,6 @@
       currentValueTemplate: 'main',
       datasourceTemplate: 'git-refs',
       packageNameTemplate: 'https://github.com/{{depName}}',
-    },
-    // Track the Postgres image of the CNPG clusters. The kubernetes manager
-    // reads only `image:` keys, and a CNPG Cluster names its image in
-    // `imageName:`.
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/manifests/.+/cluster\\.yaml$/',
-      ],
-      matchStrings: [
-        'imageName:\\s*(?<depName>ghcr\\.io/cloudnative-pg/postgresql):(?<currentValue>\\S+)',
-      ],
-      datasourceTemplate: 'docker',
     },
   ],
 }

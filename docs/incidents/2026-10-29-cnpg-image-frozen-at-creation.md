@@ -34,21 +34,27 @@ This is the same fault class as [renovate-frozen-by-tag-suffix.md](2026-10-21-re
 
 ## Correction
 
-1. Set `imageName: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie` in the 4 `cluster.yaml` files. Git now names the image, and ArgoCD owns the field.
-2. Add a regex `customManager` in `renovate.json5` for `imageName:` in `manifests/*/cluster.yaml`, with the docker datasource. The `-system-trixie` suffix stays the same between releases, so the default docker versioning reads it.
-3. Add a `packageRule` for a major bump of `ghcr.io/cloudnative-pg/postgresql`. It adds a note to the pull request. A minor bump keeps the automerge of the docker rule.
+The clusters no longer name an image. Each names its major version, and the operator takes the image from a catalog. The CNPG project publishes and updates that catalog.
 
-The merge of the correction restarts each cluster once. CNPG updates the replicas one at a time and then restarts the primary in place (`primaryUpdateMethod: restart`). Writes stop for a few seconds on each cluster.
+1. Add `manifests/cnpg-catalog`. It loads the ClusterImageCatalog `postgresql-system-trixie` from `cloudnative-pg/artifacts`, pinned to a commit. The catalog maps each major to 1 image, pinned by digest. On 2026-10-29, major 18 maps to 18.6.
+2. Add the Application `cnpg-catalog` in `apps/values.yaml`, in sync wave -9. The operator brings the CRD in wave -10, and the clusters come after.
+3. In the 4 `cluster.yaml` files, set `imageCatalogRef` with `major: 18`.
+4. In the same files, set `imageName: null`. An apply does not remove a field that git never set. CNPG rejects `imageName` next to `imageCatalogRef`, so without the `null` ArgoCD could not sync. A server dry run showed both the rejection and the fix.
+5. Extend the git-refs manager in `renovate.json5` for SHA-pinned raw.githubusercontent.com URLs to `manifests/cnpg-catalog/kustomization.yaml`. A `packageRule` limits it to 1 pull request a week, on Monday after the CNPG rebuild, with no automerge.
+
+The merge of the correction restarts each cluster once on 18.6. CNPG updates the replicas one at a time and then restarts the primary in place (`primaryUpdateMethod: restart`). Writes stop for a few seconds on each cluster.
 
 ## Upgrades from now on
 
-A **minor** bump, for example 18.6 to 18.7, keeps the data files. Postgres keeps its statistics, so it needs no ANALYZE. Read the release notes all the same: a minor release sometimes asks for a `REINDEX` of an index type.
+A **minor** release or an image rebuild arrives as the weekly Renovate pull request for the catalog. A person merges it. Each cluster on that major then restarts once. A minor upgrade keeps the data files, and Postgres keeps its statistics, so it needs no ANALYZE. Read the release notes all the same: a minor release sometimes asks for a `REINDEX` of an index type.
 
-A **major** bump, for example 18 to 19, is an offline in-place upgrade from CNPG 1.26 on:
+A **major** upgrade, for example 18 to 19, is a change of `imageCatalogRef.major` in 1 `cluster.yaml`. Renovate never makes it. From CNPG 1.26 it is an offline in-place upgrade:
 
 1. CNPG stops every instance of the cluster.
 2. A Job runs `pg_upgrade` on the primary volume.
 3. CNPG recreates the replicas from the new primary.
+
+Before the change, check that the catalog holds the new major, that a recent backup exists, and that each extension in use exists for the new major. Change 1 cluster at a time.
 
 CNPG does not run ANALYZE after it. From Postgres 18, `pg_upgrade` keeps most optimizer statistics, but not extended statistics. Run this in the primary after each upgrade:
 
@@ -58,11 +64,11 @@ vacuumdb --all --analyze-in-stages --missing-stats-only
 
 Then take a new base backup. A point-in-time recovery cannot cross a major version, so the older backups cannot restore to a time after the upgrade.
 
-CAUTION: the upgrade needs the same operating system in the old and the new image. Keep the `-system-trixie` suffix.
+CAUTION: the upgrade needs the same operating system in the old and the new image. Keep the `system-trixie` catalog.
 
 ## Prevention
 
-1. Set `imageName` on each new CNPG `Cluster`. An empty field freezes the image at the day of creation.
+1. Give each new CNPG `Cluster` an `imageCatalogRef`. With neither `imageName` nor `imageCatalogRef`, the webhook freezes the image at the day of creation.
 2. The same holds for each operator that fills in a default at creation. A field that the API server writes and git does not name never changes, and no tool reports it.
 3. The checks in [renovate-frozen-by-tag-suffix.md](2026-10-21-renovate-frozen-by-tag-suffix.md) also cover this case. Compare the running image of each workload with the newest tag upstream.
 
@@ -72,4 +78,7 @@ CAUTION: the upgrade needs the same operating system in the old and the new imag
 - The log of the operator at its start on 2026-10-26: `"operatorImageName":"ghcr.io/cloudnative-pg/cloudnative-pg:1.30.1","postgresImageName":"ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie"`.
 - The tag list of `ghcr.io/cloudnative-pg/postgresql` on 2026-10-29: `18.3`, `18.4` and `18.6` with the suffix `-system-trixie`, and `19rc1` as the only Postgres 19 tag.
 - `kubectl get clusters.postgresql.cnpg.io -A`: all 4 clusters use `primaryUpdateStrategy: unsupervised` and `primaryUpdateMethod: restart`.
+- `kubectl apply --dry-run=server` of a `cluster.yaml` with `imageCatalogRef` on 2026-10-29: `imageName and imageCatalogRef are mutually exclusive`. With `imageName: null` the dry run passed, and the result had no `imageName`.
+- The history of `image-catalogs/catalog-system-trixie.yaml` in `cloudnative-pg/artifacts`: a new commit about once a week, on Monday. The branch `main` gets commits almost every day.
+- CNPG documentation, [Image catalog](https://cloudnative-pg.io/docs/1.30/image_catalog): a Cluster selects a catalog and a major with `imageCatalogRef`, and a change of the version in the Cluster or in the catalog starts the upgrade.
 - CNPG documentation, [PostgreSQL upgrades](https://cloudnative-pg.io/docs/1.27/postgres_upgrades): `pg_upgrade` does not transfer optimizer statistics, an ANALYZE afterwards is up to the operator, and a point-in-time recovery does not cross a major version.
