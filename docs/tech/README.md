@@ -25,13 +25,14 @@ This repo is one of three:
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
 | Workloads | 58 ArgoCD Applications, 15 public HTTPS domains, 12 tailnet-only web interfaces, 1 tailnet-only SMB service |
-| Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each |
+| Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each. See [`database.md`](database.md). |
 | Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
 | Storage backend | TrueNAS SCALE (7-disk raidz1 HDD pool + 2-disk SSD mirror) over NFS + iSCSI + SMB |
 | Logs | Alloy (DaemonSet) → Loki (60-day retention, 30 GiB store) |
 | Metrics | kube-prometheus-stack + Grafana with file-provider dashboards. See [`monitoring.md`](monitoring.md). |
 | Secrets | SOPS + age, decrypted in-cluster by KSOPS in the ArgoCD repo-server |
+| Dependency updates | Renovate. See [`renovate.md`](renovate.md). |
 
 ## Traffic + state flow
 
@@ -101,6 +102,7 @@ flowchart TB
   end
 
   NAS[("TrueNAS SMB shares<br/>series/ and movies/<br/>downloads/ has .ignore")]
+  PG[("Postgres shared-pg<br/>namespace shared-pg<br/>settings, history, queue")]
   Indexers([Indexers])
   Peers([BitTorrent peers])
   Trash([TRaSH Guides on GitHub])
@@ -119,6 +121,7 @@ flowchart TB
   Sonarr & Radarr -->|"7. copy into the library"| NAS
   Sonarr & Radarr -.->|"8. scan library"| Jellyfin
   NAS -->|"read-only mount"| Jellyfin
+  Seerr & Sonarr & Radarr & Prowlarr -.-> PG
   Trash -.->|"profiles, custom formats"| Recyclarr
   Recyclarr -.->|"quality profiles"| Sonarr & Radarr
 ```
@@ -395,7 +398,9 @@ Average run: ~20 seconds.
 
 ## Dependency updates
 
-Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). A person also merges each bump of the shelly-control image, because it switches the boiler. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A bump of any image under `bootstrap/` waits for a person too, because ArgoCD does not manage that directory. Renovate labels it `manual-apply` and puts the apply command in the pull request body. A KSOPS bump also needs an updated `KSOPS_SHA256`. See `renovate.json5` and `docs/incidents/2026-10-26-bootstrap-bump-without-apply-note.md`.
+Renovate is enabled. Patch updates and docker minor updates merge themselves; they carry the `automerge` label. The go-practice images are the exception: they move together in 1 grouped pull request, and a person merges it (see `docs/runbooks/go-practice.md`). A person also merges each bump of the shelly-control image, because it switches the boiler, and each patch or minor bump of Sonarr, Radarr, Prowlarr, Seerr and qBittorrent. Every Helm chart bump waits for a person, whatever its size, and so does every major bump. A bump of any image under `bootstrap/` waits for a person too, because ArgoCD does not manage that directory. Renovate labels it `manual-apply` and puts the apply command in the pull request body. A KSOPS bump also needs an updated `KSOPS_SHA256`. The Postgres images come from the CNPG image catalog in `manifests/cnpg-catalog`; Renovate moves its pin once a week, and a person merges it. A Postgres major is never a Renovate bump.
+
+The full explanation, with a diagram of the path from a release to the cluster and a table of each rule, is in [`renovate.md`](renovate.md). See also `renovate.json5` and `docs/incidents/2026-10-26-bootstrap-bump-without-apply-note.md`.
 
 ## Homelab constraints
 

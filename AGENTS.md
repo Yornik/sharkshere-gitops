@@ -14,6 +14,8 @@ ArgoCD reads this repository and makes the cluster agree with it. A change that 
 | [`docs/styleguide.md`](docs/styleguide.md) | You write or edit a document, a README or a comment. |
 | [`docs/incidents/`](docs/incidents/README.md) | You touch a component. Read the write-up for that component first. |
 | [`docs/tech/monitoring.md`](docs/tech/monitoring.md) | You touch Prometheus, Grafana, Loki, Alloy, an exporter, a dashboard or an alert. |
+| [`docs/tech/database.md`](docs/tech/database.md) | You touch a CNPG cluster, a database, a role or a backup. |
+| [`docs/tech/renovate.md`](docs/tech/renovate.md) | You change `renovate.json5` or merge a Renovate pull request. |
 
 ## Rules
 

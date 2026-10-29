@@ -42,7 +42,7 @@ The clusters no longer name an image. Each names its major version, and the oper
 4. Remove the old `imageName` from each live Cluster, once, by hand. See the next section.
 5. Extend the git-refs manager in `renovate.json5` for SHA-pinned raw.githubusercontent.com URLs to `manifests/cnpg-catalog/kustomization.yaml`. A `packageRule` limits it to 1 pull request a week, on Monday after the CNPG rebuild, with no automerge.
 
-The merge of the correction restarts each cluster once on 18.6. CNPG updates the replicas one at a time and then restarts the primary in place (`primaryUpdateMethod: restart`). Writes stop for a few seconds on each cluster.
+The correction restarted each cluster once on 18.6. CNPG updated the replicas one at a time and then restarted the primary in place (`primaryUpdateMethod: restart`). The primary first waits up to 180 seconds (`smartShutdownTimeout`) for the client connections to close. Each primary was down for about 3.5 minutes, not a few seconds. Radarr and Sonarr restarted during the outage of `shared-pg`, because their liveness probe reads the database. Both came back without help.
 
 ## Action on the cluster
 
@@ -99,5 +99,6 @@ CAUTION: the upgrade needs the same operating system in the old and the new imag
 - `kubectl apply --dry-run=server` of a `cluster.yaml` with `imageCatalogRef` on 2026-10-29: `imageName and imageCatalogRef are mutually exclusive`. With `imageName: null` the dry run passed, and the result had no `imageName`.
 - The `Validate Kubernetes Schemas` check (kubeconform `-strict`) on the commit with `imageName: null`: `at '/spec/imageName': got null, want string`, for all 4 clusters.
 - The history of `image-catalogs/catalog-system-trixie.yaml` in `cloudnative-pg/artifacts`: a new commit about once a week, on Monday. The branch `main` gets commits almost every day.
+- The one-time patch on 2026-10-29, 1 cluster at a time: `soiree-pg` 15:16 to 15:21 UTC, `openproject-pg` 15:29 to 15:34, `shared-pg` 15:34 to 15:38, `gitlab-pg` 15:40 to 15:44. Each status read `Primary instance is being restarted without a switchover` for 3 to 4 minutes. Afterwards all 4 ran `18.6-202610260820-system-trixie`, with `ContinuousArchiving` `True`, and the 4 Applications were `Synced`.
 - CNPG documentation, [Image catalog](https://cloudnative-pg.io/docs/1.30/image_catalog): a Cluster selects a catalog and a major with `imageCatalogRef`, and a change of the version in the Cluster or in the catalog starts the upgrade.
 - CNPG documentation, [PostgreSQL upgrades](https://cloudnative-pg.io/docs/1.27/postgres_upgrades): `pg_upgrade` does not transfer optimizer statistics, an ANALYZE afterwards is up to the operator, and a point-in-time recovery does not cross a major version.

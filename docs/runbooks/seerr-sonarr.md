@@ -32,6 +32,7 @@ flowchart TB
   end
 
   NAS[("TrueNAS SMB shares<br/>series/ and movies/<br/>downloads/ has .ignore")]
+  PG[("Postgres shared-pg<br/>namespace shared-pg<br/>settings, history, queue")]
   Indexers([Indexers])
   Peers([BitTorrent peers])
 
@@ -49,9 +50,10 @@ flowchart TB
   Sonarr & Radarr -->|"7. copy into the library"| NAS
   Sonarr & Radarr -.->|"8. scan library"| Jellyfin
   NAS -->|"read-only mount"| Jellyfin
+  Seerr & Sonarr & Radarr & Prowlarr -.-> PG
 ```
 
-All calls between the parts stay in the `jellyfin` namespace.
+All calls between the parts stay in the `jellyfin` namespace. The only exception is the database: Seerr, Sonarr, Radarr and Prowlarr keep their data in the Postgres cluster `shared-pg`, in the namespace `shared-pg`. See [`../tech/database.md`](../tech/database.md).
 
 | From | To | Address in the cluster |
 |---|---|---|
@@ -64,6 +66,7 @@ All calls between the parts stay in the `jellyfin` namespace.
 | Prowlarr | Radarr | `http://radarr:7878` |
 | Sonarr, Radarr | Prowlarr | `http://prowlarr:9696` |
 | Prowlarr | FlareSolverr | `http://flaresolverr:8191` |
+| Seerr, Sonarr, Radarr, Prowlarr | `shared-pg` | `shared-pg-rw.shared-pg.svc.cluster.local:5432` |
 
 Jellyfin stays on its public address. Jellyfin Enhanced calls Seerr from the Jellyfin server, not from the browser. A user without the tailnet can request media in the Jellyfin web UI. Only the links that open the Seerr UI need the tailnet.
 
@@ -130,7 +133,9 @@ NOTE: Seerr counts seasons as TMDB does, and Sonarr counts them as TVDB does. Fo
 - Prowlarr has no VPN. Public indexers block the Mullvad exit addresses quickly, so searches leave from the home address. Only qBittorrent downloads, and it stays behind Mullvad.
 - FlareSolverr has a ClusterIP Service and nothing else. It has no tailnet address, no public route and no volume. It has no login, so anyone who reaches it can make it open any address from the home network. Only Prowlarr is set up to use it.
 - FlareSolverr has no VPN, for the same reason as Prowlarr. A solved challenge belongs to the address that solved it. Prowlarr reuses the result, so both must leave from the home address.
-- Jellyfin is unchanged.
+- Seerr, Sonarr, Radarr and Prowlarr keep their data in Postgres on `shared-pg`, not in SQLite on their volume. Each Servarr app has a `-main` and a `-log` database. Seerr has 1 database, `seerr`. The password of each app is in `manifests/<app>/postgres.enc.yaml`.
+- The move from SQLite was on 2026-10-28 and 2026-10-29. SQLite took an NFS lock for each transaction, and Sonarr and Radarr froze for 25 to 30 seconds at a time. The old SQLite files stay on the volumes as a fallback. See [`../tech/database.md`](../tech/database.md#how-the-servarr-apps-moved-from-sqlite).
+- Jellyfin is unchanged. It keeps its own SQLite database on a `local-path` volume, not on NFS.
 
 ## How to activate the new tailnet devices
 
@@ -451,7 +456,9 @@ If step 1 returns `Permission denied` or `Read-only file system`, give the SMB a
 
 ## How to undo
 
-WARNING: ArgoCD deletes `seerr-config-ssd`, `sonarr-config-ssd`, `radarr-config-ssd` and `prowlarr-config-ssd` with the Applications. They hold the settings and the SQLite database of each program. Copy the files out of the volumes first if you want to keep them.
+WARNING: ArgoCD deletes `seerr-config-ssd`, `sonarr-config-ssd`, `radarr-config-ssd` and `prowlarr-config-ssd` with the Applications. They hold the config file and the old SQLite fallback of each program. Copy the files out of the volumes first if you want to keep them.
+
+NOTE: The databases on `shared-pg` stay when the Applications go. Each `Database` resource has `databaseReclaimPolicy: retain`. To remove the data, remove the entries from `manifests/shared-pg/databases.yaml` and `manifests/shared-pg/cluster.yaml`, then drop the databases by hand.
 
 1. Remove the `seerr`, `sonarr`, `radarr`, `prowlarr` and `flaresolverr` entries from `apps/values.yaml`.
 2. Merge the change. ArgoCD prunes the Applications.
