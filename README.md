@@ -22,6 +22,8 @@ This repository is one of three:
 |---|---|
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
 | [`docs/tech/monitoring.md`](docs/tech/monitoring.md) | How metrics, logs, dashboards and alerts work, and the gaps in them. |
+| [`docs/tech/database.md`](docs/tech/database.md) | The 4 Postgres clusters: which app uses which, storage, backups, alerts, upgrades, how to add a database. |
+| [`docs/tech/renovate.md`](docs/tech/renovate.md) | How Renovate updates the versions: what it reads, which bump merges itself, which waits for a person. |
 | [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
 | [`REVIEW.md`](REVIEW.md) | 2 checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |
 | [`docs/styleguide.md`](docs/styleguide.md) | Writing rules for this README, the files in `docs/` and manifest comments. |
