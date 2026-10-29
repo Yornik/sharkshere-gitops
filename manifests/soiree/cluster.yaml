@@ -8,6 +8,13 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   instances: 3
+  # On an image change, CNPG updates the replicas first. With `switchover`
+  # it then moves the primary role to an updated replica and updates the old
+  # primary as a replica. With the default `restart`, the primary waited up
+  # to smartShutdownTimeout (180 s) for its client connections, so each
+  # primary was down for about 3.5 minutes on 2026-10-29. See
+  # docs/tech/database.md.
+  primaryUpdateMethod: switchover
   # The Postgres image comes from the ClusterImageCatalog of CNPG
   # (manifests/cnpg-catalog), not from a tag in this file. The cluster names
   # only its major version. The catalog maps that major to the current image.
