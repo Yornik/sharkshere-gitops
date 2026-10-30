@@ -12,5 +12,8 @@ resources:
   - pvc-movies.yaml
   - pvc-series.yaml
   - pvc-music.yaml
+  # Nightly copy of jellyfin-config (database, settings, plugins) to the NAS.
+  - pvc-backup.yaml
+  - cronjob-backup.yaml
 generators:
   - secret-generator.yaml
