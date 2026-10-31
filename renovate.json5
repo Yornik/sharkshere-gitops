@@ -442,7 +442,11 @@
       ],
     },
     // The democratic-csi driver image. The 4 Helm releases in apps/values.yaml
-    // pin it, and the custom manager below reads the pin. Until 2026-11 the
+    // pin it. While the pin is a version tag with a `# renovate:` comment above
+    // it, the custom manager below reads it. The pin of the TrueNAS 27 switch
+    // is a digest of `next` and has no comment, so the bot ignores it and a
+    // person bumps it by hand. This rule stays for the day a release exists.
+    // Until 2026-11 the
     // chart default `latest` ran, which no bot can follow. The REST drivers
     // (`freenas-api-*`) run on TrueNAS 25.10 up to v1.9.5. Upstream says the
     // rewrite after it drops every TrueNAS version before 26, and that
