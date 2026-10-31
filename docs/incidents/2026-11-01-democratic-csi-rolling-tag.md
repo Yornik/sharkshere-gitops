@@ -6,7 +6,9 @@
 
 ## Effect
 
-Nothing broke. The finding is a defect that was waiting.
+Nothing broke. This is a pre-incident write-up: a defect that was waiting, found and corrected by us before it failed.
+
+It is written down because the risk is proven, not guessed. The maintainer stated in public that the next code drops TrueNAS 25.10, and another homelab already lost provisioning to it (see the links below and in Evidence). A rolling tag is the one setting that lets that code arrive with no change in git. Keep this file as the example of why infrastructure does not run a rolling tag.
 
 All 20 driver containers of the 4 releases ran `ghcr.io/democratic-csi/democratic-csi:latest`, with `imagePullPolicy: Always`. Each restart of a pod pulled whatever `latest` pointed to at that moment. No git change, no pull request and no Renovate bump marked the change of that image.
 
