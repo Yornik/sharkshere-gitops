@@ -707,6 +707,10 @@ apps:
     namespace: democratic-csi
     path: manifests/democratic-csi
 
+  # The 4 democratic-csi releases below pin the driver image tag. The chart
+  # default is `latest`, which ran here with pull policy Always. The pin stays
+  # on v1.9.5 while the NAS runs TrueNAS 25.10: the rewrite in `next` needs 26.
+  # See docs/incidents/2026-11-01-democratic-csi-rolling-tag.md.
   democratic-csi-nfs:
     namespace: democratic-csi
     helm:
@@ -720,7 +724,16 @@ apps:
           existingConfigSecret: democratic-csi-nfs-driver-config
           config:
             driver: freenas-api-nfs
+        node:
+          driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
         controller:
+          driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
           externalSnapshotter:
             enabled: false
         storageClasses:
@@ -747,6 +760,9 @@ apps:
         node:
           hostPID: true
           driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
             extraEnv:
               - name: ISCSIADM_HOST_STRATEGY
                 value: nsenter
@@ -759,6 +775,10 @@ apps:
           config:
             driver: freenas-api-iscsi
         controller:
+          driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
           externalSnapshotter:
             enabled: false
         storageClasses:
@@ -783,6 +803,9 @@ apps:
         node:
           hostPID: true
           driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
             extraEnv:
               - name: ISCSIADM_HOST_STRATEGY
                 value: nsenter
@@ -795,6 +818,10 @@ apps:
           config:
             driver: freenas-api-iscsi
         controller:
+          driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
           externalSnapshotter:
             enabled: false
         storageClasses:
@@ -820,7 +847,16 @@ apps:
           existingConfigSecret: democratic-csi-nfs-ssd-driver-config
           config:
             driver: freenas-api-nfs
+        node:
+          driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
         controller:
+          driver:
+            image:
+              # renovate: datasource=docker depName=ghcr.io/democratic-csi/democratic-csi
+              tag: v1.9.5
           externalSnapshotter:
             enabled: false
         storageClasses:

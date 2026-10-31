@@ -441,6 +441,36 @@
         'dependencies',
       ],
     },
+    // The democratic-csi driver image. The 4 Helm releases in apps/values.yaml
+    // pin it, and the custom manager below reads the pin. Until 2026-11 the
+    // chart default `latest` ran, which no bot can follow. The REST drivers
+    // (`freenas-api-*`) run on TrueNAS 25.10 up to v1.9.5. Upstream says the
+    // rewrite after it drops every TrueNAS version before 26, and that
+    // includes 25.10 (democratic-csi issue 509, comment of 2026-10-06). The
+    // NAS runs 25.10, so a person reads each bump. A minor of the docker
+    // datasource would merge itself by the rule near the top, and a bump
+    // that this NAS cannot run would stop all provisioning. Same split as
+    // for Sonarr: a major keeps the `major` label from the rule near the top.
+    {
+      matchPackageNames: [
+        'ghcr.io/democratic-csi/democratic-csi',
+      ],
+      matchUpdateTypes: [
+        'patch',
+        'minor',
+      ],
+      automerge: false,
+      // `null` keeps this package out of the patch group, so a sibling bump
+      // does not bring the `automerge` label and skip the review.
+      groupName: null,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+      prBodyNotes: [
+        '> :warning: **Check the TrueNAS version first.** Upstream says the releases after v1.9.5 need TrueNAS 26 or later and drop all earlier versions. The NAS must already run a supported version, or no volume can be provisioned (existing volumes keep working). See https://github.com/democratic-csi/democratic-csi/issues/509#issuecomment-6019619601 (maintainer, 2026-10-06).',
+      ],
+    },
     // The ClusterImageCatalog of CNPG (manifests/cnpg-catalog). Its URL is
     // pinned to a commit of cloudnative-pg/artifacts, and the git-refs
     // manager below moves the pin to the head of `main`. That branch moves
@@ -540,6 +570,19 @@
       ],
       depNameTemplate: 'tomMoulard/fail2ban',
       datasourceTemplate: 'github-releases',
+    },
+    // Track an image tag inside a Helm `values: |` block, which no built-in
+    // manager reads. Put `# renovate: datasource=docker depName=<image>` on
+    // the line directly above `tag: <version>`. The democratic-csi driver
+    // uses it.
+    {
+      customType: 'regex',
+      managerFilePatterns: [
+        '/apps/values\\.yaml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\n\\s*tag: (?<currentValue>\\S+)',
+      ],
     },
     // Track SHA-pinned raw.githubusercontent.com URLs (e.g. the upstream
     // CNPG Grafana dashboard JSON we import at Grafana pod startup, and the
