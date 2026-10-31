@@ -468,7 +468,7 @@
         'dependencies',
       ],
       prBodyNotes: [
-        '> :warning: **Check the TrueNAS version first.** Upstream says the releases after v1.9.5 need TrueNAS 26 or later and drop all earlier versions. The NAS must already run a supported version, or no volume can be provisioned (existing volumes keep working). See democratic-csi issue 509 (comment of 2026-10-06).',
+        '> :warning: **Check the TrueNAS version first.** Upstream says the releases after v1.9.5 need TrueNAS 26 or later and drop all earlier versions. The NAS must already run a supported version, or no volume can be provisioned (existing volumes keep working). See https://github.com/democratic-csi/democratic-csi/issues/509#issuecomment-6019619601 (maintainer, 2026-10-06).',
       ],
     },
     // The ClusterImageCatalog of CNPG (manifests/cnpg-catalog). Its URL is

@@ -10,7 +10,7 @@ Nothing broke. The finding is a defect that was waiting.
 
 All 20 driver containers of the 4 releases ran `ghcr.io/democratic-csi/democratic-csi:latest`, with `imagePullPolicy: Always`. Each restart of a pod pulled whatever `latest` pointed to at that moment. No git change, no pull request and no Renovate bump marked the change of that image.
 
-The driver talks to the NAS. The NAS runs TrueNAS 25.10.7. On 2026-10-06 the maintainer wrote that the current `next` image supports TrueNAS 26 and later, and that support for all earlier versions "has been dropped entirely". Another homelab hit this on 25.10.7 when its chart used `next`. The driver reported `driver is only available with TrueNAS version >=26`, and no new volume could be provisioned (existing volumes kept working).
+The driver talks to the NAS. The NAS runs TrueNAS 25.10.7. On 2026-10-06 [the maintainer wrote](https://github.com/democratic-csi/democratic-csi/issues/509#issuecomment-6019619601) that the current `next` image supports TrueNAS 26 and later, and that support for all earlier versions "has been dropped entirely". Another homelab hit this on 25.10.7 when its chart used `next`. The driver reported `driver is only available with TrueNAS version >=26`, and no new volume could be provisioned (existing volumes kept working).
 
 Here the same move of a tag would have stopped every new volume. That covers a CNPG replica, a restored PVC and each new app.
 
@@ -56,5 +56,5 @@ On 2026-11-01 it listed only the democratic-csi pods. `dovah/muse` uses `latest`
 - `apps/values.yaml`, the `tag:` lines of the 4 `democratic-csi-*` releases, each with a `# renovate:` comment.
 - Image digests on 2026-11-01: running `latest` `sha256:944d0e65077efbd9c1fdf23997eec8fac4b4bfb7c3de400f63e33a0a849c5ced`, `v1.9.5` `sha256:fc3b7d7ed3a616714139525075312758e23a5d425ffb539ad12c9bd20fb6001f`, `next` `sha256:c6d74146e10b8ea2e0efd1f688779b6db529a71b83887ca3de953e5226d374b7`.
 - The compare of `b5be00c...3974268` on GitHub: 3 commits, 1 file, `README.md`, 1 line added.
-- democratic-csi issue 509, comments of 2025-10-31 (`next` supports 25.10 over REST) and 2026-10-06 (`next` supports TrueNAS 26 and later only).
-- layertwo/homelab pull request 2469, merged 2026-10-10: the same pin, after provisioning stopped on TrueNAS 25.10.7.
+- [democratic-csi issue 509](https://github.com/democratic-csi/democratic-csi/issues/509), comments of the maintainer: [2025-10-31](https://github.com/democratic-csi/democratic-csi/issues/509#issuecomment-3474389761) (`next` supports 25.10 over REST) and [2026-10-06](https://github.com/democratic-csi/democratic-csi/issues/509#issuecomment-6019619601) (`next` supports TrueNAS 26 and later only, "support for ALL previous versions of TN has been dropped entirely").
+- [layertwo/homelab pull request 2469](https://github.com/layertwo/homelab/pull/2469), merged 2026-10-10: the same pin, after provisioning stopped on TrueNAS 25.10.7.
