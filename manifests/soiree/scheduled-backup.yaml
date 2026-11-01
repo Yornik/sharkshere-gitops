@@ -4,7 +4,12 @@ metadata:
   name: soiree-pg-3h
   namespace: soiree
 spec:
-  schedule: 0 0 */3 * * *
+  # Six fields, with seconds. The 4 clusters start at :00, :10, :20 and :30
+  # (shared-pg, openproject, gitlab, soiree), so they do not hit the bucket
+  # at the same second. When they did, Hetzner answered SlowDown and the
+  # shared-pg backup of 2026-10-31 12:00 UTC failed. A backup takes 4 to 30
+  # seconds. See docs/incidents/2026-11-01-truenas-27-update-readonly-pv-again.md.
+  schedule: 0 30 */3 * * *
   cluster:
     name: soiree-pg
   backupOwnerReference: self

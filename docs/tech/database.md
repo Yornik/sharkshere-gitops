@@ -134,7 +134,7 @@ NOTE: Postgres keeps a WAL segment until the archive confirms it. If the upload 
 | Item | Value |
 |---|---|
 | WAL archive | All the time, gzip, through the barman-cloud plugin. |
-| Base backup | `ScheduledBackup` `<cluster>-3h`, schedule `0 0 */3 * * *`, method `plugin`. |
+| Base backup | `ScheduledBackup` `<cluster>-3h`, schedule `0 <minute> */3 * * *` with the minute at :00 for `shared-pg`, :10 for `openproject-pg`, :20 for `gitlab-pg` and :30 for `soiree-pg`, method `plugin`. The 4 do not start in the same second, so Hetzner Object Storage does not throttle them together (`SlowDown`). |
 | Destination | `s3://cnpg-wal/` on `nbg1.your-objectstorage.com`. Each cluster uses its own `serverName`. |
 | Retention | 14 days, in the `ObjectStore` of each cluster. |
 | Point-in-time recovery | Any time in the last 14 days, within 1 major version. |
