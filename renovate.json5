@@ -491,9 +491,11 @@
       ],
       automerge: false,
       prBodyNotes: [
-        '> :warning: **Postgres image catalog.** Merging this moves the ClusterImageCatalog `postgresql-system-trixie` to a new commit of cloudnative-pg/artifacts. If the image of major 18 changed, every CNPG cluster updates once: the replicas one at a time, then a switchover moves the primary role to an updated replica (primaryUpdateMethod: switchover). Writes stop only while the primary role moves. If the catalog file did not change in the new commit, nothing restarts.',
+        '> :warning: **Postgres image catalog.** Merging moves the ClusterImageCatalog `postgresql-system-trixie` to a new commit of cloudnative-pg/artifacts. Only a change of `image-catalogs/catalog-system-trixie.yaml` restarts anything. Check the file list of https://github.com/cloudnative-pg/artifacts/compare/{{{currentDigest}}}...{{{newDigest}}} : if that file is not in it, the catalog is unchanged and nothing restarts.',
         '',
-        'A major upgrade is not done here. It is a change of `imageCatalogRef.major` in 1 `cluster.yaml`. See docs/incidents/2026-10-29-cnpg-image-frozen-at-creation.md.',
+        'If the image of major 18 did change, every CNPG cluster updates once: the replicas one at a time, then a switchover moves the primary role to an updated replica (primaryUpdateMethod: switchover). Writes stop only while the primary role moves.',
+        '',
+        'This pull request never holds a Postgres major upgrade. That is a change of `imageCatalogRef.major` in 1 `cluster.yaml`, made by a person. See docs/incidents/2026-10-29-cnpg-image-frozen-at-creation.md.',
       ],
     },
   ],
