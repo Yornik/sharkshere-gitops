@@ -70,6 +70,12 @@ Read `node_filesystem_readonly` for the mount to tell a repair from a fault that
 
 Both costs come from the `changes()` guard. The guard exists because the orphaned `globalmount` paths read 1 for ever. Remove them from the nodes, then alert on `node_filesystem_readonly == 1` alone. That state starts when the volume breaks and ends when an operator repairs it, and at no other time. See the open item in the first file.
 
+## Later change (2026-11-01)
+
+The 24 hour hold kept a repaired volume firing for a day after the TrueNAS 27 update, and Alertmanager sent the same mail again 12 hours in. The orphaned `globalmount` paths that the guard worked around were gone: no CSI mount read 1 except the 3 CIFS shares, and none read 1 for more than half of the last 7 days. The rule now reads `node_filesystem_readonly == 1` alone, with `for: 5m` and no `keep_firing_for`. It fires while a volume is read-only and ends at the repair.
+
+CAUTION: An orphaned `globalmount` that reads 1 fires the alert until it is removed from the node. Remove the mount; do not add the guard back.
+
 ## Evidence
 
 - `soiree-pg-2` instance manager: `open /var/lib/postgresql/data/pgdata/pg_wal/_cnpg_probe_7TH2: read-only file system`.
