@@ -25,6 +25,8 @@ WARNING: `gitlab-pg-3` reported `Ready` with 0 restarts while its Postgres could
 
 The update restarted the NAS while Postgres was writing. The iSCSI targets went away. The volumes returned an I/O error. ext4 mounts with `errors=remount-ro`, so the kernel made each filesystem read-only. This is the same mechanism as on 2026-10-12.
 
+The sessions on the nodes wait `Recovery Timeout: 120` seconds for the target to return. Then open-iscsi fails the queued I/O up to the filesystem. The NAS refused every service port from 00:06:40 UTC and had them open again before 00:09:51 UTC, which is more than 3 minutes and longer than the timer. An outage shorter than 120 seconds would not have broken these mounts.
+
 A read-only ext4 does not become read-write again by itself. Postgres cannot write, so it exits. The pod restarts, finds the same read-only mount, and exits again.
 
 Read-only lines were in the log of 8 instances at 00:10:34 UTC. The driver change of the same night, [pull request 624](https://github.com/Yornik/sharkshere-gitops/pull/624), merged at 00:12:13 UTC, so it is not the cause.
@@ -59,7 +61,7 @@ Nothing else needed a delete. After the databases returned, the OpenProject work
 ## Prevention
 
 1. The alert worked this time. `VolumeRemountedReadOnly` fired 12 times, from 00:11:07 to 00:11:37 UTC. That is about 5 minutes after the NAS stopped and 3 minutes before the first repair. It names the mount paths, not the pods.
-2. Stop the writers before a NAS restart. This was not done. CNPG supports hibernation with the annotation `cnpg.io/hibernation: "on"` on the Cluster, and `"off"` brings the instances back. This write-up did not test it. Test it on `soiree-pg` first.
+2. Stop every iSCSI client before a NAS restart. This was not done. See "The next NAS update" below.
 3. After every NAS restart, scan the log of every CNPG instance. Kubernetes `Ready` is not enough:
 
 ```bash
@@ -75,10 +77,80 @@ On 2026-11-01 at 00:25 UTC this printed 0 for all 12 instances.
 4. Do not run `zpool upgrade` after a TrueNAS update. Both pools show `PoolUpgraded` notices. Enabling the new feature flags cannot be undone, and a boot environment does not restore a data pool.
 5. `soiree-pg` and the NFS volumes came through untouched or recovered alone. Both write little. The volumes that write the most are the ones that break.
 
+## The next NAS update
+
+Stopping the databases first is the right fix, and it is not enough alone. A pod that is gone has unmounted its volume and logged out of the target. The kubelet unmounts the volume and the driver logs out of the target after the containers stop. When the NAS restarts, no session exists, so no I/O fails and ext4 never goes read-only. This is the same path that fixed each volume today: the pod delete remounted a clean filesystem.
+
+CNPG is 4 of the 8 groups that mount an iSCSI volume. Read on 2026-11-01:
+
+| Namespace | Mounts an iSCSI volume |
+|---|---|
+| `gitlab` | `gitlab-pg` (3 instances), `gitlab-valkey`, `gitlab-gitaly` |
+| `openproject` | `openproject-pg` (3 instances), `openproject-web`, `openproject-worker-default`, `openproject-hocuspocus`, the seeder Job |
+| `shared-pg` | `shared-pg` (3 instances) |
+| `soiree` | `soiree-pg` (3 instances) |
+
+The OpenProject pods hold generic ephemeral volumes on the iSCSI class. `gitlab-gitaly` and `gitlab-valkey` showed no read-only line today because they write little. That is luck, not safety.
+
+Use hibernation for CNPG, not fencing. The CNPG documentation (version 1.30.1 runs here) says hibernation "will delete the primary Pod and then the replica Pods, avoiding switchover, to ensure the replicas are kept in sync", and that the PVCs are retained. Fencing keeps the pod running and the volume mounted, so it does not help.
+
+### Before
+
+1. Wait for the next scheduled backup of the 4 clusters, every 3 hours, and check that all 4 completed: `kubectl --context yornik-sharkshere get backups.postgresql.cnpg.io -A --sort-by=.metadata.creationTimestamp | tail -8`. One backup can fail on a throttle of the object storage. See the note after the checklist.
+2. Pause ArgoCD self-heal, or it puts the replicas back. `root` owns the Application objects and has `selfHeal: true`, so pause `root` first and then each app that you scale:
+
+```bash
+kubectl --context yornik-sharkshere -n argocd patch application root --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'
+```
+
+3. Hibernate the 4 clusters and wait for the condition `cnpg.io/hibernation` to read `True` on each:
+
+```bash
+for c in gitlab/gitlab-pg openproject/openproject-pg shared-pg/shared-pg soiree/soiree-pg; do
+  kubectl --context yornik-sharkshere -n "${c%/*}" annotate cluster "${c#*/}" --overwrite cnpg.io/hibernation=on
+done
+```
+
+4. Scale to 0 the other clients: `gitlab-valkey`, `gitlab-gitaly` (StatefulSet), `openproject-web`, `openproject-worker-default`, `openproject-hocuspocus`. Scale the GitLab web service and Sidekiq too, so they do not crash-loop against a database that is off.
+5. Do not start before this gate passes. The NAS must report no iSCSI session. On 2026-11-01 it reported 33:
+
+```bash
+ssh root@192.168.1.42 'midclt call iscsi.global.sessions | python3 -c "import sys,json;print(len(json.load(sys.stdin)))"'
+```
+
+### During
+
+6. Update from the web interface. Do not run `zpool upgrade`. Wait until the `iscsitarget` service reads `RUNNING`.
+
+### After
+
+7. Wake one cluster at a time with `cnpg.io/hibernation=off`. Wait for `Cluster in healthy state`, then run the log scan of Prevention 3. Then scale the other clients up.
+8. Re-enable ArgoCD last: `kubectl --context yornik-sharkshere apply -f bootstrap/root-app.yaml`. `root` then restores the auto-sync of the child apps.
+
+The cost is a planned stop of GitLab and OpenProject for the length of the update. Today it was an unplanned stop of 10 to 17 minutes and a hand repair. NFS clients do not need this: they waited and recovered alone. A client that keeps SQLite on NFS (`vikunja`, `gotosocial`) can still be scaled to 0 for the same reason.
+
+If a step is forgotten, the Correction above repairs it.
+
+### Backups before the update
+
+The backups go from the cluster to the Hetzner Object Storage at `nbg1.your-objectstorage.com`. They do not use the NAS, so the update did not cause the `CNPGBackupFailed` alert of 2026-10-31.
+
+That backup of `shared-pg` failed at 12:00 UTC. The log of the barman plugin says `Backup failed uploading backup.info file (An error occurred (SlowDown) when calling the PutObject operation (reached max retries: 4))`. `SlowDown` is the throttle answer of the object storage. The client retried 4 times and gave up after 28 seconds. CNPG does not run a failed Backup again. The next one, at 15:00 UTC, completed, and so did the 18:00, 21:00 and 00:00 runs.
+
+The same answer is not new. In the last 30 days the plugin logs of the 4 clusters hold 38 to 61 `SlowDown` lines each, on 9 days. The two earlier failures of `shared-pg` (2026-10-17 at 12:00 and 2026-10-21 at 03:00) have the same cause, and on both days other clusters failed in the same minute, because the 4 schedules start together. WAL archiving is a separate path and logged no error in the 12:00 to 15:30 window, so the point-in-time range had no hole. `ContinuousArchiving` is `True` on all 4 clusters.
+
+Not done: an offset between the 4 schedules, so that they do not hit the bucket in the same second.
+
+### A second layer, not yet done
+
+The 120 second timer is the reason a 3 minute outage breaks the mounts. A longer timer, for example 600 seconds, would make the clients queue the I/O and continue when the NAS returns. The price is that a real NAS failure freezes the pods for 10 minutes before they fail. The driver passes any key that starts with `node-db.` in the node-stage secret to `iscsiadm` (`src/driver/index.js`, `node-db.node.session.timeo.replacement_timeout`). That needs a StorageClass that names such a secret, so it reaches new volumes only, not the 36 that exist. Test it on one new volume before any change.
+
 ## Open items
 
 - No restore or point-in-time test was run after the repair. The 4 clusters report a healthy state and `ContinuousArchiving` is `True`.
-- The hibernation step of Prevention 2 is untested.
+- The checklist of "The next NAS update" is untested as a whole. Hibernation of a CNPG cluster, the pause of ArgoCD through `root`, and the `bootstrap/root-app.yaml` re-enable were not run. Test the order on `soiree-pg` first.
+- Whether ArgoCD keeps the `cnpg.io/hibernation` annotation is unknown. It compares only fields in git, so the annotation should stay. This was not tried.
+- The 600 second timer is an idea, not a result.
 - The 12 alerts stay in the firing state until the 2 hour window of the rule ends, so Alertmanager may mail them after the repair.
 
 ## Evidence
