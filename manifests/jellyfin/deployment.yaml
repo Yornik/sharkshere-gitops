@@ -166,25 +166,29 @@ spec:
             - name: series
               mountPath: /media/series
               readOnly: true
-            - name: music
-              mountPath: /media/music
-              readOnly: true
             - name: cache
               mountPath: /cache
             - name: dvdcss
               mountPath: /dvdcss
+          # timeoutSeconds is 30 on both probes. The default is 1 second, and a
+          # library scan keeps about 3 of the 4 CPU cores busy, so /health did
+          # not answer in time. On 2026-11-01 that took the pod out of the
+          # Service for 2 minutes ("no available server") and then killed the
+          # container. See docs/incidents/2026-11-01-jellyfin-health-probe-timeout.md.
           livenessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 30
             periodSeconds: 30
+            timeoutSeconds: 30
           readinessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 30
       volumes:
         - name: config
           persistentVolumeClaim:
@@ -195,9 +199,6 @@ spec:
         - name: series
           persistentVolumeClaim:
             claimName: jellyfin-series
-        - name: music
-          persistentVolumeClaim:
-            claimName: jellyfin-music
         - name: cache
           emptyDir: {}
         - name: dvdcss
