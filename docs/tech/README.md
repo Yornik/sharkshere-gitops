@@ -95,7 +95,7 @@ flowchart TB
     Radarr["Radarr<br/>films, category movies"]
     Prowlarr["Prowlarr<br/>syncs indexers to Sonarr and Radarr"]
     Flare["FlareSolverr<br/>ClusterIP only"]
-    Recyclarr["Recyclarr CronJob<br/>hourly"]
+    Recyclarr["Recyclarr CronJob<br/>weekly"]
     subgraph QB["qBittorrent pod, ndots:1"]
       QBit["qBittorrent"] --- Gluetun["gluetun<br/>Mullvad WireGuard"]
     end
@@ -126,7 +126,7 @@ flowchart TB
   Recyclarr -.->|"quality profiles"| Sonarr & Radarr
 ```
 
-In step 4, Sonarr and Radarr score each release with the quality profile of the title. Recyclarr syncs these profiles from the TRaSH Guides every hour:
+In step 4, Sonarr and Radarr score each release with the quality profile of the title. Recyclarr syncs these profiles from the TRaSH Guides once a week:
 
 - `Remux 2160p (Alternative)` for films and normal series.
 - `[Anime] Remux-1080p` for anime.
