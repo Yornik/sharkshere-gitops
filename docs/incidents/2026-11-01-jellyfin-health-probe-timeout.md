@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-01 18:43 UTC to 18:46 UTC
 **Component:** `jellyfin` Deployment (`manifests/jellyfin/deployment.yaml`)
-**Severity:** 3 minutes without Jellyfin. No data lost
+**Severity:** 2 minutes without Jellyfin, and 1 container restart. No data lost
 
 ## Effect
 
@@ -29,6 +29,7 @@ NOTE: The earlier library scan of the same day (17:28 to 17:42 UTC, 13 minutes) 
 
 1. Nothing was needed for the recovery. Kubelet restarted the container and Jellyfin came back by itself.
 2. Set `timeoutSeconds: 30` on the liveness probe and on the readiness probe in `manifests/jellyfin/deployment.yaml`. A busy Jellyfin that answers within 30 seconds stays in the Service and is not killed.
+3. Remove the `music` volume, the mount `/media/music`, the PersistentVolumeClaim `jellyfin-music` and the PersistentVolume `jellyfin-music` (`pv-music.yaml`, `pvc-music.yaml`, and their lines in `kustomization.yaml`). The library was deleted and nothing else used the mount. ArgoCD prunes the 2 objects. The PV had `persistentVolumeReclaimPolicy: Retain` and an SMB source, so the files on the NAS (`shared_evreyone/music`) are not touched. To get the library back, restore these files from git history.
 
 ## Prevention
 
@@ -40,8 +41,6 @@ The change has 2 costs:
 | A busy Jellyfin stays in the Service | During a scan the pages can be slow. Before the change they failed with "no available server". |
 
 Open item: the time that `/health` takes during a scan was not measured. If it is above 30 seconds, the probes still fail. Measure it during the next library scan, and raise the timeout or the `failureThreshold` of the liveness probe if needed.
-
-NOTE: The `music` library is gone, but the deployment still mounts `/media/music` (`pv-music.yaml`, `pvc-music.yaml`). The mount is unused. Remove it in a separate change if the library does not come back.
 
 ## Evidence
 
