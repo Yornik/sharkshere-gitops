@@ -262,7 +262,7 @@ CAUTION: FlareSolverr has no login and no tailnet address. Do not change the Ser
 
 ## Recyclarr
 
-`manifests/recyclarr/` runs Recyclarr every hour, at minute 17, as a CronJob. It syncs 2 TRaSH Guides profiles into Sonarr and into Radarr. It does not change the other profiles.
+`manifests/recyclarr/` runs Recyclarr once a week, on Monday at 04:17 (Europe/Amsterdam), as a CronJob. After a change to its config, run it by hand (see [How to run it now](#how-to-run-it-now)). It syncs 2 TRaSH Guides profiles into Sonarr and into Radarr. It does not change the other profiles.
 
 | Profile | Use it for | Qualities |
 |---|---|---|
@@ -307,7 +307,7 @@ NOTE: Recyclarr keeps the IDs of the custom formats it created on the `recyclarr
 
 ### How to run it now
 
-CAUTION: Do not start a manual run near minute 17 of the hour. A job made with `create job --from` does not obey `concurrencyPolicy: Forbid`, so it can run at the same time as the scheduled run. Both jobs mount `recyclarr-config-ssd`, which is `ReadWriteOnce`. On another node the second pod waits with `FailedAttachVolume`. On the same node both pods write the same state in `/config/state`.
+CAUTION: Do not start a manual run near Monday 04:17. A job made with `create job --from` does not obey `concurrencyPolicy: Forbid`, so it can run at the same time as the scheduled run. Both jobs mount `recyclarr-config-ssd`, which is `ReadWriteOnce`. On another node the second pod waits with `FailedAttachVolume`. On the same node both pods write the same state in `/config/state`.
 
 1. Start the job and follow its log:
 

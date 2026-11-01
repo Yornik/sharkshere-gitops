@@ -245,6 +245,13 @@ apps:
             # email via Resend SMTP. configSecret REPLACES the chart-generated
             # config entirely, and useExistingSecret stops the chart from
             # rendering its default null-receiver config Secret alongside it.
+            # The email receiver sets `send_resolved: true`, so an alert that
+            # stops also sends one [RESOLVED] mail, at the next group_interval
+            # (5m). The default for e-mail is false, which left every alert
+            # without an end: CNPGBackupFailed mailed on 2026-10-31 and nothing
+            # said when the next backup worked. An alert whose rule keeps
+            # it active after a repair (VolumeRemountedReadOnly, up to 24h)
+            # sends its [RESOLVED] mail only when the rule stops.
             configSecret: alertmanager-config
             useExistingSecret: true
             # The "View in Alertmanager" link in each alert e-mail uses this
