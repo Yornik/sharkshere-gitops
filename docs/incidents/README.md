@@ -27,6 +27,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-10-26 | [bootstrap-bump-without-apply-note.md](2026-10-26-bootstrap-bump-without-apply-note.md) | A Redis bump to `bootstrap/` merged with the `automerge` label and no apply note, so git moved and the cluster did not |
 | 2026-10-29 | [cnpg-image-frozen-at-creation.md](2026-10-29-cnpg-image-frozen-at-creation.md) | The 4 Postgres clusters stayed on the image of their creation day, 18.3 or 18.4, while 18.6 was out, and git, ArgoCD and Renovate showed nothing |
 | 2026-11-01 | [democratic-csi-rolling-tag.md](2026-11-01-democratic-csi-rolling-tag.md) | Pre-incident: the storage driver ran the rolling tag `latest` with pull policy `Always`, so a moved tag would have stopped all provisioning on TrueNAS 25.10, and no bot or review could see it. Found and corrected before it failed |
+| 2026-11-01 | [truenas-27-update-readonly-pv-again.md](2026-11-01-truenas-27-update-readonly-pv-again.md) | The TrueNAS 27 update turned the iSCSI volumes of 3 Postgres clusters read-only for the second time; the instance that looked Ready blocked the rebuild again, and the same repair fixed it |
 
 ## How to add an incident
 
