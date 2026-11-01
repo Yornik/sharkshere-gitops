@@ -6,9 +6,11 @@ metadata:
   labels:
     app: recyclarr
 spec:
-  # Every hour, so a change to the TRaSH Guides or to this config reaches
-  # Sonarr and Radarr within an hour. A run with no changes writes nothing.
-  schedule: "17 * * * *"
+  # Once a week, on Monday at 04:17. The TRaSH Guides change rarely, so a
+  # weekly sync is enough. After a change to this config, run it by hand
+  # (docs/runbooks/seerr-sonarr.md, "How to run it now"). A run with no
+  # changes writes nothing.
+  schedule: "17 4 * * 1"
   timeZone: "Europe/Amsterdam"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
