@@ -139,7 +139,9 @@ That backup of `shared-pg` failed at 12:00 UTC. The log of the barman plugin say
 
 The same answer is not new. In the last 30 days the plugin logs of the 4 clusters hold 38 to 61 `SlowDown` lines each, on 9 days. The two earlier failures of `shared-pg` (2026-10-17 at 12:00 and 2026-10-21 at 03:00) have the same cause, and on both days other clusters failed in the same minute, because the 4 schedules start together. WAL archiving is a separate path and logged no error in the 12:00 to 15:30 window, so the point-in-time range had no hole. `ContinuousArchiving` is `True` on all 4 clusters.
 
-Done the same day: the 4 schedules start at :00, :10, :20 and :30 (shared-pg, openproject, gitlab, soiree). A backup takes 4 to 30 seconds, so they no longer overlap. This is not proof that `SlowDown` ends: the throttle can also come from other load on the project. Count the `SlowDown` lines and the failed backups again after 30 days.
+Done the same day, in PR 632 (merged 2026-11-01 18:23 UTC): the 4 schedules start at :00, :10, :20 and :30 (shared-pg, openproject, gitlab, soiree). A backup takes 4 to 30 seconds, so they no longer overlap. This is not proof that `SlowDown` ends: the throttle can also come from other load on the project. Count the `SlowDown` lines and the failed backups again after 30 days.
+
+NOTE: A change of schedule starts a backup at once when the new schedule has a slot between the last run and now. PR 632 said it would not. At the sync, `openproject-pg` (new slot :10) and `gitlab-pg` (new slot :20) each started a backup at 18:23:14 UTC, in the same second, for the slot of 18:10 and 18:20 that they had missed. Both completed in 7 and 18 seconds with no error. `shared-pg` (slot :00) and `soiree-pg` (slot :30) started none. Expect this once after the next change of a schedule, and do not make the change while a backup of that cluster is failing.
 
 ### A second layer, not yet done
 
