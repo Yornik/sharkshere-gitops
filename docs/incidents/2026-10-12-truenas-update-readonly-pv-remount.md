@@ -112,7 +112,9 @@ They are left from volumes that are gone. They have no effect on a workload. Rem
 
 NOTE: A third path on `talos-0wq-zph` was read-only on 2026-10-12 and is read-write on 2026-10-13. No PersistentVolume owns it either. It changed when kubelet mounted a volume on that node again. A repair on a node can therefore clear an orphaned mount on the same node.
 
-These paths are the reason the `VolumeRemountedReadOnly` rule reads the change and not the state. Remove them, and the rule reads `node_filesystem_readonly == 1` alone. See [`2026-10-13-readonly-alert-cleared-while-volume-broken.md`](2026-10-13-readonly-alert-cleared-while-volume-broken.md).
+NOTE: Closed 2026-11-01. No CSI mount reads 1 now except the 3 CIFS shares, and the rule reads `node_filesystem_readonly == 1` alone.
+
+These paths were the reason the `VolumeRemountedReadOnly` rule read the change and not the state. Remove them, and the rule reads `node_filesystem_readonly == 1` alone. See [`2026-10-13-readonly-alert-cleared-while-volume-broken.md`](2026-10-13-readonly-alert-cleared-while-volume-broken.md).
 
 ## Evidence
 
