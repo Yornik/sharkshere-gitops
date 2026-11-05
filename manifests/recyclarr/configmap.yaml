@@ -14,6 +14,10 @@ data:
   #   upscales, so it stops at 1080p. `Dubs Only` gets -10000, so a release
   #   always has the Japanese audio. `Anime Dual Audio` keeps the TRaSH
   #   score of 0: a release with an English dub is not preferred.
+  #   Among streaming services it keeps the small TRaSH anime scores (CR 6,
+  #   DSNP 5, NF 4, AMZN 3). The streaming boost of the normal profile does
+  #   not apply to it, so a HULU release gets no bonus. The Japanese HULU
+  #   releases are raws without subtitles.
   #
   # The `Unwanted Formats` group gives -10000 to BR-DISK, LQ groups,
   # upscales and 3D, so neither profile takes them. `Golden Rule UHD` refuses
@@ -62,7 +66,15 @@ data:
         custom_format_groups:
           add:
             - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
+            # The boost gives ATVP, HMAX, HULU and PCOK +75. TRaSH means it for
+            # the normal profiles only. Without assign_scores_to it also reached
+            # the anime profile, and there a Japanese HULU release (a raw
+            # without subtitles) scored 375 against 306 for the Crunchyroll
+            # release with English subtitles. Seen on 2026-11-05 for
+            # "Go For It, Nakamura-kun!!": 12 of 13 episodes had no subtitles.
             - trash_id: 85fae4a2294965b75710ef2989c850eb # [Streaming Services] HD/UHD boost
+              assign_scores_to:
+                - trash_id: 361717d531db5a6002e0f547ace46551 # Remux 2160p (Alternative)
             - trash_id: 59c3af66780d08332fdc64e68297098f # [Unwanted] Unwanted Formats
 
     radarr:
