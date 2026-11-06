@@ -7,8 +7,7 @@ metadata:
     app: metube
 spec:
   replicas: 1
-  # Recreate, not RollingUpdate: 2 pods would run 2 tunnels on 1 WireGuard
-  # key at the same time. See the gluetun comment below.
+  # Recreate: the emptyDir is not shared, and 2 pods would split the queue.
   strategy:
     type: Recreate
   selector:
@@ -22,75 +21,7 @@ spec:
       # MeTube does not call the Kubernetes API. It opens pages from the
       # internet. A token in the pod would help an exploit in yt-dlp.
       automountServiceAccountToken: false
-      # gluetun's DNS server answers a name that does not exist with an empty
-      # NOERROR, not NXDOMAIN. The musl resolver stops on that answer, so
-      # names with fewer than 5 dots do not resolve. ndots:1 fixes it. See
-      # docs/incidents/2026-10-23-qbittorrent-dns-search-domain.md.
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "1"
       containers:
-        - name: gluetun
-          image: qmcgaw/gluetun:v3.41.3
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-            privileged: false
-          env:
-            - name: VPN_SERVICE_PROVIDER
-              value: mullvad
-            - name: VPN_TYPE
-              value: wireguard
-            # The key and the address are the ones of qBittorrent. The Secret
-            # `qbittorrent-vpn-secrets` is in this namespace and the qbittorrent
-            # Application creates it. MeTube needs that Application to stay.
-            - name: WIREGUARD_PRIVATE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: qbittorrent-vpn-secrets
-                  key: wireguard-private-key
-            - name: WIREGUARD_ADDRESSES
-              valueFrom:
-                secretKeyRef:
-                  name: qbittorrent-vpn-secrets
-                  key: wireguard-addresses
-            # qBittorrent uses Netherlands. 2 tunnels on 1 key to the same
-            # server make the server flip the endpoint between the 2 pods, and
-            # both lose packets. A different country avoids the same server.
-            - name: SERVER_COUNTRIES
-              value: Germany
-            # Lets replies reach the tailnet proxy and the kubelet probes
-            # without going through the tunnel. Same value as qBittorrent.
-            - name: FIREWALL_OUTBOUND_SUBNETS
-              value: 10.0.0.0/8,192.168.0.0/16
-            - name: TZ
-              value: Europe/Amsterdam
-          ports:
-            - containerPort: 8081
-              name: webui
-          volumeMounts:
-            - name: dev-net-tun
-              mountPath: /dev/net/tun
-          # gluetun's health server binds 127.0.0.1:9999, so kubelet cannot
-          # reach it over the pod IP. Use an exec probe. 30 s x 5 = about
-          # 2.5 min of tunnel-down before a restart, so a short VPN blip that
-          # gluetun heals itself does not kill the pod.
-          livenessProbe:
-            exec:
-              command: ["wget", "-qO-", "http://127.0.0.1:9999"]
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 5
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
         - name: metube
           image: ghcr.io/alexta69/metube:2026.11.06
           # No securityContext. The image starts as root, changes the owner of
@@ -111,14 +42,30 @@ spec:
             # emptyDir fills up with files that the UI no longer shows.
             - name: DELETE_FILE_ON_TRASHCAN
               value: "true"
+            # yt-dlp sends its requests through the HTTP proxy of the gluetun
+            # sidecar in the qbittorrent pod, so they leave through Mullvad.
+            # This pod has no tunnel of its own. The proxy has a login, because
+            # the cluster does not enforce NetworkPolicy. The password is hex,
+            # so it is safe inside a URL. $(VAR) is expanded by the kubelet and
+            # the variables must come before YTDL_OPTIONS.
+            - name: PROXY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-proxy-secrets
+                  key: proxy-user
+            - name: PROXY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-proxy-secrets
+                  key: proxy-password
+            - name: YTDL_OPTIONS
+              value: '{"proxy": "http://$(PROXY_USER):$(PROXY_PASSWORD)@qbittorrent-proxy:8888"}'
           ports:
             - containerPort: 8081
               name: webui
           volumeMounts:
             - name: downloads
               mountPath: /downloads
-          # gluetun accepts traffic to the pod subnet on eth0, so the kubelet
-          # reaches the pod IP. Same reason as for qBittorrent.
           readinessProbe:
             httpGet:
               path: /
@@ -154,7 +101,3 @@ spec:
         - name: downloads
           emptyDir:
             sizeLimit: 20Gi
-        - name: dev-net-tun
-          hostPath:
-            path: /dev/net/tun
-            type: CharDevice
