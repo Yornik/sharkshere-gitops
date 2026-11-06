@@ -307,6 +307,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `smb` | SMB | `Big_Pool/Share` | Jellyfin media read-only |
 | `smb-rw` | SMB | `Big_Pool/Share` | qBittorrent downloads read-write into `downloads/` on the series and movies shares; Sonarr and Radarr copy into the library on the same share, because SMB has no hardlinks |
 | `local-path` | hostPath | Node-local | Jellyfin config (node-pinned) |
+| `emptyDir` (no class) | Node disk | Node-local | MeTube downloads, limit 20 Gi. The kubelet evicts the pod at 22 Gi of ephemeral storage. A restart, a drain or an image bump deletes the files. The owner moves finished files to the NAS by hand |
 
 ## Public surface
 
