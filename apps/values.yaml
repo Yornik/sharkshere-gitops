@@ -660,6 +660,13 @@ apps:
     namespace: jellyfin
     path: manifests/qbittorrent
 
+  # Sends yt-dlp through the HTTP proxy of the gluetun sidecar in the
+  # qbittorrent pod. It reads the Secret `qbittorrent-proxy-secrets`, which the
+  # qbittorrent Application creates, in the same namespace.
+  metube:
+    namespace: jellyfin
+    path: manifests/metube
+
   seerr:
     namespace: jellyfin
     path: manifests/seerr

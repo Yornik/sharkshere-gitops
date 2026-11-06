@@ -86,11 +86,39 @@ spec:
               value: 10.0.0.0/8,192.168.0.0/16
             - name: FIREWALL_VPN_INPUT_PORTS
               value: "6881"
+            # The HTTP proxy of gluetun, for MeTube. yt-dlp in the metube pod
+            # sends its requests here and they leave through this tunnel. A pod
+            # cannot share the network of another pod, so a proxy is the way to
+            # share the tunnel. The wiki lists FIREWALL_INPUT_PORTS as needed
+            # for Kubernetes sidecars, so 8888 is listed.
+            #
+            # The cluster has no NetworkPolicy enforcer (flannel only), so the
+            # login is the only gate. Without it, any pod could use the exit
+            # address.
+            - name: HTTPPROXY
+              value: "on"
+            - name: HTTPPROXY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-proxy-secrets
+                  key: proxy-user
+            - name: HTTPPROXY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-proxy-secrets
+                  key: proxy-password
+            - name: FIREWALL_INPUT_PORTS
+              value: "8888"
+            # Stealth: no Via or Forwarded header marks the request as proxied.
+            - name: HTTPPROXY_STEALTH
+              value: "on"
             - name: TZ
               value: Europe/Amsterdam
           ports:
             - containerPort: 8080
               name: webui
+            - containerPort: 8888
+              name: httpproxy
             - containerPort: 6881
               name: bittorrent
             - containerPort: 6881

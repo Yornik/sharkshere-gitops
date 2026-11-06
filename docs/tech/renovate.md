@@ -102,6 +102,8 @@ The rules apply in order. A later rule replaces the `labels` of an earlier one. 
 | 20 | shelly-control | A person merges a patch or a minor. | It switches the relay of the boiler. |
 | 21 | The CNPG image catalog | 1 pull request a week, Monday after 12:00 UTC. A person merges. | The merge restarts every Postgres cluster once. |
 
+NOTE: MeTube has no rule of its own. Its tag is a date, such as `2026.11.06`, and the default versioning reads it as `major.minor.patch`. A new month is a minor bump and a new day is a patch bump. Both merge themselves. The merge restarts the pod, and the `emptyDir` of MeTube deletes the downloads. Download a finished file from the UI before a bump merges. A bump of qBittorrent or gluetun restarts the qBittorrent pod. The proxy is down for about 1 minute and a running MeTube download fails and can be retried. The first tag of a new year is a major bump and waits for a person.
+
 ## Postgres and CNPG
 
 3 versions decide what runs in a CNPG cluster. Each one moves in its own way.

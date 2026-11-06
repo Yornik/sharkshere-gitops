@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-proxy
+  namespace: jellyfin
+  labels:
+    app: qbittorrent
+# The HTTP proxy of the gluetun sidecar, for MeTube. ClusterIP only, with no
+# external-dns annotation and no Ingress. The proxy has a login, because the
+# cluster does not enforce NetworkPolicy.
+spec:
+  selector:
+    app: qbittorrent
+  ports:
+    - name: httpproxy
+      port: 8888
+      targetPort: httpproxy
+      protocol: TCP

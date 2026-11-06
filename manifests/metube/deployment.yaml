@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metube
+  namespace: jellyfin
+  labels:
+    app: metube
+spec:
+  replicas: 1
+  # Recreate: the emptyDir is not shared, and 2 pods would split the queue.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: metube
+  template:
+    metadata:
+      labels:
+        app: metube
+    spec:
+      # MeTube does not call the Kubernetes API. It opens pages from the
+      # internet. A token in the pod would help an exploit in yt-dlp.
+      automountServiceAccountToken: false
+      containers:
+        - name: metube
+          image: ghcr.io/alexta69/metube:2026.11.06
+          # No securityContext. The image starts as root, changes the owner of
+          # the download folder, and then drops to UID/GID 1000 itself. That
+          # step needs CHOWN, SETUID and SETGID.
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+            # Files and state share the 1 emptyDir below. The queue history
+            # is lost on a restart, as are the files.
+            - name: DOWNLOAD_DIR
+              value: /downloads
+            - name: STATE_DIR
+              value: /downloads/.metube
+            - name: TEMP_DIR
+              value: /downloads/.tmp
+            # A file removed in the UI also leaves the disk. Without it the
+            # emptyDir fills up with files that the UI no longer shows.
+            - name: DELETE_FILE_ON_TRASHCAN
+              value: "true"
+            # yt-dlp sends its requests through the HTTP proxy of the gluetun
+            # sidecar in the qbittorrent pod, so they leave through Mullvad.
+            # This pod has no tunnel of its own. The proxy has a login, because
+            # the cluster does not enforce NetworkPolicy. The password is hex,
+            # so it is safe inside a URL. $(VAR) is expanded by the kubelet and
+            # the variables must come before YTDL_OPTIONS.
+            - name: PROXY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-proxy-secrets
+                  key: proxy-user
+            - name: PROXY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-proxy-secrets
+                  key: proxy-password
+            - name: YTDL_OPTIONS
+              value: '{"proxy": "http://$(PROXY_USER):$(PROXY_PASSWORD)@qbittorrent-proxy:8888"}'
+          ports:
+            - containerPort: 8081
+              name: webui
+          volumeMounts:
+            - name: downloads
+              mountPath: /downloads
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+              ephemeral-storage: 1Gi
+            limits:
+              # ffmpeg merges video and audio. A 4K merge needs memory.
+              cpu: "2"
+              memory: 2Gi
+              # The kubelet evicts the pod above this value. It is 2 Gi above
+              # the emptyDir limit, for logs and the image layer.
+              ephemeral-storage: 22Gi
+      volumes:
+        # Ephemeral by choice: the owner moves each file to the NAS by hand.
+        # A restart, a node drain or an eviction deletes the folder. Download
+        # the file from the UI first.
+        - name: downloads
+          emptyDir:
+            sizeLimit: 20Gi
