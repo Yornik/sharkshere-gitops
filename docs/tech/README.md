@@ -6,7 +6,7 @@ GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kube
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
-The admin interfaces do not take that path. The ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control are reachable from a tailnet device only, through Tailscale Ingress proxies that terminate TLS with a `ts.net` certificate. See [Tailnet only](#tailnet-only).
+The admin interfaces do not take that path. The ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, MeTube, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control are reachable from a tailnet device only, through Tailscale Ingress proxies that terminate TLS with a `ts.net` certificate. See [Tailnet only](#tailnet-only).
 
 This repo is one of three:
 
@@ -81,7 +81,7 @@ flowchart LR
 
 ## Media request flow
 
-A request for a series or a film runs through these steps. All calls between the apps stay in the `jellyfin` namespace. Only qBittorrent goes through Mullvad. Setup and checks are in [`../runbooks/seerr-sonarr.md`](../runbooks/seerr-sonarr.md).
+A request for a series or a film runs through these steps. All calls between the apps stay in the `jellyfin` namespace. Only qBittorrent goes through Mullvad in this flow. MeTube has a Mullvad sidecar of its own, outside this flow. Setup and checks are in [`../runbooks/seerr-sonarr.md`](../runbooks/seerr-sonarr.md).
 
 ```mermaid
 flowchart TB
@@ -203,7 +203,7 @@ NOTE: Sonarr numbers anime episodes by absolute number only when the series type
 - **Valkey, not Bitnami Redis.** GitLab chart 10.0 dropped its bundled Redis subchart, and the Bitnami chart went paid in Sept 2025. The cache + queue tier runs the official Valkey chart from `valkey.io` (Linux Foundation Redis fork) with iSCSI persistence.
 - **GitLab on chart 10.0 the week it released.** External CNPG + Valkey + Hetzner S3 (six dedicated `yornik-gitlab-*` buckets across **three** different Secret schemas — Rails Fog YAML for `appConfig`, docker registry `config.yml` for the registry, s3cmd INI for backup tarballs). Container registry and git-over-SSH on dedicated subdomains. Hosted repo data (gitaly on an iSCSI zvol, invisible to NAS file-level backup) is covered by the toolbox backup CronJob — 03:30 daily, `--skip db`, uploading tarballs to `yornik-gitlab-backups`; the database is already protected by CNPG barman base backups + continuous WAL archive.
 - **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
-- **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control to tailnet devices, with Tailnet Lock signing each new proxy device. The NAS is outside the cluster, so a small nginx pod relays TCP to it. The SMB service of the NAS has its own relay pod and its own tailnet address, `nas-smb`. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there. Alertmanager and the boiler page have no login, so the tailnet is their only gate — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
+- **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, MeTube, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control to tailnet devices, with Tailnet Lock signing each new proxy device. The NAS is outside the cluster, so a small nginx pod relays TCP to it. The SMB service of the NAS has its own relay pod and its own tailnet address, `nas-smb`. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there. Alertmanager and the boiler page have no login, so the tailnet is their only gate — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 - **Media request pipeline.** A request starts in the Jellyfin web UI, through the Jellyfin Enhanced plugin, or in Seerr. Seerr sends a series to Sonarr and a film to Radarr. Prowlarr holds the indexers and syncs them to both. qBittorrent downloads behind the gluetun Mullvad sidecar into `downloads/` on the series or movies share. Each `downloads/` folder has a `.ignore` file, so Jellyfin skips unfinished files. Sonarr and Radarr copy a finished download into the library and tell Jellyfin to scan. Prowlarr searches from the home address, because public indexers block VPN exit addresses. The qBittorrent pod sets `ndots:1`, because gluetun's DNS answers a missing name with an empty NOERROR and the musl resolver then gave up — see [the incident](../incidents/2026-10-23-qbittorrent-dns-search-domain.md). Jellyfin Enhanced, the qBittorrent categories and the app settings live in each app's config volume, not in git — see [the runbook](../runbooks/seerr-sonarr.md).
 - **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu` and `vesper-labs.org`, and a reject-all SPF and DMARC policy for the 3 zones that send no mail.
 - **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
@@ -244,6 +244,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `intel-gpu-plugin` | `kube-system` | Intel GPU device plugin DaemonSet; offers each node's iGPU as `gpu.intel.com/i915`, so a pod can use it without a hostPath mount of `/dev/dri` |
 | `omni-tools` | `omni-tools` | utility services |
 | `qbittorrent` | `jellyfin` | torrent workload behind a gluetun (Mullvad WireGuard) sidecar; WebUI on the tailnet only |
+| `metube` | `jellyfin` | yt-dlp web UI behind its own gluetun (Mullvad WireGuard) sidecar, with the Mullvad Secret of `qbittorrent`; downloads go to an `emptyDir` of 20 Gi, so a restart deletes them; no login, WebUI on the tailnet only |
 | `seerr` | `jellyfin` | media request UI; sends series requests to Sonarr and film requests to Radarr; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `sonarr` | `jellyfin` | TV series manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
 | `radarr` | `jellyfin` | film manager; hands downloads to qBittorrent; WebUI on the tailnet only — see [runbook](../runbooks/seerr-sonarr.md) |
@@ -342,6 +343,7 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 | `requests.hedgehog-wage.ts.net` | Seerr |
 | `sonarr.hedgehog-wage.ts.net` | Sonarr |
 | `radarr.hedgehog-wage.ts.net` | Radarr |
+| `metube.hedgehog-wage.ts.net` | MeTube; no login, the tailnet is the only gate |
 | `prowlarr.hedgehog-wage.ts.net` | Prowlarr |
 | `vaultwarden-admin.hedgehog-wage.ts.net` | Vaultwarden admin panel |
 | `nas.hedgehog-wage.ts.net` | TrueNAS web interface, through a TCP relay pod; see [`../runbooks/truenas-ui.md`](../runbooks/truenas-ui.md) |

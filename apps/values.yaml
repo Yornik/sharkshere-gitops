@@ -660,6 +660,12 @@ apps:
     namespace: jellyfin
     path: manifests/qbittorrent
 
+  # Reuses the Mullvad Secret of qbittorrent, so it deploys after that
+  # Application and the 2 share the namespace.
+  metube:
+    namespace: jellyfin
+    path: manifests/metube
+
   seerr:
     namespace: jellyfin
     path: manifests/seerr

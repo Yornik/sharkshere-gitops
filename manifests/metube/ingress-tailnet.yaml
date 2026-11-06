@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: metube-tailnet
+  namespace: jellyfin
+  annotations:
+    # The proxy serves port 443 only. Without the redirect, an http://
+    # address times out instead of reaching the HTTPS one.
+    tailscale.com/http-redirect: "true"
+spec:
+  # The Tailscale operator runs 1 proxy device for this Ingress. The proxy
+  # ends TLS with a certificate for the ts.net name and sends plain HTTP to
+  # the WebUI. There is no public route.
+  #
+  # CAUTION: MeTube has no login. The tailnet is the only gate, as for
+  # Alertmanager. Anyone on the tailnet can queue a download and read the
+  # finished files. See docs/runbooks/tailnet-only-admin-uis.md.
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: metube
+      port:
+        number: 8081
+  tls:
+    # The first label is the device name: metube.hedgehog-wage.ts.net.
+    - hosts:
+        - metube

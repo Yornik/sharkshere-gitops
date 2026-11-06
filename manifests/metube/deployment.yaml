@@ -1,0 +1,160 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metube
+  namespace: jellyfin
+  labels:
+    app: metube
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate: 2 pods would run 2 tunnels on 1 WireGuard
+  # key at the same time. See the gluetun comment below.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: metube
+  template:
+    metadata:
+      labels:
+        app: metube
+    spec:
+      # MeTube does not call the Kubernetes API. It opens pages from the
+      # internet. A token in the pod would help an exploit in yt-dlp.
+      automountServiceAccountToken: false
+      # gluetun's DNS server answers a name that does not exist with an empty
+      # NOERROR, not NXDOMAIN. The musl resolver stops on that answer, so
+      # names with fewer than 5 dots do not resolve. ndots:1 fixes it. See
+      # docs/incidents/2026-10-23-qbittorrent-dns-search-domain.md.
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      containers:
+        - name: gluetun
+          image: qmcgaw/gluetun:v3.41.3
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+            privileged: false
+          env:
+            - name: VPN_SERVICE_PROVIDER
+              value: mullvad
+            - name: VPN_TYPE
+              value: wireguard
+            # The key and the address are the ones of qBittorrent. The Secret
+            # `qbittorrent-vpn-secrets` is in this namespace and the qbittorrent
+            # Application creates it. MeTube needs that Application to stay.
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-vpn-secrets
+                  key: wireguard-private-key
+            - name: WIREGUARD_ADDRESSES
+              valueFrom:
+                secretKeyRef:
+                  name: qbittorrent-vpn-secrets
+                  key: wireguard-addresses
+            # qBittorrent uses Netherlands. 2 tunnels on 1 key to the same
+            # server make the server flip the endpoint between the 2 pods, and
+            # both lose packets. A different country avoids the same server.
+            - name: SERVER_COUNTRIES
+              value: Germany
+            # Lets replies reach the tailnet proxy and the kubelet probes
+            # without going through the tunnel. Same value as qBittorrent.
+            - name: FIREWALL_OUTBOUND_SUBNETS
+              value: 10.0.0.0/8,192.168.0.0/16
+            - name: TZ
+              value: Europe/Amsterdam
+          ports:
+            - containerPort: 8081
+              name: webui
+          volumeMounts:
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+          # gluetun's health server binds 127.0.0.1:9999, so kubelet cannot
+          # reach it over the pod IP. Use an exec probe. 30 s x 5 = about
+          # 2.5 min of tunnel-down before a restart, so a short VPN blip that
+          # gluetun heals itself does not kill the pod.
+          livenessProbe:
+            exec:
+              command: ["wget", "-qO-", "http://127.0.0.1:9999"]
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+        - name: metube
+          image: ghcr.io/alexta69/metube:2026.11.06
+          # No securityContext. The image starts as root, changes the owner of
+          # the download folder, and then drops to UID/GID 1000 itself. That
+          # step needs CHOWN, SETUID and SETGID.
+          env:
+            - name: TZ
+              value: Europe/Amsterdam
+            # Files and state share the 1 emptyDir below. The queue history
+            # is lost on a restart, as are the files.
+            - name: DOWNLOAD_DIR
+              value: /downloads
+            - name: STATE_DIR
+              value: /downloads/.metube
+            - name: TEMP_DIR
+              value: /downloads/.tmp
+            # A file removed in the UI also leaves the disk. Without it the
+            # emptyDir fills up with files that the UI no longer shows.
+            - name: DELETE_FILE_ON_TRASHCAN
+              value: "true"
+          ports:
+            - containerPort: 8081
+              name: webui
+          volumeMounts:
+            - name: downloads
+              mountPath: /downloads
+          # gluetun accepts traffic to the pod subnet on eth0, so the kubelet
+          # reaches the pod IP. Same reason as for qBittorrent.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+              ephemeral-storage: 1Gi
+            limits:
+              # ffmpeg merges video and audio. A 4K merge needs memory.
+              cpu: "2"
+              memory: 2Gi
+              # The kubelet evicts the pod above this value. It is 2 Gi above
+              # the emptyDir limit, for logs and the image layer.
+              ephemeral-storage: 22Gi
+      volumes:
+        # Ephemeral by choice: the owner moves each file to the NAS by hand.
+        # A restart, a node drain or an eviction deletes the folder. Download
+        # the file from the UI first.
+        - name: downloads
+          emptyDir:
+            sizeLimit: 20Gi
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice

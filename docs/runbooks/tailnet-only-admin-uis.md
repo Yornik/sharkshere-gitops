@@ -1,6 +1,6 @@
 # Tailnet-only admin interfaces
 
-ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, the
+ArgoCD, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, MeTube, the
 Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control are reachable on
 the tailnet only, over HTTPS. This file
 says how to reach them, how to activate a new proxy device, what changed, and
@@ -17,6 +17,7 @@ how to undo the change.
 | Sonarr | `https://sonarr.hedgehog-wage.ts.net` | none |
 | Radarr | `https://radarr.hedgehog-wage.ts.net` | none |
 | Prowlarr | `https://prowlarr.hedgehog-wage.ts.net` | none |
+| MeTube | `https://metube.hedgehog-wage.ts.net` | none |
 | Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
 | TrueNAS | `https://nas.hedgehog-wage.ts.net` | none |
 | Shelly control (boiler) | `https://boiler.hedgehog-wage.ts.net` | none |
@@ -89,7 +90,7 @@ keeps syncing in the meantime, so a merge on GitHub still reaches the cluster.
 5. Check the device name:
 
    ```sh
-   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|radarr|prowlarr|vaultwarden-admin|boiler| nas(-[0-9]+)? '
+   tailscale status | grep -E 'grafana|alertmanager|argocd|asf|qbittorrent|requests|sonarr|radarr|prowlarr|metube|vaultwarden-admin|boiler| nas(-[0-9]+)? '
    ```
 
 Expected result: each name is as in the table above, without a suffix.
