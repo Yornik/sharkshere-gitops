@@ -51,7 +51,7 @@ spec:
           # price. Source + CI: github.com/Yornik/Shelly-control. Renovate
           # does not merge a bump of this image by itself, because the image
           # switches a real device. See renovate.json5.
-          image: ghcr.io/yornik/shelly-control:v1.0.0
+          image: ghcr.io/yornik/shelly-control:v1.1.0
           imagePullPolicy: IfNotPresent
           env:
             # The same device as SHELLY_URL of shelly-bridge. Scheme, host and
