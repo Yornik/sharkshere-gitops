@@ -23,7 +23,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: metube
-          image: ghcr.io/alexta69/metube:2026.11.06
+          image: ghcr.io/alexta69/metube:2026.11.10
           # No securityContext. The image starts as root, changes the owner of
           # the download folder, and then drops to UID/GID 1000 itself. That
           # step needs CHOWN, SETUID and SETGID.
