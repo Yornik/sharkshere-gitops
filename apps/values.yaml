@@ -1195,7 +1195,7 @@ apps:
     helm:
       repoURL: https://charts.gitlab.io
       chart: gitlab
-      targetRevision: 10.5.4
+      targetRevision: 10.5.5
       values: |
         # All subcharts disabled — we use external CNPG postgres, external
         # Valkey, external S3, and Traefik IngressRoutes instead of
@@ -1518,7 +1518,7 @@ apps:
     helm:
       repoURL: https://charts.openproject.org/
       chart: openproject
-      targetRevision: 13.17.1
+      targetRevision: 13.17.3
       values: |
         # We ship our own IngressRoute (see manifests/openproject/) so the
         # chart's bundled Ingress stays off.
