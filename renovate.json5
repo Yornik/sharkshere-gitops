@@ -99,11 +99,21 @@
         'major',
       ],
     },
+    // A person merges every chart bump. A chart bump can change many objects
+    // at once.
+    //
+    // `groupName: null` keeps a chart patch out of the `patch updates` group.
+    // A group automerges only when every bump in it does. Before this, 1
+    // chart patch in the group held back every image patch next to it, and
+    // the group lost its automerge. Seen in #660 on 2026-11-11: the MeTube
+    // and ASF patches waited 2 days behind the GitLab and OpenProject charts.
+    // Each chart bump now gets a pull request of its own.
     {
       matchDatasources: [
         'helm',
       ],
       automerge: false,
+      groupName: null,
       labels: [
         'renovate',
         'helm',
