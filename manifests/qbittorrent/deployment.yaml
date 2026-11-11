@@ -148,7 +148,7 @@ spec:
               cpu: 500m
               memory: 512Mi
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls486
+          image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls487
           env:
             - name: PUID
               value: "1000"
