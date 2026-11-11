@@ -250,7 +250,7 @@ apps:
     helm:
       repoURL: https://grafana.github.io/helm-charts
       chart: loki
-      targetRevision: 7.5.0
+      targetRevision: 7.6.0
       values: |
         deploymentMode: SingleBinary
         loki:
