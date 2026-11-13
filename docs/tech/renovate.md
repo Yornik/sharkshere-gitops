@@ -91,7 +91,7 @@ The rules apply in order. A later rule replaces the `labels` of an earlier one. 
 | 3 | `go-practice-web` and `go-practice-runner` | 1 group, a person merges. | The 2 images share an API and move together. |
 | 4 | `nginx` in `truenas-ui` and `truenas-smb` | A person merges. | The relays carry the access to the NAS. CI does not run nginx. |
 | 5 | Every major bump | A person merges, label `major`. | A major bump can break compatibility. |
-| 6 | Every Helm chart | A person merges, label `helm`. | A chart bump can change many objects at once. |
+| 6 | Every Helm chart | A person merges, label `helm`. No group: each chart bump gets a pull request of its own. | A chart bump can change many objects at once. A group automerges only when every bump in it does, so a chart patch in `patch updates` held back the image patches. |
 | 7 | KSOPS | A person merges, then applies. Label `manual-apply`. | `KSOPS_SHA256` needs an update by hand. CI fails until it matches. |
 | 8 | ArgoCD | A person merges, then applies. Label `manual-apply`. Versioning `semver`. | `bootstrap/` is not managed by ArgoCD. Docker versioning rejected the stable tags after an `-rc` pin. |
 | 9 | Every other image under `bootstrap/` | A person merges, then applies. Label `manual-apply`. | The same reason as rule 8. |
