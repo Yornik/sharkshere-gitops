@@ -30,6 +30,10 @@ The annotation stays in `apps/values.yaml`. Each future chart update that change
 
 CAUTION: Any sync that changes the Job re-runs the seeder Job. This includes the merge of the annotation itself.
 
+## Follow-up on 2026-11-14
+
+`Replace=true` alone did not make chart updates sync at once. With the server-side diff, a changed Job template stops the diff before any sync, so each chart update waited until the 24-hour TTL deleted the Job. See [`2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md`](2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md).
+
 ## Evidence
 
 - `apps/values.yaml`, comment above `seederJob.annotations`.
