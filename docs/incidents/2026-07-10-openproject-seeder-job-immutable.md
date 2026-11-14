@@ -32,11 +32,7 @@ CAUTION: Any sync that changes the Job re-runs the seeder Job. This includes the
 
 ## Follow-up on 2026-11-14
 
-ArgoCD now computes diffs with a server-side dry-run apply (`controller.diff.server.side` in `bootstrap/argocd/argocd-cmd-params-cm-patch.yaml`). The dry run of the changed seeder Job fails on the immutable template, before any sync. The Application shows sync status `Unknown` with a `ComparisonError`, and `Replace=true` never runs.
-
-Chart 13.17.4 changed only the label `helm.sh/chart` in the Job template. The pods kept running 17.9.7 and stayed healthy, but the Application stayed on 13.17.3 and synced nothing else.
-
-The correction: the `openproject` Application has the annotation `argocd.argoproj.io/compare-options: ServerSideDiff=false`. With the client-side diff, the Job is `OutOfSync`, and the sync replaces it. The other Applications keep the server-side diff.
+`Replace=true` alone did not make chart updates sync at once. With the server-side diff, a changed Job template stops the diff before any sync, so each chart update waited until the 24-hour TTL deleted the Job. See [`2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md`](2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md).
 
 ## Evidence
 

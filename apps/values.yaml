@@ -1522,10 +1522,11 @@ apps:
     # (controller.diff.server.side). Each chart bump changes the
     # `helm.sh/chart` label in the template of the seeder Job, and a Job
     # template is immutable. The dry run then fails with a ComparisonError,
-    # so ArgoCD never syncs and the Replace=true option on the Job never runs.
-    # Seen on 2026-11-14: chart 13.17.4 waited behind 13.17.3. The client-side
-    # diff shows the Job as OutOfSync, and the sync then replaces it. See
-    # docs/incidents/2026-07-10-openproject-seeder-job-immutable.md.
+    # so ArgoCD does not sync and the Replace=true option on the Job does not
+    # run, until the 24-hour TTL deletes the Job. Each chart bump waited 3.5
+    # to 25 hours that way. The client-side diff shows the Job as OutOfSync,
+    # and the sync replaces it at once. See
+    # docs/incidents/2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md.
     annotations:
       argocd.argoproj.io/compare-options: ServerSideDiff=false
     helm:
