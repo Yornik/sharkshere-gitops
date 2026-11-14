@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: yornik-html
   namespace: yornik
+# No og:image or apple-touch-icon: scrapers ignore SVG and ConfigMap keys are text,
+# so a preview card needs a PNG served from outside this ConfigMap.
 data:
   index.html: |
     <!DOCTYPE html>
@@ -10,30 +12,27 @@ data:
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Yornik Heyl – Cloud Reliability Engineer | Rotterdam, Netherlands</title>
+      <title>Yornik Heyl – Cloud Reliability Engineer, Rotterdam</title>
       <meta name="author" content="Yornik Heyl" />
-      <meta name="description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens). Open to opportunities." />
-      <meta name="keywords" content="Yornik Heyl, Cloud Reliability Engineer, Platform Engineer, SRE, Site Reliability Engineer, DevOps, Kubernetes, GitOps, Docker, Terraform, CI/CD, AWS, Azure, Infrastructure as Code, Mendix, Siemens, Rotterdam, Netherlands" />
-      <meta name="robots" content="index,follow,max-image-preview:large" />
-      <meta name="theme-color" content="#0a0e15" />
-      <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIEBrZXlmcmFtZXMgc3BpbiB7CiAgICAgICAgMCUgeyB0cmFuc2Zvcm06IHJvdGF0ZSgwZGVnKTsgfQogICAgICAgIDEwMCUgeyB0cmFuc2Zvcm06IHJvdGF0ZSgzNjBkZWcpOyB9CiAgICAgIH0KICAgICAgLnNoYXJrIHsKICAgICAgICBhbmltYXRpb246IHNwaW4gM3MgbGluZWFyIGluZmluaXRlOwogICAgICAgIHRyYW5zZm9ybS1vcmlnaW46IDE2cHggMTZweDsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CgogIDxnIGNsYXNzPSJzaGFyayI+CiAgICA8IS0tIEJvZHkgLSBzaW5nbGUgYm9sZCBzaGFwZSAtLT4KICAgIDxlbGxpcHNlIGN4PSIxOCIgY3k9IjE2IiByeD0iMTIiIHJ5PSI3IiBmaWxsPSIjNUI5QkI1Ii8+CgogICAgPCEtLSBCZWxseSAtIGhpZ2ggY29udHJhc3QgLS0+CiAgICA8ZWxsaXBzZSBjeD0iMTkiIGN5PSIxNyIgcng9IjgiIHJ5PSI0IiBmaWxsPSIjRThGNEY4Ii8+CgogICAgPCEtLSBUYWlsIC0gYm9sZCB0cmlhbmdsZSAtLT4KICAgIDxwYXRoIGQ9Ik0gNCAxNiBMIDEgMTIgTCAxIDIwIFoiIGZpbGw9IiM1QjlCQjUiLz4KCiAgICA8IS0tIERvcnNhbCBmaW4gLSBzaW1wbGUgdHJpYW5nbGUgLS0+CiAgICA8cGF0aCBkPSJNIDE3IDkgTCAyMCA2IEwgMjEgMTEgWiIgZmlsbD0iIzVCOUJCNSIvPgoKICAgIDwhLS0gRXllIC0gYmlnIGFuZCBib2xkIC0tPgogICAgPGNpcmNsZSBjeD0iMjYiIGN5PSIxNSIgcj0iMy41IiBmaWxsPSIjMDAwIi8+CiAgICA8Y2lyY2xlIGN4PSIyNy41IiBjeT0iMTQiIHI9IjEuNSIgZmlsbD0iI2ZmZiIvPgogIDwvZz4KPC9zdmc+Cg==">
+      <meta name="description"
+            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Mendix (Siemens). Open to conversations." />
+      <meta name="theme-color" content="#0a0e15" media="(prefers-color-scheme: dark)" />
+      <meta name="theme-color" content="#fbf8f1" media="(prefers-color-scheme: light)" />
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="canonical" href="https://yornik.eu/" />
-      <link rel="alternate" hreflang="en" href="https://yornik.eu/" />
-      <meta name="geo.region" content="NL-ZH" />
-      <meta name="geo.placename" content="Rotterdam" />
-      <meta name="geo.position" content="51.9225;4.47917" />
-      <meta name="ICBM" content="51.9225, 4.47917" />
       <meta property="og:type" content="profile" />
       <meta property="og:url" content="https://yornik.eu/" />
-      <meta property="og:title" content="Yornik Heyl – Cloud & Platform Engineer" />
-      <meta property="og:description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability, and resilient cloud infrastructure." />
+      <meta property="og:title" content="Yornik Heyl – Cloud Reliability Engineer" />
+      <meta property="og:description"
+            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Mendix (Siemens). Open to conversations." />
       <meta property="og:site_name" content="Yornik Heyl" />
-      <meta property="og:locale" content="en_NL" />
+      <meta property="og:locale" content="en_GB" />
       <meta property="profile:first_name" content="Yornik" />
       <meta property="profile:last_name" content="Heyl" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Yornik Heyl – Cloud & Platform Engineer" />
-      <meta name="twitter:description" content="Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Kubernetes, GitOps, observability specialist." />
+      <meta name="twitter:card" content="summary" />
+      <meta name="twitter:title" content="Yornik Heyl – Cloud Reliability Engineer" />
+      <meta name="twitter:description"
+            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Mendix (Siemens). Open to conversations." />
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -41,7 +40,7 @@ data:
           {
             "@type": "WebSite",
             "@id": "https://yornik.eu/#website",
-            "url": "https://yornik.eu",
+            "url": "https://yornik.eu/",
             "name": "Yornik Heyl – Cloud Reliability Engineer",
             "description": "Portfolio of Yornik Heyl, Cloud Reliability & Platform Engineer in Rotterdam, Netherlands",
             "publisher": { "@id": "https://yornik.eu/#person" },
@@ -50,9 +49,10 @@ data:
           {
             "@type": "ProfilePage",
             "@id": "https://yornik.eu/#profilepage",
-            "url": "https://yornik.eu",
-            "dateCreated": "2025-01-01",
-            "dateModified": "2026-04-18",
+            "url": "https://yornik.eu/",
+            "name": "Yornik Heyl – Cloud Reliability Engineer",
+            "inLanguage": "en",
+            "dateModified": "2026-11-14",
             "isPartOf": { "@id": "https://yornik.eu/#website" },
             "mainEntity": { "@id": "https://yornik.eu/#person" }
           },
@@ -60,7 +60,8 @@ data:
             "@type": "Person",
             "@id": "https://yornik.eu/#person",
             "name": "Yornik Heyl",
-            "url": "https://yornik.eu",
+            "url": "https://yornik.eu/",
+            "email": "mailto:yornik@yornik.nl",
             "jobTitle": "Cloud Reliability Engineer",
             "description": "Cloud Reliability & Platform Engineer based in Rotterdam, Netherlands. Specializing in Kubernetes, GitOps, observability, and resilient cloud infrastructure.",
             "address": {
@@ -84,19 +85,14 @@ data:
               "https://www.credly.com/users/yornik-heyl"
             ],
             "knowsAbout": [
-              { "@type": "Thing", "name": "Kubernetes", "sameAs": "https://en.wikipedia.org/wiki/Kubernetes" },
-              { "@type": "Thing", "name": "Site Reliability Engineering", "sameAs": "https://en.wikipedia.org/wiki/Site_reliability_engineering" },
-              { "@type": "Thing", "name": "Cloud Computing", "sameAs": "https://en.wikipedia.org/wiki/Cloud_computing" },
-              { "@type": "Thing", "name": "DevOps", "sameAs": "https://en.wikipedia.org/wiki/DevOps" },
-              { "@type": "Thing", "name": "Infrastructure as Code", "sameAs": "https://en.wikipedia.org/wiki/Infrastructure_as_code" },
-              "GitOps", "Observability", "Argo CD", "Grafana", "Terraform",
-              "CI/CD", "Docker", "Linux", "Platform Engineering", "Prometheus", "Helm"
+              "Kubernetes", "Site Reliability Engineering", "Platform Engineering",
+              "GitOps", "Observability", "Argo CD", "Prometheus", "Grafana", "Helm",
+              "OpenTofu", "Infrastructure as Code", "Incident response"
             ],
             "knowsLanguage": [
               { "@type": "Language", "name": "English" },
               { "@type": "Language", "name": "Dutch" }
-            ],
-            "subjectOf": { "@id": "https://yornik.eu/#profilepage" }
+            ]
           }
         ]
       }
@@ -108,7 +104,7 @@ data:
         <div class="status-strip">
           <span class="dot" aria-hidden="true"></span>
           <span class="status-label">Online</span>
-          <span class="status-meta">yornik.eu &middot; rotterdam, nl</span>
+          <span class="status-meta">yornik.eu</span>
         </div>
       </header>
 
@@ -117,11 +113,11 @@ data:
         <section class="hero">
           <h1>Yornik Heyl</h1>
           <p class="hero-meta">
-            Cloud Reliability Engineer
-            <span class="sep">/</span>
-            Rotterdam, NL
-            <span class="sep">/</span>
-            EN &middot; NL
+            <span class="role">Cloud Reliability Engineer</span>
+            <span class="sep" aria-hidden="true">/</span>
+            <span>Rotterdam, NL</span>
+            <span class="sep" aria-hidden="true">/</span>
+            <span>EN &middot; NL</span>
           </p>
           <p class="hero-prose">
             Five years keeping production calm at <a href="https://www.mendix.com">Mendix</a> (Siemens).
@@ -134,13 +130,17 @@ data:
             <a class="cta" href="https://www.linkedin.com/in/yornik/">linkedin</a>
             <a class="cta" href="https://www.credly.com/users/yornik-heyl">credly</a>
           </div>
+          <p class="hero-status">
+            <span class="led" aria-hidden="true"></span>
+            Open to conversations about platform &amp; reliability work in the Netherlands and remote across Europe.
+          </p>
         </section>
 
-        <section class="overview">
+        <section aria-labelledby="h-overview">
           <header class="section-head">
-            <span class="section-num">01</span>
-            <h2>Overview</h2>
-            <span class="section-rule"></span>
+            <span class="section-num" aria-hidden="true">01</span>
+            <h2 id="h-overview">Overview</h2>
+            <span class="section-rule" aria-hidden="true"></span>
           </header>
           <div class="metrics">
             <div class="metric">
@@ -149,13 +149,13 @@ data:
               <span class="metric-foot">since 2021 &middot; mendix &middot; siemens</span>
             </div>
             <div class="metric">
-              <span class="metric-value">28</span>
+              <span class="metric-value">59</span>
               <span class="metric-label">Apps under GitOps</span>
               <span class="metric-foot">homelab &middot; argo cd app-of-apps</span>
             </div>
             <div class="metric">
               <span class="metric-value">4</span>
-              <span class="metric-label">Node Talos cluster</span>
+              <span class="metric-label">Talos cluster nodes</span>
               <span class="metric-foot">3 control-plane &middot; 1 worker</span>
             </div>
             <div class="metric">
@@ -166,183 +166,179 @@ data:
           </div>
         </section>
 
-        <section class="practice">
+        <section aria-labelledby="h-practice">
           <header class="section-head">
-            <span class="section-num">02</span>
-            <h2>Practice</h2>
-            <span class="section-rule"></span>
+            <span class="section-num" aria-hidden="true">02</span>
+            <h2 id="h-practice">Practice</h2>
+            <span class="section-rule" aria-hidden="true"></span>
           </header>
           <div class="prose">
             <p>
-              I make production safer to change. Incident response, rollout design,
-              observability that actually tells you something at 03:00, and alerting
-              that doesn't go off for nothing. Systems should be explainable under
-              pressure, not just work when everything is fine.
+              Declarative by default: reproducible rollouts, clear ownership, and security
+              built into the platform rather than bolted on. Systems should be explainable
+              under pressure, not just work when everything is fine.
             </p>
             <p>
-              The way I work is declarative. Reproducible rollouts, clear ownership,
-              and security folded into the platform rather than bolted on afterwards.
-              AI tooling where it pays &mdash; automating the boring parts and catching
-              mistakes early &mdash; not as a buzzword.
+              AI tooling where it pays, automating the boring parts and catching
+              mistakes early, not as a buzzword.
             </p>
           </div>
         </section>
 
-        <section class="runbook">
+        <section aria-labelledby="h-runbook">
           <header class="section-head">
-            <span class="section-num">03</span>
-            <h2>Runbook &middot; what I operate</h2>
-            <span class="section-rule"></span>
+            <span class="section-num" aria-hidden="true">03</span>
+            <h2 id="h-runbook">Runbook: what I operate</h2>
+            <span class="section-rule" aria-hidden="true"></span>
           </header>
           <ul class="services">
             <li>
-              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="led" aria-hidden="true"></span>
               <span class="svc-name">talos linux</span>
               <span class="svc-version">v1.12</span>
               <span class="svc-note">4-node cluster &middot; 3 control-plane / 1 worker &middot; intel n150</span>
             </li>
             <li>
-              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="led" aria-hidden="true"></span>
               <span class="svc-name">argo cd</span>
               <span class="svc-version">v3</span>
-              <span class="svc-note">app-of-apps &middot; 28 applications &middot; sops + ksops</span>
+              <span class="svc-note">app-of-apps &middot; 59 applications &middot; sops + ksops</span>
             </li>
             <li>
-              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="led" aria-hidden="true"></span>
               <span class="svc-name">prometheus / grafana / loki</span>
               <span class="svc-version">stable</span>
-              <span class="svc-note">alloy log shipping &middot; 48 h retention &middot; custom dashboards</span>
+              <span class="svc-note">alloy log shipping &middot; 60-day retention &middot; custom dashboards</span>
             </li>
             <li>
-              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="led" aria-hidden="true"></span>
               <span class="svc-name">traefik</span>
               <span class="svc-version">v3</span>
-              <span class="svc-note">tls 1.3 only &middot; ecdsa p-384 &middot; acme via let's encrypt</span>
+              <span class="svc-note">tls 1.3 only &middot; ecdsa p-384 &middot; hsts preload &middot; acme via let's encrypt</span>
             </li>
             <li>
-              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="led" aria-hidden="true"></span>
               <span class="svc-name">external-dns</span>
-              <span class="svc-version">v0.21</span>
-              <span class="svc-note">cloudflare &middot; dane / tlsa cron jobs &middot; sops-encrypted creds</span>
+              <span class="svc-version">v0.24</span>
+              <span class="svc-note">cloudflare &middot; dane / tlsa and caa cron jobs &middot; sops-encrypted creds</span>
             </li>
             <li>
-              <span class="svc-dot" aria-hidden="true"></span>
+              <span class="led" aria-hidden="true"></span>
               <span class="svc-name">opentofu</span>
               <span class="svc-version">v1.10</span>
               <span class="svc-note">hetzner edge nodes &middot; haproxy ingress to tailscale &middot; iac end-to-end</span>
             </li>
           </ul>
           <p class="runbook-note">
-            All declarative. Every change is a pull request: required review, yaml lint,
-            <code>helm template</code>, and <code>kubeconform</code> validation in CI before merge.
+            All declarative. Every change is a pull request. Yaml lint, <code>helm template</code>,
+            <code>kubeconform</code>, per&#8209;chart values rendering and a ksops hash guard must pass in CI before merge.
           </p>
         </section>
 
-        <section class="signals">
+        <section aria-labelledby="h-signals">
           <header class="section-head">
-            <span class="section-num">04</span>
-            <h2>Signals</h2>
-            <span class="section-rule"></span>
+            <span class="section-num" aria-hidden="true">04</span>
+            <h2 id="h-signals">Signals</h2>
+            <span class="section-rule" aria-hidden="true"></span>
           </header>
-          <ul class="signals-list">
-            <li>
-              <span class="signal-key">TLS policy</span>
-              <span class="signal-val">tls 1.3 only &middot; hsts preload</span>
-            </li>
-            <li>
-              <span class="signal-key">Certificates</span>
-              <span class="signal-val">ecdsa p-384 &middot; le &middot; 90-day rotation</span>
-            </li>
-            <li>
-              <span class="signal-key">Email auth</span>
-              <span class="signal-val">spf &middot; dkim &middot; dmarc &middot; dane / tlsa</span>
-            </li>
-            <li>
-              <span class="signal-key">IPv6</span>
-              <span class="signal-val">end-to-end</span>
-            </li>
-            <li>
-              <span class="signal-key">Audit</span>
-              <span class="signal-val">ncsc nl &mdash; "good" on every category</span>
-            </li>
-          </ul>
+          <dl class="signals-list">
+            <div>
+              <dt>Backups</dt>
+              <dd>4 ha postgres clusters &middot; wal + base every 3 h &middot; 14-day pitr &middot; restore runbook</dd>
+            </div>
+            <div>
+              <dt>Incidents</dt>
+              <dd>24 written post-mortems in git &middot; cause, correction, prevention</dd>
+            </div>
+            <div>
+              <dt>Dependencies</dt>
+              <dd>renovate &middot; automerge on patch and minor image bumps &middot; human gate on chart and major updates</dd>
+            </div>
+            <div>
+              <dt>Admin plane</dt>
+              <dd>admin uis tailnet-only &middot; one public webhook path</dd>
+            </div>
+            <div>
+              <dt>Email auth</dt>
+              <dd>spf &middot; dkim &middot; dmarc &middot; dane / tlsa</dd>
+            </div>
+            <div>
+              <dt>IPv6</dt>
+              <dd>end-to-end</dd>
+            </div>
+            <div>
+              <dt>Audit</dt>
+              <dd>ncsc nl &mdash; "good" on every category</dd>
+            </div>
+          </dl>
         </section>
 
-        <section class="contact">
-          <header class="section-head">
-            <span class="section-num">05</span>
-            <h2>Contact</h2>
-            <span class="section-rule"></span>
-          </header>
-          <div class="contact-grid">
-            <a href="mailto:yornik@yornik.nl">
-              <span class="contact-key">email</span>
-              <span class="contact-val">yornik@yornik.nl</span>
-            </a>
-            <a href="https://github.com/Yornik">
-              <span class="contact-key">github</span>
-              <span class="contact-val">github.com/yornik</span>
-            </a>
-            <a href="https://www.linkedin.com/in/yornik/">
-              <span class="contact-key">linkedin</span>
-              <span class="contact-val">linkedin.com/in/yornik</span>
-            </a>
-            <a href="https://www.credly.com/users/yornik-heyl">
-              <span class="contact-key">credly</span>
-              <span class="contact-val">credly.com/users/yornik-heyl</span>
-            </a>
-          </div>
-          <p class="contact-foot">
-            Currently at Mendix (Siemens). Open to conversations about platform &amp; reliability work
-            in the Netherlands and remote across Europe.
-          </p>
-        </section>
-
-        <footer class="page-foot">
-          <div class="foot-line">
-            <span>yornik.eu</span>
-            <span class="dim">declarative &middot; reproducible &middot; in git</span>
-            <span class="dim">written by hand, with help from AI</span>
-          </div>
-        </footer>
       </main>
+
+      <footer class="page-foot">
+        <p>yornik.eu &middot; declarative &middot; in git &middot; written by hand, with help from AI</p>
+      </footer>
     </body>
     </html>
 
   styles.css: |
     :root {
+      color-scheme: light dark;
+
       --bg:        #0a0e15;
       --bg-2:      #0c1119;
-      --surface:   #0e131c;
-      --line:      #1c2330;
-      --line-soft: #131822;
+      --line:      #1f2735;
       --text:      #e8eef6;
       --muted:     #8a96a8;
-      --dim:       #525e6e;
-      --vdim:      #2f3744;
+      /* 5:1 or better on --bg; the old #525e6e failed AA for small text. */
+      --dim:       #7b8798;
       --accent:    #f5b942;
-      --accent-2:  #f59e0b;
+      --accent-wash: rgba(245, 185, 66, 0.07);
       --status:    #4ade80;
+      --status-glow: rgba(74, 222, 128, 0.4);
       --link:      #93c5fd;
+      --link-line: rgba(147, 197, 253, 0.55);
+      --hover:     rgba(255, 255, 255, 0.025);
 
       --serif: ui-serif, "New York", "Iowan Old Style", "Charter", "Cambria", "Times New Roman", serif;
       --sans:  ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       --mono:  ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", "Menlo", Consolas, monospace;
+
+      /* type scale: label / small / body / lead */
+      --fs-label: 12px;
+      --fs-sm:    14px;
+      --fs-body:  16px;
+      --fs-lead:  clamp(19px, 1.7vw, 22px);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:        #fbf8f1;
+        --bg-2:      #f3efe5;
+        --line:      #ddd6c6;
+        --text:      #161a22;
+        --muted:     #4a5566;
+        --dim:       #5f6a7a;
+        --accent:    #8f5400;
+        --accent-wash: rgba(143, 84, 0, 0.08);
+        --status:    #15803d;
+        --status-glow: rgba(21, 128, 61, 0.3);
+        --link:      #1d4ed8;
+        --link-line: rgba(29, 78, 216, 0.5);
+        --hover:     rgba(0, 0, 0, 0.03);
+      }
     }
 
     * { box-sizing: border-box; }
 
-    html {
-      background: var(--bg);
-      color-scheme: dark;
-    }
+    html { background: var(--bg); }
 
     body {
       margin: 0;
       min-height: 100vh;
       color: var(--text);
       font-family: var(--mono);
-      font-size: 14px;
+      font-size: var(--fs-sm);
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -350,16 +346,23 @@ data:
       background: var(--bg);
     }
 
+    /* Underline rather than border so wrapped links stay underlined on every line. */
     a {
       color: var(--link);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(147, 197, 253, 0.32);
-      transition: color 0.16s ease, border-color 0.16s ease;
+      text-decoration: underline;
+      text-decoration-color: var(--link-line);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      transition: color 0.16s ease, text-decoration-color 0.16s ease;
     }
-    a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 2px;
+    }
 
-    code, .mono { font-family: var(--mono); }
-    .mono-em { color: var(--accent); }
+    code { font-family: var(--mono); }
 
     /* ─────────────── status strip ─────────────── */
 
@@ -374,8 +377,7 @@ data:
       max-width: 1100px;
       margin: 0 auto;
       padding: 13px 32px;
-      font-family: var(--mono);
-      font-size: 11.5px;
+      font-size: 12.5px;
       letter-spacing: 0.04em;
       color: var(--muted);
     }
@@ -389,13 +391,14 @@ data:
       position: relative;
       flex: 0 0 auto;
     }
+    /* Two pulses (4.8s) then rest: WCAG 2.2.2 allows motion under 5s without a pause control. */
     .dot::after {
       content: "";
       position: absolute;
       inset: -6px;
       border-radius: 999px;
-      background: rgba(74, 222, 128, 0.35);
-      animation: pulse 2.6s cubic-bezier(0.2, 0.6, 0.2, 1) infinite;
+      background: var(--status-glow);
+      animation: pulse 2.4s cubic-bezier(0.2, 0.6, 0.2, 1) 2 forwards;
       pointer-events: none;
     }
     @keyframes pulse {
@@ -404,25 +407,24 @@ data:
       100% { transform: scale(2.0); opacity: 0; }
     }
 
+    /* Static status LED shared by the runbook rows and the availability line. */
+    .led {
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: var(--status);
+      box-shadow: 0 0 12px var(--status-glow);
+      flex: 0 0 auto;
+    }
+
     /* ─────────────── page shell ─────────────── */
 
     .page {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 96px 32px 60px;
+      padding: 64px 32px 40px;
     }
 
-    section + section { margin-top: 84px; }
-
-    .eyebrow {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin: 0 0 18px;
-      text-align: center;
-    }
+    section + section { margin-top: 72px; }
 
     /* ─────────────── hero ─────────────── */
 
@@ -430,7 +432,6 @@ data:
       animation: fade-up 0.6s ease-out both;
       text-align: center;
     }
-    .hero .eyebrow { text-align: center; }
 
     h1 {
       margin: 0 auto;
@@ -440,69 +441,76 @@ data:
       line-height: 1;
       letter-spacing: -0.025em;
       color: var(--text);
+      text-wrap: balance;
     }
 
     .hero-meta {
       margin: 22px 0 0;
-      font-family: var(--mono);
-      font-size: 12.5px;
-      letter-spacing: 0.04em;
-      color: var(--text);
+      font-size: clamp(14px, 1.4vw, 16px);
+      letter-spacing: 0.06em;
+      color: var(--muted);
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 0 6px;
+      gap: 0 10px;
     }
-    .hero-meta .sep { color: var(--vdim); }
+    .hero-meta .role { color: var(--accent); }
+    .hero-meta .sep { color: var(--dim); }
 
     .hero-prose {
-      margin: 32px auto 0;
-      max-width: 56ch;
+      margin: 28px auto 0;
+      max-width: 52ch;
       font-family: var(--serif);
-      font-size: clamp(19px, 1.7vw, 22px);
+      font-size: var(--fs-lead);
       line-height: 1.5;
       color: var(--text);
-      font-weight: 400;
+      text-wrap: balance;
     }
-    .hero-prose em {
-      color: var(--accent);
-      font-style: italic;
-    }
-    .hero-prose a { color: var(--accent); border-bottom-color: rgba(245, 185, 66, 0.5); }
+    .hero-prose a { color: var(--accent); text-decoration-color: var(--accent); }
 
     .hero-actions {
-      margin: 40px 0 0;
+      margin: 36px 0 0;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 8px;
     }
     .cta {
-      font-family: var(--mono);
-      font-size: 12px;
+      font-size: var(--fs-label);
       letter-spacing: 0.04em;
       text-transform: lowercase;
-      padding: 10px 16px;
+      text-decoration: none;
+      padding: 13px 16px;
       border: 1px solid var(--line);
       background: transparent;
       color: var(--text);
-      border-radius: 0;
       transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
     }
     .cta:hover {
       color: var(--accent);
       border-color: var(--accent);
-      background: rgba(245, 185, 66, 0.06);
+      background: var(--accent-wash);
     }
+    .cta:active { transform: translateY(1px); }
     .cta.primary {
       border-color: var(--accent);
       color: var(--accent);
-      background: rgba(245, 185, 66, 0.04);
+      background: var(--accent-wash);
     }
     .cta.primary:hover {
       color: var(--bg);
       background: var(--accent);
     }
+
+    .hero-status {
+      margin: 28px auto 0;
+      max-width: 60ch;
+      font-family: var(--sans);
+      font-size: var(--fs-sm);
+      color: var(--muted);
+      text-wrap: balance;
+    }
+    .hero-status .led { display: inline-block; margin-right: 10px; vertical-align: middle; }
 
     /* ─────────────── section heads ─────────────── */
 
@@ -514,15 +522,13 @@ data:
       margin: 0 0 28px;
     }
     .section-num {
-      font-family: var(--mono);
-      font-size: 11px;
+      font-size: var(--fs-label);
       letter-spacing: 0.06em;
-      color: var(--dim);
+      color: var(--accent);
     }
     .section-head h2 {
       margin: 0;
-      font-family: var(--mono);
-      font-size: 12px;
+      font-size: var(--fs-label);
       font-weight: 600;
       letter-spacing: 0.22em;
       text-transform: uppercase;
@@ -541,12 +547,12 @@ data:
     }
     .metric {
       background: var(--bg);
-      padding: 28px 24px 26px;
+      padding: 28px 20px 26px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 12px;
+      gap: 10px;
       position: relative;
     }
     .metric::before {
@@ -554,21 +560,12 @@ data:
       position: absolute;
       top: 0; left: 50%;
       transform: translateX(-50%);
-      width: 32px; height: 1px;
+      width: 32px; height: 2px;
       background: var(--accent);
-      opacity: 0.7;
-    }
-    .metric-label {
-      font-family: var(--mono);
-      font-size: 10.5px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--dim);
     }
     .metric-value {
       font-family: var(--serif);
-      font-weight: 400;
-      font-size: 64px;
+      font-size: 56px;
       line-height: 0.95;
       color: var(--text);
       letter-spacing: -0.02em;
@@ -577,36 +574,35 @@ data:
       justify-content: center;
       gap: 6px;
     }
-    .metric-value.sm { font-size: 42px; letter-spacing: -0.01em; }
     .metric-unit {
-      font-family: var(--serif);
       font-style: italic;
       font-size: 22px;
       color: var(--muted);
-      font-weight: 400;
+    }
+    .metric-label {
+      font-size: var(--fs-label);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
     .metric-foot {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
+      font-size: var(--fs-label);
+      color: var(--dim);
       letter-spacing: 0.02em;
       margin-top: auto;
     }
 
-    /* ─────────────── practice grid ─────────────── */
+    /* ─────────────── practice ─────────────── */
 
     .prose {
-      max-width: 64ch;
-      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 48px;
       font-family: var(--sans);
-      font-size: 16px;
+      font-size: var(--fs-body);
       line-height: 1.7;
-      color: var(--text);
     }
-    .prose p {
-      margin: 0 0 1.1em;
-    }
-    .prose p:last-child { margin-bottom: 0; }
+    .prose p { margin: 0; max-width: 64ch; text-wrap: pretty; }
 
     /* ─────────────── runbook ─────────────── */
 
@@ -618,52 +614,47 @@ data:
     }
     .services li {
       display: grid;
-      grid-template-columns: 14px 240px 80px 1fr;
+      grid-template-columns: 14px clamp(150px, 24vw, 240px) 64px 1fr;
       align-items: baseline;
       gap: 16px;
       padding: 16px 0;
       border-bottom: 1px solid var(--line);
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, box-shadow 0.15s ease;
     }
-    .services li:hover { background: rgba(255, 255, 255, 0.014); }
-    .svc-dot {
-      width: 6px; height: 6px;
-      border-radius: 999px;
-      background: var(--status);
-      align-self: center;
-      box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+    .services li:hover {
+      background: var(--hover);
+      box-shadow: inset 2px 0 0 var(--accent);
     }
+    .services li:hover .svc-name { color: var(--accent); }
+    /* Baseline alignment ignores an empty box, so pin the LED to the first text line. */
+    .services .led { align-self: start; margin-top: 8px; }
     .svc-name {
-      font-family: var(--mono);
       font-size: 13.5px;
       color: var(--text);
       font-weight: 500;
       letter-spacing: 0.01em;
+      transition: color 0.15s ease;
     }
     .svc-version {
-      font-family: var(--mono);
-      font-size: 11px;
+      font-size: var(--fs-label);
       color: var(--accent);
       letter-spacing: 0.02em;
     }
     .svc-note {
       font-family: var(--sans);
-      font-size: 14px;
+      font-size: var(--fs-sm);
       color: var(--muted);
     }
     .runbook-note {
-      margin: 22px auto 0;
-      max-width: 70ch;
+      margin: 22px 0 0;
+      max-width: 72ch;
       font-family: var(--sans);
-      font-size: 13.5px;
-      color: var(--dim);
-      font-style: italic;
-      text-align: center;
+      font-size: var(--fs-sm);
+      color: var(--muted);
     }
     .runbook-note code {
-      font-style: normal;
       font-size: 12.5px;
-      color: var(--muted);
+      color: var(--text);
       padding: 1px 6px;
       border: 1px solid var(--line);
       border-radius: 3px;
@@ -672,12 +663,10 @@ data:
     /* ─────────────── signals ─────────────── */
 
     .signals-list {
-      list-style: none;
-      padding: 0;
       margin: 0;
       border-top: 1px solid var(--line);
     }
-    .signals-list li {
+    .signals-list > div {
       display: grid;
       grid-template-columns: 200px 1fr;
       align-items: baseline;
@@ -685,84 +674,36 @@ data:
       padding: 16px 0;
       border-bottom: 1px solid var(--line);
     }
-    .signal-key {
-      font-family: var(--mono);
-      font-size: 11px;
+    .signals-list dt {
+      font-size: var(--fs-label);
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
     }
-    .signal-val {
-      font-family: var(--mono);
+    .signals-list dd {
+      margin: 0;
       font-size: 12.5px;
       color: var(--text);
       letter-spacing: 0.02em;
     }
 
-    /* ─────────────── contact ─────────────── */
-
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--line);
-      border: 1px solid var(--line);
-    }
-    .contact-grid a {
-      background: var(--bg);
-      padding: 22px 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      border: none;
-      transition: background 0.16s ease;
-      text-align: center;
-    }
-    .contact-grid a:hover { background: var(--bg-2); }
-    .contact-key {
-      font-family: var(--mono);
-      font-size: 10.5px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--dim);
-    }
-    .contact-val {
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--text);
-      letter-spacing: 0.01em;
-    }
-    .contact-grid a:hover .contact-val { color: var(--accent); }
-
-    .contact-foot {
-      margin: 22px auto 0;
-      max-width: 64ch;
-      font-family: var(--sans);
-      font-size: 14px;
-      color: var(--muted);
-      text-align: center;
-    }
-
     /* ─────────────── footer ─────────────── */
 
     .page-foot {
-      margin-top: 100px;
-      padding-top: 28px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px 56px;
+    }
+    .page-foot p {
+      margin: 0;
+      padding-top: 24px;
       border-top: 1px solid var(--line);
-      font-family: var(--mono);
-      font-size: 10.5px;
+      font-size: var(--fs-label);
       color: var(--dim);
       letter-spacing: 0.06em;
-    }
-    .foot-line {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 22px;
       text-align: center;
     }
-    .foot-line .dim { color: var(--vdim); }
+
     /* ─────────────── motion ─────────────── */
 
     @keyframes fade-up {
@@ -770,43 +711,70 @@ data:
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* Remove the animations outright; a near-zero duration would still loop them. */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.001ms !important; transition: none !important; }
+      .dot::after { animation: none; opacity: 0; }
+      .hero { animation: none; }
+      * { transition: none !important; }
     }
 
     /* ─────────────── responsive ─────────────── */
 
     @media (max-width: 920px) {
       .metrics { grid-template-columns: repeat(2, 1fr); }
-      .signals-list li { grid-template-columns: 1fr; gap: 4px; }
-    }
-
-    @media (max-width: 640px) {
-      .page { padding: 60px 22px 40px; }
-      .status-strip { padding: 12px 22px; gap: 10px; flex-wrap: wrap; }
-      .status-meta { margin-left: 0; flex-basis: 100%; }
-      .metrics { grid-template-columns: 1fr; }
-      .contact-grid { grid-template-columns: 1fr; }
+      .prose { grid-template-columns: 1fr; row-gap: 1.1em; }
+      .signals-list > div { grid-template-columns: 1fr; gap: 4px; }
       .services li {
-        grid-template-columns: 12px 1fr auto;
+        grid-template-columns: 14px 1fr auto;
         row-gap: 6px;
       }
       .svc-version { grid-column: 3; }
-      .svc-note { grid-column: 2 / -1; padding-left: 0; }
+      .svc-note { grid-column: 2 / -1; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 44px 22px 32px; }
+      .page-foot { padding: 0 22px 40px; }
+      .status-strip { padding: 12px 22px; gap: 10px; flex-wrap: wrap; }
+      .status-meta { margin-left: 0; flex-basis: 100%; }
+      .metric { padding: 22px 12px 20px; }
+      .metric-value { font-size: 44px; }
+      .metric-unit { font-size: 18px; }
+      .services li { grid-template-columns: 12px auto 1fr; }
+      .svc-version { grid-column: 3; justify-self: start; }
       h1 { font-size: clamp(48px, 14vw, 80px); }
     }
 
+    /* ─────────────── print ─────────────── */
+
+    @media print {
+      :root {
+        --bg: #fff; --bg-2: #fff; --line: #ccc; --text: #111; --muted: #333;
+        --dim: #555; --accent: #8a5a00; --link: #111; --link-line: #999;
+        --accent-wash: transparent; --hover: transparent;
+      }
+      html, body { background: #fff; color: #111; font-size: 11pt; }
+      .masthead, .dot, .section-rule, .metric::before { display: none; }
+      .page { padding: 0; }
+      section + section { margin-top: 18pt; }
+      .hero { animation: none; }
+      .cta { border: 0; padding: 0 8px; }
+      a[href^="mailto:"]::after { content: none; }
+      .led { box-shadow: none; }
+      a { text-decoration: none; }
+      a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; }
+      .hero, .metric, .services li, .signals-list > div { break-inside: avoid; }
+    }
+
+  favicon.svg: |
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="7" fill="#0a0e15"/>
+      <path d="M7 22 C13 21 15 13 17 6 C19 13 23 20 26 22 Z" fill="#f5b942"/>
+      <path d="M5 26 H27" stroke="#f5b942" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+    </svg>
+
   robots.txt: |
     User-agent: *
-    Allow: /
-
-    User-agent: GPTBot
-    Allow: /
-
-    User-agent: ClaudeBot
-    Allow: /
-
-    User-agent: PerplexityBot
     Allow: /
 
     Sitemap: https://yornik.eu/sitemap.xml
@@ -816,34 +784,25 @@ data:
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
         <loc>https://yornik.eu/</loc>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
+        <lastmod>2026-11-14</lastmod>
       </url>
     </urlset>
 
   llms.txt: |
-    # yornik.eu
-    > Yornik Heyl is a Cloud Reliability & Platform Engineer based in Rotterdam, Netherlands, specializing in Kubernetes, GitOps, observability, and resilient cloud infrastructure. SRE specialist at Mendix (Siemens).
+    # Yornik Heyl
+    > Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Five years at Mendix (Siemens): incident response, rollout design, GitOps and observability. Open to conversations about platform & reliability work in the Netherlands and remote across Europe.
 
-    ## Primary URL
-    - https://yornik.eu/
+    yornik.eu is a one-page profile written like a runbook. It also describes the author's homelab, a 4-node Talos Kubernetes cluster managed declaratively with Argo CD.
 
-    ## Profile Summary
-    - Cloud Reliability & Platform Engineer (SRE / DevOps / Site Reliability Engineer)
-    - Based in Rotterdam, Netherlands. Available across the Netherlands and Europe
-    - Kubernetes, Docker, Terraform, Helm, CI/CD, Infrastructure as Code
-    - Observability: Prometheus, Grafana, Loki
-    - Cloud platforms: AWS, Azure, GCP
-    - AI-assisted and agent-driven engineering workflows
-    - Strong practical focus on security, automation, and incident response
-
-    ## Professional Links
-    - LinkedIn: https://www.linkedin.com/in/yornik/
-    - GitHub: https://github.com/Yornik
-    - Credly: https://www.credly.com/users/yornik-heyl
+    ## Links
+    - [Website](https://yornik.eu/): the profile page
+    - [GitHub](https://github.com/Yornik): code and infrastructure
+    - [LinkedIn](https://www.linkedin.com/in/yornik/): professional profile
+    - [Credly](https://www.credly.com/users/yornik-heyl): certifications and badges
 
     ## Contact
-    - yornik@yornik.nl
+    - [yornik@yornik.nl](mailto:yornik@yornik.nl)
 
-    ## Credentials and Security
-    - Website security benchmark: 100% website score on Internet.nl, aligned with Dutch NCSC guidance
+    ## Optional
+    - Stack: Kubernetes, Argo CD, Helm, Prometheus, Grafana, Loki, OpenTofu
+    - Website security: 100% website score on Internet.nl, aligned with Dutch NCSC guidance
