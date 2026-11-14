@@ -1150,7 +1150,7 @@ apps:
     helm:
       repoURL: https://valkey.io/valkey-helm/
       chart: valkey
-      targetRevision: 0.12.1
+      targetRevision: 1.0.0
       values: |
         replica:
           enabled: false
@@ -1162,10 +1162,13 @@ apps:
         # volume detaches; the short outage per bump is unavoidable with one
         # RWO replica anyway. Same class of fix as Grafana's maxSurge: 0.
         deploymentStrategy: Recreate
-        dataStorage:
+        # Chart 1.0 replaced `dataStorage` with `persistence` and refuses to
+        # render the old key (UPGRADE.md of the chart). The PVC name stays the
+        # same, so the data stays on the same volume.
+        persistence:
           enabled: true
-          requestedSize: 8Gi
-          className: truenas-ssd-iscsi
+          size: 8Gi
+          storageClass: truenas-ssd-iscsi
           accessModes:
             - ReadWriteOnce
         auth:
