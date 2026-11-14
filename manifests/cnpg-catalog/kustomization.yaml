@@ -13,7 +13,7 @@ kind: Kustomization
 # NOTE: no `namespace:` here. ClusterImageCatalog is cluster-scoped, and
 # kustomize would add the namespace to a kind it does not know.
 resources:
-  - https://raw.githubusercontent.com/cloudnative-pg/artifacts/26046cc60c7442c95c6c2de041b0352363eaa8a6/image-catalogs/catalog-system-trixie.yaml
+  - https://raw.githubusercontent.com/cloudnative-pg/artifacts/a3cce06e1a2030a7257552852042dc5118f9a666/image-catalogs/catalog-system-trixie.yaml
 # Never let a pruned Application take the catalog with it: every cluster
 # would lose its image source. The same guard as on the clusters.
 commonAnnotations:
