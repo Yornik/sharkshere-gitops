@@ -107,9 +107,9 @@ data:
         <div class="band">
           <div class="band-inner">
             <p class="pitch">
-              Cloud reliability engineer. Five years, since 2021, keeping production calm at
-              <a href="https://www.mendix.com">Mendix</a> (Siemens), with incident response,
-              rollout design and observability that means something at&nbsp;03:00.
+              Cloud reliability engineer at <a href="https://www.mendix.com">Mendix</a> (Siemens)
+              since 2021. I handle incidents, design safe rollouts and build monitoring that
+              still makes sense at 3 in the&nbsp;morning.
             </p>
             <div class="band-actions">
               <a class="button" href="mailto:yornik@yornik.nl">yornik@yornik.nl</a>
