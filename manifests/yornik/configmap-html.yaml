@@ -15,7 +15,7 @@ data:
       <title>Yornik Heyl – Cloud Reliability Engineer, Rotterdam</title>
       <meta name="author" content="Yornik Heyl" />
       <meta name="description"
-            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Mendix (Siemens). Happy to network." />
+            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Siemens. Happy to network." />
       <meta name="theme-color" content="#14325c" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="canonical" href="https://yornik.eu/" />
@@ -23,7 +23,7 @@ data:
       <meta property="og:url" content="https://yornik.eu/" />
       <meta property="og:title" content="Yornik Heyl – Cloud Reliability Engineer" />
       <meta property="og:description"
-            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Mendix (Siemens). Happy to network." />
+            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Siemens. Happy to network." />
       <meta property="og:site_name" content="Yornik Heyl" />
       <meta property="og:locale" content="en_GB" />
       <meta property="profile:first_name" content="Yornik" />
@@ -31,7 +31,7 @@ data:
       <meta name="twitter:card" content="summary" />
       <meta name="twitter:title" content="Yornik Heyl – Cloud Reliability Engineer" />
       <meta name="twitter:description"
-            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Mendix (Siemens). Happy to network." />
+            content="Cloud Reliability &amp; Platform Engineer in Rotterdam. Incident response, GitOps and observability for production at Siemens. Happy to network." />
       <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -71,12 +71,8 @@ data:
             },
             "worksFor": {
               "@type": "Organization",
-              "name": "Mendix",
-              "url": "https://www.mendix.com",
-              "parentOrganization": {
-                "@type": "Organization",
-                "name": "Siemens"
-              }
+              "name": "Siemens",
+              "url": "https://www.siemens.com"
             },
             "sameAs": [
               "https://github.com/Yornik",
@@ -107,8 +103,7 @@ data:
         <div class="band">
           <div class="band-inner">
             <p class="pitch">
-              Cloud reliability engineer at <a href="https://www.mendix.com">Mendix</a> (Siemens)
-              since 2021. I handle incidents, design safe rollouts and build monitoring that
+              Cloud reliability engineer at Siemens since 2021. I handle incidents, design safe rollouts and build monitoring that
               still makes sense at 3 in the&nbsp;morning.
             </p>
             <div class="band-actions">
@@ -142,15 +137,26 @@ data:
         </section>
 
         <section class="section" aria-labelledby="h-run">
-          <h2 id="h-run">What I run</h2>
+          <h2 id="h-run">The homelab</h2>
           <div class="content">
+            <p>
+              At home, four small Intel N150 machines run a Kubernetes cluster with 59 applications
+              on it. It hosts my own GitLab, my password manager, my media server, a Fediverse
+              instance and a site where people learn Go in the browser.
+            </p>
+            <p>
+              It also runs the house. Every quarter of an hour it reads the electricity price and
+              decides whether to heat the water boiler. That job used to be a cron script on a
+              Raspberry Pi. It keeps a dashboard for my car too. That one can only read: the build
+              fails if the code could ever send the car a command.
+            </p>
             <p class="lead">
-              This is my homelab. All of it is declarative and every change is a pull request. YAML
-              lint, helm template, kubeconform, per&#8209;chart values rendering and a KSOPS hash guard
-              must pass in CI before merge.
+              All of it is declarative and every change is a pull request. YAML lint, helm template,
+              kubeconform, per&#8209;chart values rendering and a KSOPS hash guard must pass in CI
+              before merge.
             </p>
             <table class="stack" role="table">
-              <caption class="sr-only">Tools I run and how each is set up</caption>
+              <caption class="sr-only">Tools the homelab runs on and how each is set up</caption>
               <thead role="rowgroup">
                 <tr role="row">
                   <th scope="col" role="columnheader">Tool</th>
@@ -187,6 +193,38 @@ data:
           </div>
         </section>
 
+        <section class="section" aria-labelledby="h-wrong">
+          <h2 id="h-wrong">What went wrong</h2>
+          <div class="content">
+            <p>
+              Things break here too. When they do, I write down what happened, why, how I fixed it
+              and what stops it next time. There are 24 of these in git so far. A few favourites:
+            </p>
+            <dl class="facts stories">
+              <div>
+                <dt>The cache that did nothing</dt>
+                <dd>Loki reserved almost 10 GB of memory for a cache that answered 37 requests out of 12,000. I measured it, then turned it off.</dd>
+              </div>
+              <div>
+                <dt>The alert that gave up</dt>
+                <dd>After a storage update I wrote an alert for volumes that go read-only. It cleared itself two hours later while the volumes were still broken, because it watched for the change and not the state.</dd>
+              </div>
+              <div>
+                <dt>Eight quiet months</dt>
+                <dd>The update bot skipped one image for eight months and nothing complained. I found out by wondering where a release had gone.</dd>
+              </div>
+              <div>
+                <dt>The update that broke nothing</dt>
+                <dd>A routine minor bump stopped all DNS automation for days. Every site stayed up, so nobody noticed until a new hostname never appeared.</dd>
+              </div>
+              <div>
+                <dt>One second</dt>
+                <dd>I deleted a music library, the media server got busy, and its health check gave it one second to answer. Kubernetes killed it for being slow.</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
         <section class="section" aria-labelledby="h-up">
           <h2 id="h-up">How it stays up</h2>
           <div class="content">
@@ -194,10 +232,6 @@ data:
               <div>
                 <dt>Backups</dt>
                 <dd>Four HA Postgres clusters, with WAL and a base backup every 3 hours, 14-day point-in-time recovery and a restore runbook.</dd>
-              </div>
-              <div>
-                <dt>Incidents</dt>
-                <dd>24 written post-mortems in git, each with cause, correction and prevention.</dd>
               </div>
               <div>
                 <dt>Dependencies</dt>
@@ -539,11 +573,13 @@ data:
       border-bottom: 1px solid var(--rule);
     }
     .facts > div:first-child { padding-top: 0; }
+    .stories { margin-top: 1.5rem; }
     .facts dt { font-weight: 600; }
     .facts dd { max-width: 62ch; }
 
     @media (min-width: 800px) {
       .facts > div { grid-template-columns: 16rem minmax(0, 1fr); gap: 0; }
+      .facts dt { padding-right: 1.5rem; }
     }
 
     /* Get in touch */
@@ -620,9 +656,9 @@ data:
 
   llms.txt: |
     # Yornik Heyl
-    > Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Five years at Mendix (Siemens): incident response, rollout design, GitOps and observability. Happy to network.
+    > Cloud Reliability & Platform Engineer in Rotterdam, Netherlands. Five years at Siemens: incident response, rollout design, GitOps and observability. Happy to network.
 
-    yornik.eu is a one-page profile written like a runbook. It also describes the author's homelab, a 4-node Talos Kubernetes cluster managed declaratively with Argo CD.
+    yornik.eu is a one-page profile. It also describes the author's homelab, a 4-node Talos Kubernetes cluster managed declaratively with Argo CD.
 
     ## Links
     - [Website](https://yornik.eu/): the profile page
