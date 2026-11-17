@@ -31,7 +31,7 @@ This file describes how the cluster is monitored. It covers metrics, logs, dashb
 | Namespace | `monitoring`, with Pod Security level `privileged`. |
 | Metrics | Prometheus, 1 replica. Retention is 60 days or 45 GiB, on a 50 Gi volume. |
 | Logs | Alloy on each node, then Loki. Loki keeps 60 days on a 30 Gi volume. |
-| Dashboards | Grafana. 25 from the chart, 1 for Postgres, 5 in this repository. |
+| Dashboards | Grafana. 25 from the chart, 1 for Postgres, 6 in this repository. |
 | Alerts | Prometheus rules, then Alertmanager, then e-mail through Resend SMTP. |
 | Access | The web interfaces are on the tailnet only. Grafana and Alertmanager each have a Tailscale Ingress. Prometheus has no address outside the cluster. The 2 NAS push ports are NodePorts without authentication. |
 | Storage | All 4 stateful components use the `truenas-ssd` class. They store their data on the NAS that they monitor. |
@@ -337,7 +337,7 @@ flowchart LR
   classDef ui fill:#f3e8ff,stroke:#8a4fd1,color:#2d1250
 
   Chart["kube-prometheus-stack chart<br/>25 default dashboards"]:::src
-  CM["ConfigMaps with the label<br/>grafana_dashboard: '1'<br/>Tibber, DIRIGERA,<br/>Mazda 6e, Shelly relay,<br/>Shelly control"]:::src
+  CM["ConfigMaps with the label<br/>grafana_dashboard: '1'<br/>Tibber, DIRIGERA (2),<br/>Mazda 6e, Shelly relay,<br/>Shelly control"]:::src
   URL["GitHub raw URL<br/>pinned commit, no hash check<br/>CloudNativePG cluster"]:::src
 
   Side["Dashboard sidecar<br/>watches ConfigMaps"]:::mech
@@ -359,6 +359,7 @@ flowchart LR
 | CloudNativePG cluster | `cloudnative-pg/grafana-dashboards`, pinned by commit | Renovate tracks the commit. The `sha256` key in `apps/values.yaml` is not used. See gap G14. The operator chart dashboard is off, because it queries deprecated metrics. |
 | Tibber | The source repository [`Yornik/tibber-grafana-dashboard`](https://github.com/Yornik/tibber-grafana-dashboard), `dashboard.json` | UID `5rT8QDiVk`. Refresh 1 m, range 24 h, time zone `Europe/Amsterdam`. Redesigned on 2026-10-25: a stopped meter feed blanks the meter values ("Power now", "Today so far" and "Phase current now"), and grey regions mark feed gaps. "Price now" blanks only when the exporter is not scraped. This copy differs from the source in 4 places. The file header lists them. |
 | DIRIGERA Air Quality | `manifests/dirigera-exporter/grafana-dashboard.yaml` | UID `dirigera-air`. Refresh 30 s, range 24 h. |
+| DIRIGERA Lights and Motion | The source repository [`Yornik/dirigera-grafana-dashboard`](https://github.com/Yornik/dirigera-grafana-dashboard), `lights-dashboard.json` | UID `dirigera-lights`. Refresh 30 s, range 24 h. Lights, motion, batteries and the connection of each device. The copy is in `manifests/dirigera-exporter/grafana-dashboard-lights.yaml` and does not differ from the source. The panels need `dirigera-exporter` `v0.5.0`. With an older image every panel says "No reading". |
 | Mazda 6e | The source repository, `dashboards/mazda6e.json` | UID `mazda6e-bridge`. Refresh 5 m, range 7 days. This copy differs from the source. The file header lists the differences. |
 | Shelly relay | The source repository, `dashboards/shelly.json` | UID `shelly-bridge`. Refresh 1 m, range 7 days. This copy differs from the source in 1 place, the data source variable. The cost panels read `tibber_power_price{type="total"}` from `tibber-exporter`. |
 | Shelly control | The source repository [`Yornik/Shelly-control`](https://github.com/Yornik/Shelly-control), `dashboards/shelly-control.json` | UID `shelly-control`. Refresh 1 m, range 2 days. This copy differs from the source in 1 place, the data source variable. The ConfigMap is in `monitoring`, and the Application `shelly-control` owns it. The panel "Rules want, relay is" also reads `shelly_switch_output` from `shelly-bridge`. |
