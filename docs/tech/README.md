@@ -235,7 +235,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `external-dns` | `external-dns` | DNS automation for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party` + `vesper-labs.org`, plus CronJobs for CAA, DANE TLSA and mail records |
 | `monitoring` | `monitoring` | monitoring namespace, Grafana tailnet Ingress, secrets |
 | `tibber-exporter` | `monitoring` | energy metrics exporter (Tibber API), with 3 alerts on the live data and the price — see [runbook](../runbooks/tibber-exporter.md) |
-| `dirigera-exporter` | `monitoring` | IKEA DIRIGERA air-quality and air purifier metrics exporter |
+| `dirigera-exporter` | `monitoring` | IKEA DIRIGERA metrics exporter: air quality, air purifier, lights, motion and batteries |
 | `mazda6e-bridge` | `monitoring` | read-only Mazda 6e car metrics exporter (Mazda cloud API) — see [runbook](../runbooks/mazda6e-bridge.md) |
 | `shelly-bridge` | `monitoring` | read-only Shelly relay metrics exporter for the boiler (local device API) — see [runbook](../runbooks/shelly-bridge.md) |
 | `shelly-control` | `shelly-control` | **switches** the boiler's Shelly relay by the Tibber price from `tibber-exporter`; web page on the tailnet only (`boiler.hedgehog-wage.ts.net`), no login; `ALLOW_SWITCHING` is `"true"`, so an override switches; the rules switch only in Live mode, which needs a confirmation on the page; Live since 2026-10-26 (it starts in Shadow mode on a fresh volume); the Pi cron job is gone since 2026-10-26; dashboard ConfigMap in `monitoring`; 8 alerts on the switches, the relay, the prices, the decisions, the volume and the mode — see [runbook](../runbooks/shelly-control.md) |
