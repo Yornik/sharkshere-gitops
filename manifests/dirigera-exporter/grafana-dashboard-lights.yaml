@@ -1,8 +1,8 @@
 ---
 # Source: Yornik/dirigera-grafana-dashboard, lights-dashboard.json. Make each
 # change there first, then copy the file here unchanged.
-# The panels need the light, motion and battery metrics of dirigera-exporter
-# v0.5.0. The motion counts and the remote presses need v0.6.0.
+# The panels need dirigera-exporter v0.6.0: the motion counts and the remote
+# presses come from its event stream. With v0.5.0 those 3 panels are empty.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -289,7 +289,7 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 8,
+            "w": 12,
             "x": 0,
             "y": 3
           },
@@ -388,7 +388,7 @@ data:
           "gridPos": {
             "h": 4,
             "w": 4,
-            "x": 8,
+            "x": 12,
             "y": 3
           },
           "fieldConfig": {
@@ -479,7 +479,7 @@ data:
         {
           "id": 4,
           "type": "stat",
-          "title": "Motions, last 24 h",
+          "title": "Motions, 24 h",
           "description": "Times each sensor started to see motion in the last 24 hours. Every motion counts, also a short one.",
           "datasource": {
             "type": "prometheus",
@@ -487,8 +487,8 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 3,
-            "x": 12,
+            "w": 4,
+            "x": 16,
             "y": 3
           },
           "fieldConfig": {
@@ -565,7 +565,7 @@ data:
         {
           "id": 5,
           "type": "stat",
-          "title": "Light at the sensor",
+          "title": "Light level",
           "description": "Light at the light sensor of each motion sensor, in lux. 0 is too dark to measure. For scale: a lit room is about 100 to 500 lux.",
           "datasource": {
             "type": "prometheus",
@@ -573,8 +573,8 @@ data:
           },
           "gridPos": {
             "h": 4,
-            "w": 3,
-            "x": 15,
+            "w": 4,
+            "x": 20,
             "y": 3
           },
           "fieldConfig": {
@@ -650,88 +650,6 @@ data:
           ]
         },
         {
-          "id": 6,
-          "type": "bargauge",
-          "title": "Batteries",
-          "description": "Battery of each remote control and motion sensor. Yellow at 30 % or less, red at 15 % or less. A device the hub cannot reach is not listed here: see Needs attention.",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "gridPos": {
-            "h": 4,
-            "w": 6,
-            "x": 18,
-            "y": 3
-          },
-          "fieldConfig": {
-            "defaults": {
-              "min": 0,
-              "max": 100,
-              "unit": "percent",
-              "decimals": 0,
-              "noValue": "No battery devices",
-              "color": {
-                "mode": "thresholds"
-              },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "#d03b3b",
-                    "value": null
-                  },
-                  {
-                    "color": "#fab219",
-                    "value": 15.0001
-                  },
-                  {
-                    "color": "#8a8a8a",
-                    "value": 30.0001
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "options": {
-            "displayMode": "basic",
-            "orientation": "horizontal",
-            "showUnfilled": true,
-            "valueMode": "color",
-            "namePlacement": "left",
-            "minVizHeight": 10,
-            "minVizWidth": 0,
-            "maxVizHeight": 300,
-            "sizing": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "legend": {
-              "showLegend": false
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sort(min by (sensor, room) (ikea_dirigera_device_battery_percent{room=~\"$room\"})) and on() (time() - max(ikea_dirigera_last_success_timestamp_seconds) < 300)",
-              "refId": "A",
-              "instant": true,
-              "range": false,
-              "legendFormat": "{{sensor}}",
-              "exemplar": false
-            }
-          ]
-        },
-        {
           "id": 7,
           "type": "state-timeline",
           "title": "Lights over time",
@@ -800,7 +718,6 @@ data:
                   }
                 }
               ],
-              "noValue": "No readings in this time range",
               "custom": {
                 "fillOpacity": 85,
                 "lineWidth": 0,
@@ -967,7 +884,7 @@ data:
             "uid": "${datasource}"
           },
           "gridPos": {
-            "h": 3,
+            "h": 4,
             "w": 24,
             "x": 0,
             "y": 25
@@ -995,7 +912,6 @@ data:
                   }
                 }
               ],
-              "noValue": "No readings in this time range",
               "custom": {
                 "fillOpacity": 85,
                 "lineWidth": 0,
@@ -1053,7 +969,7 @@ data:
         {
           "id": 10,
           "type": "timeseries",
-          "title": "Light at the sensor over time",
+          "title": "Light level over time",
           "description": "Light at the light sensor of each motion sensor, in lux. A gap means no reading from the sensor or the hub.",
           "datasource": {
             "type": "prometheus",
@@ -1063,7 +979,7 @@ data:
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 28
+            "y": 29
           },
           "fieldConfig": {
             "defaults": {
@@ -1148,7 +1064,8 @@ data:
               "range": true,
               "legendFormat": "{{room}} · {{sensor}}"
             }
-          ]
+          ],
+          "interval": "1m"
         },
         {
           "id": 11,
@@ -1163,7 +1080,7 @@ data:
             "h": 5,
             "w": 24,
             "x": 0,
-            "y": 34
+            "y": 35
           },
           "fieldConfig": {
             "defaults": {
@@ -1180,6 +1097,101 @@ data:
                   {
                     "color": "#3987e5",
                     "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "displayMode": "basic",
+            "orientation": "horizontal",
+            "showUnfilled": true,
+            "valueMode": "text",
+            "namePlacement": "left",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "maxVizHeight": 300,
+            "sizing": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "legend": {
+              "showLegend": false
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "round(sum by (sensor, room) (increase(ikea_remote_presses_total{room=~\"$room\"}[1d]))) and on() (time() - max(ikea_dirigera_last_success_timestamp_seconds) < 300)",
+              "refId": "A",
+              "instant": true,
+              "range": false,
+              "legendFormat": "{{sensor}}",
+              "exemplar": false
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "type": "row",
+          "title": "Batteries and connection",
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 40
+          },
+          "panels": []
+        },
+        {
+          "id": 6,
+          "type": "bargauge",
+          "title": "Batteries now",
+          "description": "Battery of each remote control and motion sensor. Yellow at 30 % or less, red at 15 % or less. A device the hub cannot reach is not listed here: see Needs attention.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 24,
+            "x": 0,
+            "y": 41
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent",
+              "decimals": 0,
+              "noValue": "No battery devices",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "#d03b3b",
+                    "value": null
+                  },
+                  {
+                    "color": "#fab219",
+                    "value": 15.0001
+                  },
+                  {
+                    "color": "#8a8a8a",
+                    "value": 30.0001
                   }
                 ]
               }
@@ -1214,27 +1226,14 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "round(sum by (sensor, room) (increase(ikea_remote_presses_total{room=~\"$room\"}[1d]))) and on() (time() - max(ikea_dirigera_last_success_timestamp_seconds) < 300)",
+              "expr": "sort(min by (sensor, room) (ikea_dirigera_device_battery_percent{room=~\"$room\"})) and on() (time() - max(ikea_dirigera_last_success_timestamp_seconds) < 300)",
               "refId": "A",
               "instant": true,
               "range": false,
-              "legendFormat": "{{room}} · {{sensor}}",
+              "legendFormat": "{{sensor}}",
               "exemplar": false
             }
           ]
-        },
-        {
-          "id": 12,
-          "type": "row",
-          "title": "Batteries and connection",
-          "collapsed": false,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 39
-          },
-          "panels": []
         },
         {
           "id": 13,
@@ -1249,7 +1248,7 @@ data:
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 40
+            "y": 46
           },
           "fieldConfig": {
             "defaults": {
@@ -1295,7 +1294,6 @@ data:
                   }
                 }
               ],
-              "noValue": "No readings in this time range",
               "custom": {
                 "fillOpacity": 85,
                 "lineWidth": 0,
@@ -1363,7 +1361,7 @@ data:
             "h": 14,
             "w": 24,
             "x": 0,
-            "y": 46
+            "y": 52
           },
           "fieldConfig": {
             "defaults": {
@@ -1388,7 +1386,6 @@ data:
                   }
                 }
               ],
-              "noValue": "No readings in this time range",
               "custom": {
                 "fillOpacity": 85,
                 "lineWidth": 0,
