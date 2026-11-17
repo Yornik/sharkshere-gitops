@@ -35,7 +35,22 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
       "id": null,
-      "links": [],
+      "links": [
+        {
+          "type": "dashboards",
+          "title": "DIRIGERA dashboards",
+          "tags": [
+            "dirigera"
+          ],
+          "asDropdown": false,
+          "icon": "external link",
+          "includeVars": false,
+          "keepTime": true,
+          "targetBlank": false,
+          "tooltip": "",
+          "url": ""
+        }
+      ],
       "liveNow": false,
       "panels": [
         {
@@ -725,8 +740,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed",
-                "fixedColor": "#8a8a8a"
+                "mode": "palette-classic-by-name"
               },
               "custom": {
                 "axisBorderShow": false,
@@ -945,8 +959,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed",
-                "fixedColor": "#8a8a8a"
+                "mode": "palette-classic-by-name"
               },
               "custom": {
                 "axisBorderShow": false,
@@ -1085,8 +1098,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed",
-                "fixedColor": "#8a8a8a"
+                "mode": "palette-classic-by-name"
               },
               "custom": {
                 "axisBorderShow": false,
@@ -1221,8 +1233,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed",
-                "fixedColor": "#8a8a8a"
+                "mode": "palette-classic-by-name"
               },
               "custom": {
                 "axisBorderShow": false,
