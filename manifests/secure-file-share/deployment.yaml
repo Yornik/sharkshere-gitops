@@ -123,16 +123,19 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 3
             failureThreshold: 3
-          # Same shape as the other small web apps: requests that keep it
-          # Burstable, memory limit with headroom, no CPU limit. The app
-          # holds at most one 4 MiB chunk in memory by design, so 128 Mi is
-          # generous.
+          # The memory limit is 2 GiB on purpose. The app's frame reader
+          # is bounded per stream (a 4 MiB frame buffer plus a 4 MiB
+          # frame copy, roughly 8-12 MiB per active upload), but a flood
+          # of parallel uploads multiplies that: at the previous 128 Mi
+          # limit the pod was OOMKilled twice during upload testing
+          # (Nov 19 2026, exit 137). The cluster has memory to spare, so
+          # the limit gives the flood room instead of killing it.
           resources:
             requests:
               cpu: 50m
-              memory: 64Mi
+              memory: 256Mi
             limits:
-              memory: 128Mi
+              memory: 2Gi
           # The one writable path the service needs: ciphertext blobs,
           # one file per share. Everything else the pod touches is
           # read-only.
