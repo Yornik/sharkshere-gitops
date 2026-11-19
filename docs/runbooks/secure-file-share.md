@@ -110,5 +110,13 @@ base backup every 3 hours. Follow
 - Prometheus scrapes the app through the ServiceMonitor; the Grafana
   dashboard lives in `manifests/secure-file-share/grafana-dashboard.yaml`
   (source of truth: `dashboards/secure-file-share.json` in the app repo).
+- DANE: `external-dns/cronjob-dane-updater-secure-share.yaml` publishes
+  the TLSA `3 1 1` record for `_443._tcp.secure-share.yornik.eu` daily
+  (03:53, ten minutes after the vesper job). The zone is DNSSEC-signed,
+  so a DANE client can authenticate the endpoint without a CA. Traefik
+  keeps the private key across Let's Encrypt renewals, so the record is
+  stable; a DANE failure self-heals within a day after a key loss.
+  Verify from outside: `dane --verify secure-share.yornik.eu` or
+  `kdig +tlsa _443._tcp.secure-share.yornik.eu TLSA`.
 - The image is `ghcr.io/yornik/secure-file-share`, signed with keyless
   cosign. Renovate opens the version bump; do not pin by hand.
