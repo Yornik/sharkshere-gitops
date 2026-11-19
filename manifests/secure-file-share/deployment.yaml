@@ -42,7 +42,7 @@ spec:
           # Renovate tracks this tag; do not move it to `latest`, which would
           # make the running version unknowable and silently change it under a
           # restart.
-          image: ghcr.io/yornik/secure-file-share:v0.3.0
+          image: ghcr.io/yornik/secure-file-share:v0.3.1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
