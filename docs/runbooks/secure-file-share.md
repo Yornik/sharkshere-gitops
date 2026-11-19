@@ -46,14 +46,16 @@ Do not put it in a chat or a ticket.
 The public API has no deletion path. The control plane on :8081 is the
 only door that deletes, and its token is a separate secret.
 
-1. Run `sops -d manifests/secure-file-share/secure-file-share-control
+1. Open `https://secure-share-control.hedgehog-wage.ts.net` (tailnet
+   only; the Tailscale Ingress is the only route and nothing public
+   reaches it). Without the tailnet, use a port-forward instead:
+   `kubectl -n secure-file-share port-forward deploy/secure-file-share 8081:8081`
+   and open `http://localhost:8081`.
+2. Run `sops -d manifests/secure-file-share/secure-file-share-control
    .enc.yaml` and read `SFS_CONTROL_TOKEN`.
-2. Open a port-forward to the pod:
-   `kubectl -n secure-file-share port-forward deploy/secure-file-share 8081:8081`.
-3. Open `http://localhost:8081`.
-4. Paste the control token and the share link. Lookup shows the
-   bookkeeping (sizes, times, downloads). Delete removes the row and the
-   blob and writes one audit log line.
+3. Paste the control token and the share link into the portal. Lookup
+   shows the bookkeeping (sizes, times, downloads). Delete removes the
+   row and the blob and writes one audit log line.
 
 The fragment of the link is never needed: the control plane reads only
 the id half, so the operator stays blind to the content.

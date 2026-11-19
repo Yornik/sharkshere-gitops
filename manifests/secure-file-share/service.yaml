@@ -26,3 +26,11 @@ spec:
       port: 9090
       targetPort: metrics
       protocol: TCP
+    # The control-plane listener: the Tailscale Ingress
+    # (ingress-tailnet.yaml) is the only route to it. The public
+    # IngressRoute has no path here, so the tailnet proxy device is the
+    # single door, and the control token guards it.
+    - name: control
+      port: 8081
+      targetPort: control
+      protocol: TCP

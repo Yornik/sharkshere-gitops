@@ -21,6 +21,7 @@ how to undo the change.
 | Vaultwarden admin | `https://vaultwarden-admin.hedgehog-wage.ts.net/admin` | the vault only, not `/admin` |
 | TrueNAS | `https://nas.hedgehog-wage.ts.net` | none |
 | Shelly control (boiler) | `https://boiler.hedgehog-wage.ts.net` | none |
+| secure-file-share control | `https://secure-share-control.hedgehog-wage.ts.net` | none |
 
 ## How to reach them
 

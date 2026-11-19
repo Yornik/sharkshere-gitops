@@ -42,7 +42,7 @@ spec:
           # Renovate tracks this tag; do not move it to `latest`, which would
           # make the running version unknowable and silently change it under a
           # restart.
-          image: ghcr.io/yornik/secure-file-share:v0.3.1
+          image: ghcr.io/yornik/secure-file-share:v0.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -55,6 +55,13 @@ spec:
             # asked. Nothing routes to this port from outside the cluster.
             - name: metrics
               containerPort: 9090
+              protocol: TCP
+            # The control-plane listener: the operator's revocation door.
+            # The only route to it is the Tailscale Ingress
+            # (ingress-tailnet.yaml); the public IngressRoute has no path
+            # here, and the control token guards the door itself.
+            - name: control
+              containerPort: 8081
               protocol: TCP
           env:
             # The database lives on shared-pg, like the Servarr databases.
