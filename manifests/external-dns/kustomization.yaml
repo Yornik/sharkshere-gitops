@@ -21,6 +21,7 @@ resources:
   - cronjob-dane-updater-passwords.yaml
   - cronjob-dane-updater-yornik.yaml
   - cronjob-dane-updater-vesper.yaml
+  - cronjob-dane-updater-secure-share.yaml
   - cronjob-mail-sender-vesper.yaml
   - cronjob-mail-updater-yornik.yaml
   - cronjob-no-mail-bokings.yaml

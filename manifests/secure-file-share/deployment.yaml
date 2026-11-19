@@ -42,7 +42,7 @@ spec:
           # Renovate tracks this tag; do not move it to `latest`, which would
           # make the running version unknowable and silently change it under a
           # restart.
-          image: ghcr.io/yornik/secure-file-share:v0.3.1
+          image: ghcr.io/yornik/secure-file-share:v0.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -56,6 +56,13 @@ spec:
             - name: metrics
               containerPort: 9090
               protocol: TCP
+            # The control-plane listener: the operator's revocation door.
+            # The only route to it is the Tailscale Ingress
+            # (ingress-tailnet.yaml); the public IngressRoute has no path
+            # here, and the control token guards the door itself.
+            - name: control
+              containerPort: 8081
+              protocol: TCP
           env:
             # The database lives on shared-pg, like the Servarr databases.
             # The DSN carries the password and the sslmode=disable that an
@@ -67,14 +74,27 @@ spec:
                 secretKeyRef:
                   name: secure-file-share-app
                   key: DATABASE_URL
-            # The bearer token every write path requires. Generate one with
-            # `openssl rand -base64 24`. The binary compares it in constant
-            # time, so a rotation is safe to do at any moment.
-            - name: SFS_ADMIN_TOKEN
+            # The upload token: the bearer token every write path
+            # requires (v0.4 renamed the env var from SFS_ADMIN_TOKEN; the
+            # secret key keeps the old name so the rotation is a code
+            # change, not a sops edit). Generate one with
+            # `openssl rand -base64 24`. The binary compares it in
+            # constant time, so a rotation is safe to do at any moment.
+            - name: SFS_UPLOAD_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: secure-file-share-app
                   key: SFS_ADMIN_TOKEN
+            # The control-plane token: the only door that deletes a share
+            # (legal/compliance revocation by share link, on :8081). A
+            # separate secret from the upload token on purpose, and
+            # nothing routes to the port from outside the cluster. The
+            # app logs one audit line per deletion.
+            - name: SFS_CONTROL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: secure-file-share-control
+                  key: SFS_CONTROL_TOKEN
             # Share links are built against this origin. It must match the
             # IngressRoute host, or a link opens the app on the wrong name
             # and the browser refuses nothing - it just fails to decrypt.

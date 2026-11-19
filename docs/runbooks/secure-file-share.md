@@ -32,14 +32,42 @@ keeps only the bookkeeping. See
 
 Expected result: all three answer within a second.
 
-## How to read the admin token
+## How to read the upload token
 
-NOTE: The token is a bearer token. Anyone holding it can create, list and
-revoke shares. Do not put it in a chat or a ticket.
+NOTE: The token is a bearer token. Anyone holding it can create shares.
+Do not put it in a chat or a ticket.
 
 1. Run `sops -d manifests/secure-file-share/secure-file-share-app.enc.yaml`.
 2. Read `SFS_ADMIN_TOKEN`.
-3. Paste the token into the "Admin token" field of the upload form.
+3. Paste the token into the "Upload token" field of the upload form.
+
+## How to revoke a share (legal/compliance)
+
+The public API has no deletion path. The control plane on :8081 is the
+only door that deletes, and its token is a separate secret.
+
+1. Open `https://secure-share-control.hedgehog-wage.ts.net` (tailnet
+   only; the Tailscale Ingress is the only route and nothing public
+   reaches it). Without the tailnet, use a port-forward instead:
+   `kubectl -n secure-file-share port-forward deploy/secure-file-share 8081:8081`
+   and open `http://localhost:8081`.
+2. Run `sops -d manifests/secure-file-share/secure-file-share-control
+   .enc.yaml` and read `SFS_CONTROL_TOKEN`.
+3. Paste the control token and the share link into the portal. Lookup
+   shows the bookkeeping (sizes, times, downloads). Delete removes the
+   row and the blob and writes one audit log line.
+
+The fragment of the link is never needed: the control plane reads only
+the id half, so the operator stays blind to the content.
+
+## How to rotate the control token
+
+1. Edit `manifests/secure-file-share/secure-file-share-control.enc.yaml`
+   with `sops`. Replace `SFS_CONTROL_TOKEN` with `openssl rand -hex 24`.
+2. Open a pull request. Merge it.
+3. Restart the deployment.
+
+Expected result: the old control token stops working after the restart.
 
 ## How to rotate the token
 
@@ -81,5 +109,16 @@ base backup every 3 hours. Follow
 - The blob PVC is the only state outside Postgres. It holds a rolling
   window (shares live 7 days by default, 90 at most), not an archive; the
   class can expand if the window ever needs to be wider.
+- Prometheus scrapes the app through the ServiceMonitor; the Grafana
+  dashboard lives in `manifests/secure-file-share/grafana-dashboard.yaml`
+  (source of truth: `dashboards/secure-file-share.json` in the app repo).
+- DANE: `external-dns/cronjob-dane-updater-secure-share.yaml` publishes
+  the TLSA `3 1 1` record for `_443._tcp.secure-share.yornik.eu` daily
+  (03:53, ten minutes after the vesper job). The zone is DNSSEC-signed,
+  so a DANE client can authenticate the endpoint without a CA. Traefik
+  keeps the private key across Let's Encrypt renewals, so the record is
+  stable; a DANE failure self-heals within a day after a key loss.
+  Verify from outside: `dane --verify secure-share.yornik.eu` or
+  `kdig +tlsa _443._tcp.secure-share.yornik.eu TLSA`.
 - The image is `ghcr.io/yornik/secure-file-share`, signed with keyless
   cosign. Renovate opens the version bump; do not pin by hand.
