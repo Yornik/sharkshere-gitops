@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-file-share
+  namespace: secure-file-share
+  labels:
+    app.kubernetes.io/name: secure-file-share
+    app.kubernetes.io/instance: secure-file-share
+spec:
+  replicas: 1
+  # Recreate stops the old pod before the new pod starts: the blob PVC is
+  # ReadWriteOnce, and with RollingUpdate the new pod waits on
+  # FailedAttachVolume while the old pod still holds the volume. See
+  # docs/incidents/grafana-rwo-multi-attach.md and
+  # docs/incidents/2026-09-08-gitlab-valkey-rollingupdate-multi-attach.md,
+  # the same reasoning as shelly-control.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: secure-file-share
+      app.kubernetes.io/instance: secure-file-share
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: secure-file-share
+        app.kubernetes.io/instance: secure-file-share
+    spec:
+      # fsGroup gives group 65532 write access to the NFS volume, the same
+      # arrangement shelly-control and go-practice-web run with on
+      # truenas-ssd; the container user is already 65532 via the image.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      containers:
+        - name: secure-file-share
+          # Static Rust binary on a scratch base. Source, CI and releases:
+          # github.com/Yornik/secure-file-share
+          #
+          # Renovate tracks this tag; do not move it to `latest`, which would
+          # make the running version unknowable and silently change it under a
+          # restart.
+          image: ghcr.io/yornik/secure-file-share:v0.3.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            # The Prometheus exposition listens separately, on purpose: the
+            # IngressRoute in front of :8080 carries no path constraint, so
+            # /metrics served there would be world-readable and
+            # sfs_build_info would name the running commit to anyone who
+            # asked. Nothing routes to this port from outside the cluster.
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            # The database lives on shared-pg, like the Servarr databases.
+            # The DSN carries the password and the sslmode=disable that an
+            # in-cluster connection needs. Both values come from the
+            # SOPS-encrypted Secret, so a rotation is one edit plus a
+            # restart.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secure-file-share-app
+                  key: DATABASE_URL
+            # The bearer token every write path requires. Generate one with
+            # `openssl rand -base64 24`. The binary compares it in constant
+            # time, so a rotation is safe to do at any moment.
+            - name: SFS_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: secure-file-share-app
+                  key: SFS_ADMIN_TOKEN
+            # Share links are built against this origin. It must match the
+            # IngressRoute host, or a link opens the app on the wrong name
+            # and the browser refuses nothing - it just fails to decrypt.
+            - name: SFS_BASE_URL
+              value: https://secure-share.yornik.eu
+            # 1 GiB is the explicit ceiling for one share, ciphertext
+            # counted. Since v0.2 the bytes land on the blob PVC, not in
+            # shared-pg, so the ceiling is a volume-budget line: the PVC
+            # below holds a rolling window of shares and must fit the
+            # biggest ones that window will ever carry.
+            - name: SFS_MAX_UPLOAD_BYTES
+              value: "1073741824"
+            - name: SFS_IMPORT_MAX_BYTES
+              value: "1073741824"
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Same shape as the other small web apps: requests that keep it
+          # Burstable, memory limit with headroom, no CPU limit. The app
+          # holds at most one 4 MiB chunk in memory by design, so 128 Mi is
+          # generous.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          # The one writable path the service needs: ciphertext blobs,
+          # one file per share. Everything else the pod touches is
+          # read-only.
+          volumeMounts:
+            - name: blobs
+              mountPath: /var/lib/secure-file-share
+      volumes:
+        - name: blobs
+          persistentVolumeClaim:
+            claimName: secure-file-share-blobs

@@ -77,6 +77,13 @@ spec:
         login: true
         passwordSecret:
           name: shared-pg-role-seerr
+      # Login role of the file-share app, created with the database it owns
+      # in databases.yaml. Same pattern as the Servarr roles above it.
+      - name: secure-file-share
+        ensure: present
+        login: true
+        passwordSecret:
+          name: shared-pg-role-secure-file-share
   monitoring:
     # Deprecated in CNPG; will be removed. We ship our own PodMonitor in
     # podmonitor.yaml so we control the release label Prometheus filters on.

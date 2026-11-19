@@ -4,8 +4,8 @@ This repository holds the desired state of the sharkshere Kubernetes cluster. Ar
 
 ## What this repository does
 
-- It defines 57 ArgoCD Applications for a 4-node Talos Linux cluster.
-- It serves 15 public HTTPS domains. Examples are GitLab CE, OpenProject, Vaultwarden, Jellyfin and a Fediverse instance.
+- It defines 58 ArgoCD Applications for a 4-node Talos Linux cluster.
+- It serves 16 public HTTPS domains. Examples are GitLab CE, OpenProject, Vaultwarden, Jellyfin and a Fediverse instance.
 - It keeps all secrets encrypted with SOPS and age. ArgoCD decrypts them in the cluster with KSOPS.
 
 This repository is one of three:

@@ -1,0 +1,25 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-secure-file-share
+  namespace: secure-file-share
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        # A backstop on the one door a credential gets tried at: the admin
+        # API. Every write under /api/v1 without a valid bearer token
+        # answers 401, so this rule counts token guessing.
+        #
+        # Attached to the /api/v1 route only - see ingressroute.yaml. The
+        # public pages answer 404 and 410 to unknown or dead shares and
+        # must not be counted: a recipient re-opening an expired link from
+        # a NAT'd household is ordinary traffic. The numbers match the
+        # settled Vaultwarden and soiree ones, loose on purpose: the
+        # household behind one address is exactly the traffic a mistaken
+        # ban would hit.
+        statuscode: "401-403"
+        maxretry: 30
+        findtime: 10m
+        bantime: 1h
+        enabled: "true"

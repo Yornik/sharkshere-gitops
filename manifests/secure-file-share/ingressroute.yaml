@@ -1,0 +1,50 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: secure-file-share
+  namespace: secure-file-share
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # DNS must resolve before this route exists - Traefik does not retry a
+    # failed ACME order, so an IngressRoute that appears first burns the
+    # attempt and the certificate has to be prompted by restarting Traefik.
+    # The Service annotations publish the DNS record through ExternalDNS,
+    # so merge those first and wait for the record before this route.
+
+    # The one door a wrong credential can be tried at: every /api/v1 write
+    # without a valid bearer token answers 401. fail2ban watches only this
+    # path, for the same reason as soiree: a rule that counts across the
+    # whole application counts ordinary traffic, and the users here sit
+    # behind NAT and CGNAT.
+    - match: Host(`secure-share.yornik.eu`) && PathPrefix(`/api/v1`)
+      kind: Rule
+      priority: 10
+      middlewares:
+        - name: no-compression
+          namespace: traefik
+        - name: rate-limit
+          namespace: traefik
+        - name: fail2ban-secure-file-share
+          namespace: secure-file-share
+      services:
+        - name: secure-file-share
+          port: 8080
+
+    # Everything else: the pages, the metadata and the ciphertext
+    # downloads. no-compression because the body is ciphertext - it does
+    # not compress, so a gzip pass only burns CPU on a 512 MiB share.
+    - match: Host(`secure-share.yornik.eu`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: no-compression
+          namespace: traefik
+        - name: rate-limit
+          namespace: traefik
+      services:
+        - name: secure-file-share
+          port: 8080
+  tls:
+    certResolver: letsencrypt
