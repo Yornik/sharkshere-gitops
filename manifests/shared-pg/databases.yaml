@@ -88,3 +88,18 @@ spec:
   name: seerr
   owner: seerr
   databaseReclaimPolicy: retain
+---
+# One database of the file-share app. Ciphertext chunks up to 4 MiB per row,
+# so it stays small: the app caps a share at 512 MiB and sweeps expired
+# shares away hourly.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: secure-file-share
+  namespace: shared-pg
+spec:
+  cluster:
+    name: shared-pg
+  name: secure-file-share
+  owner: secure-file-share
+  databaseReclaimPolicy: retain

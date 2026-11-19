@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-file-share
+  namespace: secure-file-share
+  labels:
+    app.kubernetes.io/name: secure-file-share
+    app.kubernetes.io/instance: secure-file-share
+  annotations:
+    external-dns.kubernetes.io/hostname: secure-share.yornik.eu
+    external-dns.kubernetes.io/target: jump.fedishark.eu
+    external-dns.kubernetes.io/ttl: "3600"
+spec:
+  selector:
+    app.kubernetes.io/name: secure-file-share
+    app.kubernetes.io/instance: secure-file-share
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    # Selected by the ServiceMonitor. Present on the Service but absent
+    # from the IngressRoute, which is what keeps the exposition reachable
+    # from Prometheus and from nowhere else.
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP
