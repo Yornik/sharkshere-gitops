@@ -1,12 +1,17 @@
 # secure-file-share runbook
 
 secure-file-share shares one file with one link (`secure-share.yornik.eu`).
-The browser encrypts the file. The server stores ciphertext. The key lives in
-the link fragment, which the browser does not send. Source, CI and releases:
+The browser encrypts the file with a hybrid post-quantum key (ML-KEM-1024
+encapsulation fused with a 256-bit random value). The server stores
+ciphertext. The unlock material lives in the link fragment, which the
+browser does not send. Source, CI and releases:
 `github.com/Yornik/secure-file-share`.
 
 The app is one stateless replica. Its database is `secure-file-share` on
-`shared-pg`, created through a managed role, like the Servarr databases. See
+`shared-pg`, created through a managed role, like the Servarr databases.
+Since v0.2 the ciphertext itself is one `<id>.sfs` file per share on the
+`secure-file-share-blobs` PVC (truenas-ssd, 10 Gi, Prune=false); Postgres
+keeps only the bookkeeping. See
 [`../tech/database.md`](../tech/database.md) for the shared-pg pattern.
 
 ## Documents
@@ -14,6 +19,7 @@ The app is one stateless replica. Its database is `secure-file-share` on
 | Document | Read it when |
 |---|---|
 | `manifests/secure-file-share/` | You change the deployment, the routes or the secrets. |
+| `manifests/secure-file-share/pvc-blobs.yaml` | You change the blob volume. |
 | `manifests/shared-pg/databases.yaml` | You touch the database of the app. |
 | The repo `docs/` upstream | You want the wire format or the threat model. |
 
@@ -66,9 +72,14 @@ base backup every 3 hours. Follow
 
 ## Notes
 
-- A share dies by expiry or by burn. The sweeper removes expired rows hourly;
-  the link is dead the moment `expires_at` passes, not when the row goes.
+- A share dies by expiry or by burn. The sweeper removes expired rows (and
+  their blob files) hourly; the link is dead the moment `expires_at`
+  passes, not when the row goes.
 - A URL import reads the plaintext once on the server. That is by design.
-  The database still holds ciphertext only.
+  Postgres still never sees anything but bookkeeping, and the volume never
+  sees anything but ciphertext.
+- The blob PVC is the only state outside Postgres. It holds a rolling
+  window (shares live 7 days by default, 90 at most), not an archive; the
+  class can expand if the window ever needs to be wider.
 - The image is `ghcr.io/yornik/secure-file-share`, signed with keyless
   cosign. Renovate opens the version bump; do not pin by hand.

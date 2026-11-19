@@ -991,8 +991,10 @@ apps:
     path: manifests/soiree
 
   # Zero-knowledge file sharing (secure-share.yornik.eu): the browser
-  # encrypts, Postgres stores ciphertext chunks, the key lives in the link
-  # fragment. One replica; its database is a managed role + Database on
+  # encrypts with a hybrid post-quantum key (ML-KEM-1024 + a 256-bit random
+  # value), the unlock material lives in the link fragment, ciphertext
+  # blobs ride the secure-file-share-blobs PVC and Postgres keeps only the
+  # bookkeeping. One replica; its database is a managed role + Database on
   # shared-pg, like the Servarr apps, not its own CNPG cluster. Admin token
   # and DSN: manifests/secure-file-share/secure-file-share-app.enc.yaml.
   # First deploy, DNS, the token, restore: docs/runbooks/secure-file-share.md.
