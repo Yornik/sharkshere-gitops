@@ -10,5 +10,6 @@ resources:
   - middleware-redirect-https.yaml
   - middleware-fail2ban.yaml
   - servicemonitor.yaml
+  - grafana-dashboard.yaml
 generators:
   - secret-generator.yaml

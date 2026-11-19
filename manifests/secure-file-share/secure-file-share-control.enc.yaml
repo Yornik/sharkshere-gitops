@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: secure-file-share-control
+    namespace: secure-file-share
+type: Opaque
+stringData:
+    SFS_CONTROL_TOKEN: ENC[AES256_GCM,data:Utw2FTkqwkjQkH8OUZo211Cg83TwhVxtyqzTiGVyit0A1wXxaxA9GmBlkEI41n8i,iv:AShc3ZsoHwDaL3KV2qJheC7lk/WpKdsuCkEdeOrkX0A=,tag:k5xO2krU/3SP7foHnFJBNg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAwWUxkckhCU3pVWlBiUk42
+            Z2kvNHRSQWFITjhPTWNLWlU3YkpNQWFBMndzCjlaZU9UR3hNUnRqK1doTEs4WXFs
+            Z09nbFErSmxaR2JjcWFETCt4WGY0LzgKLS0tIDVVNmN1WTlhOWc4TUxhVkVUV3Qy
+            R1hTSDlLemJzaHRObjBmZUFlNlptQUkKKK26iWGYh0vGDVlOmZQu3huom2aWdVG1
+            Xb4dwHoTi8HFlZqfW0NA3MVd5cxwy+uXG6+pcZpX3x4HWmc0MHPVCA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1uhgqfcm3tfuzv3tq8d62medf04g977zas2hr9wmntc8wjn2e3asqvp7adp
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-19T20:57:33Z"
+    mac: ENC[AES256_GCM,data:ELhOKAnMtApncyoXQXOuCR0KLtj9Y0VbODUuhaXrgpTrWQ3h6sb7VN6jqVjbnrriDYrgP6LKWXgDDiESKKefe784A0aQzVXPEKYsvpPjoycLCRWaWytXlAdMMNzrpnwqyjYYpaXt4brMh/CrRqWhFIV3TPg46NU4VybMee/y4Hg=,iv:6qOlFMRyWhaR2/zLG6OHgEqifsqfybBdAZFFO0nhCsU=,tag:H6dG8P8wNXKDvU7r4XH9wQ==,type:str]
+    version: 3.13.3
