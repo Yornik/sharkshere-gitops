@@ -10,7 +10,7 @@ env:
   # renovate: datasource=pypi depName=anthropic
   ANTHROPIC_VERSION: 2.11.0
   # renovate: datasource=pypi depName=pyyaml
-  PYYAML_VERSION: 6.0.3
+  PYYAML_VERSION: 6.0.4
   # CRD schemas (IngressRoute, Middleware, CNPG Cluster, Application,
   # PodMonitor, ...). Without this, kubeconform skips every CRD-typed
   # resource — more than half the repo — while reporting green.
