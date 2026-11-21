@@ -208,3 +208,27 @@ spec:
     - name: dummy
       port: 80
       targetPort: 80
+---
+# health.vesper-labs.org is the host of vesper-health, the food and health
+# tracker. It is a subdomain, so it takes the CNAME to the jump hosts, as
+# registry.git.yornik.eu above. The zone already has its --domain-filter.
+#
+# The record is here, not on the Service of the app. The name must resolve
+# before the IngressRoute of the app exists: Traefik does not try a failed
+# ACME order again on a timer. This Service merges first, in a change of its
+# own. See docs/runbooks/go-practice.md, step 3 of the first deploy.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-health-vesper-labs-org
+  namespace: external-dns
+  annotations:
+    external-dns.kubernetes.io/hostname: health.vesper-labs.org
+    external-dns.kubernetes.io/target: jump.fedishark.eu
+    external-dns.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
