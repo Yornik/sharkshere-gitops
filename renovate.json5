@@ -23,6 +23,11 @@
     {
       matchUpdateTypes: [
         'patch',
+        // A digest bump (2026-11-24, Yorde) moves an already version-pinned
+        // image to a rebuilt image. Semantically the safest update class:
+        // the version pin did not change. Argocd-managed digest bumps now
+        // automerge; bootstrap/ digest bumps keep their manual-apply rule.
+        'digest',
       ],
       groupName: 'patch updates',
       automerge: true,
