@@ -17,8 +17,9 @@ data:
     \        \"datasource\": {\n          \"type\": \"prometheus\",\n          \"uid\": \"${datasource}\"\n        },\n  \
     \      \"query\": {\n          \"query\": \"label_values(homeconnect_appliance_info, appliance)\",\n          \"refId\"\
     : \"appliance\"\n        },\n        \"refresh\": 2,\n        \"includeAll\": true,\n        \"multi\": true,\n      \
-    \  \"sort\": 1,\n        \"current\": {\n          \"text\": \"All\",\n          \"value\": \"$__all\"\n        }\n  \
-    \    }\n    ]\n  },\n  \"panels\": [\n    {\n      \"id\": 1,\n      \"type\": \"stat\",\n      \"title\": \"Needs attention\"\
+    \  \"sort\": 1,\n        \"current\": {\n          \"selected\": true,\n          \"text\": [\n            \"All\"\n \
+    \         ],\n          \"value\": [\n            \"$__all\"\n          ]\n        },\n        \"allValue\": \".*\"\n\
+    \      }\n    ]\n  },\n  \"panels\": [\n    {\n      \"id\": 1,\n      \"type\": \"stat\",\n      \"title\": \"Needs attention\"\
     ,\n      \"description\": \"Appliances with connected == 0 right now. Green 0, red 1 or more.\",\n      \"datasource\"\
     : {\n        \"type\": \"prometheus\",\n        \"uid\": \"${datasource}\"\n      },\n      \"gridPos\": {\n        \"\
     h\": 3,\n        \"w\": 6,\n        \"x\": 0,\n        \"y\": 0\n      },\n      \"targets\": [\n        {\n         \
@@ -91,7 +92,7 @@ data:
     \        \"graphMode\": \"none\",\n        \"justifyMode\": \"auto\",\n        \"orientation\": \"auto\"\n      }\n  \
     \  },\n    {\n      \"id\": 100,\n      \"type\": \"row\",\n      \"title\": \"$appliance\",\n      \"collapsed\": false,\n\
     \      \"gridPos\": {\n        \"h\": 1,\n        \"w\": 24,\n        \"x\": 0,\n        \"y\": 4\n      },\n      \"\
-    panels\": [],\n      \"repeat\": \"appliance\",\n      \"repeatDirection\": \"h\"\n    },\n    {\n      \"id\": 101,\n\
+    panels\": [],\n      \"repeat\": \"appliance\",\n      \"repeatDirection\": \"v\"\n    },\n    {\n      \"id\": 101,\n\
     \      \"type\": \"stat\",\n      \"title\": \"State\",\n      \"description\": \"The active BSH operation state, e.g.\
     \ Inactive, Ready, Run, Finished.\",\n      \"datasource\": {\n        \"type\": \"prometheus\",\n        \"uid\": \"\
     ${datasource}\"\n      },\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 8,\n        \"x\": 0,\n        \"y\"\
