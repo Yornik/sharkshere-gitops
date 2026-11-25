@@ -16,7 +16,12 @@ spec:
   endpoints:
     - port: http
       path: /metrics
-      interval: 30s
+      # 15s: the exporter's gauges update instantly from its event streams,
+      # so the scrape interval is the whole delay between appliance and
+      # dashboard. Scraping the local endpoint costs nothing against the
+      # Home Connect budget; 30s is the house standard, 15s halves the
+      # feedback for door and state tiles.
+      interval: 15s
       scrapeTimeout: 10s
       metricRelabelings:
         # Every new pod gets a new name and IP. With these labels, each pod

@@ -23,8 +23,13 @@ metadata:
   namespace: monitoring
   labels:
     grafana_dashboard: '1'
+# The data key is the FILE the sidecar writes: /tmp/dashboards/<key>.
+# Two ConfigMaps with the same key overwrite each other's file every poll
+# cycle, and one dashboard silently disappears (measured 2026-11-25:
+# homeconnect-dashboard.json collided with tibber-dashboard's dashboard.json
+# and Grafana showed only one of the two). Keep the key unique.
 data:
-  dashboard.json: |-
+  homeconnect.json: |-
     {
       "uid": "homeconnect",
       "title": "Home Connect",
@@ -34,7 +39,7 @@ data:
       "editable": false,
       "graphTooltip": 1,
       "style": "dark",
-      "refresh": "30s",
+      "refresh": "15s",
       "schemaVersion": 39,
       "time": {"from": "now-24h", "to": "now"},
       "templating": {
@@ -43,7 +48,7 @@ data:
             "name": "datasource",
             "type": "datasource",
             "query": "prometheus",
-            "current": {"text": "Prometheus", "value": "Prometheus"},
+            "current": {"selected": true, "text": "Prometheus", "value": "Prometheus"},
             "hide": 2
           },
           {

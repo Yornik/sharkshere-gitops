@@ -1,8 +1,11 @@
 ---
 # The Tibber dashboard. Source: Yornik/tibber-grafana-dashboard, dashboard.json.
-# This copy differs from the source in 4 places: UID 5rT8QDiVk (the UID this
+# This copy differs from the source in 5 places: UID 5rT8QDiVk (the UID this
 # Grafana has always used), time zone Europe/Amsterdam (the source uses the
-# browser's), editable false, and a hidden data source variable.
+# browser's), editable false, a hidden data source variable, and the data key
+# tibber.json - the sidecar writes one file per data key, and the source name
+# dashboard.json collided with the homeconnect dashboard (see
+# docs/incidents/2026-11-25-grafana-sidecar-dashboard-key-collision.md).
 # Grafana aligns 1d query steps to the viewer's current UTC offset, not to the
 # offset of each day, so a step can sit 1 hour before or after local midnight.
 # The per-day panels take max_over_time(...[1d:1m] offset -25h) of the
@@ -17,7 +20,7 @@ metadata:
   labels:
     grafana_dashboard: '1'
 data:
-  dashboard.json: |-
+  tibber.json: |-
     {
       "uid": "5rT8QDiVk",
       "title": "Tibber",
