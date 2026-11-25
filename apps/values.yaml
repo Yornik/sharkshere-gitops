@@ -631,6 +631,12 @@ apps:
     namespace: monitoring
     path: manifests/shelly-bridge
 
+  # Read-only Siemens Home Connect exporter (dishwasher, coffee maker, hob).
+  # To replace its credentials, see docs/runbooks/siemens-home-connect-exporter.md.
+  siemens-home-connect-exporter:
+    namespace: monitoring
+    path: manifests/siemens-home-connect-exporter
+
   # Not read-only: this one SWITCHES the boiler, through the same Shelly relay,
   # by the Tibber price. Its own namespace keeps it away from the read-only
   # exporters in monitoring. ALLOW_SWITCHING in manifests/shelly-control/ is

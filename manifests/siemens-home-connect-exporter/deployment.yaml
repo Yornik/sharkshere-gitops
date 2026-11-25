@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: siemens-home-connect-exporter
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: siemens-home-connect-exporter
+    app.kubernetes.io/instance: siemens-home-connect-exporter
+spec:
+  replicas: 1
+  # The exporter holds 3 SSE streams against the same Home Connect account.
+  # A second pod would open 3 more channels against a per-account limit of
+  # 10 and would double the daily request budget burn. The ServiceMonitor
+  # also drops the pod label, so 2 pods would send the same series.
+  # Recreate keeps exactly 1 pod. If the API server has added the default
+  # rollingUpdate block to the live object, remove it 1 time by hand, as in
+  # docs/incidents/2026-09-08-gitlab-valkey-rollingupdate-multi-attach.md
+  # (tibber-exporter needed the same on 2026-10-25).
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: siemens-home-connect-exporter
+      app.kubernetes.io/instance: siemens-home-connect-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: siemens-home-connect-exporter
+        app.kubernetes.io/instance: siemens-home-connect-exporter
+    spec:
+      containers:
+        - name: hce
+          # Rust Home Connect exporter. Source, CI and signed images:
+          # github.com/Yornik/Siemens-home-connect-exporter
+          image: ghcr.io/yornik/siemens-home-connect-exporter:v0.3.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: HCE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: homeconnect
+                  key: client-id
+            - name: HCE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: homeconnect
+                  key: client-secret
+            - name: HCE_REFRESH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: homeconnect
+                  key: refresh-token
+          ports:
+            - name: http
+              containerPort: 9780
+              protocol: TCP
+          # /healthz answers while the HTTP listener runs and does not depend
+          # on Home Connect. An appliance outage or an API 429 neither
+          # restarts the pod nor takes it out of service: the exporter
+          # retries its streams inside the process, and
+          # manifests/monitoring/prometheusrule-siemens-home-connect.yaml
+          # watches the data.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the
+            # full reasoning. The exporter is a small static Rust binary with
+            # 3 idle SSE connections; the request matches the sibling
+            # exporters and the limit leaves 4x headroom.
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              memory: 128Mi

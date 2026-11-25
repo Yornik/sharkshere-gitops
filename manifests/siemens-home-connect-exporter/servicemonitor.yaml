@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: siemens-home-connect-exporter
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: siemens-home-connect-exporter
+      app.kubernetes.io/instance: siemens-home-connect-exporter
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        # Every new pod gets a new name and IP. With these labels, each pod
+        # change starts new series. Without them, the series continue: the
+        # Deployment uses Recreate, so a rollout never runs 2 pods, and all
+        # pods read the same Home Connect account anyway. The `up` series
+        # keeps both labels. Same reasoning as the tibber-exporter monitor.
+        - action: labeldrop
+          regex: pod|instance
