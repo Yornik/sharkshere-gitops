@@ -9,5 +9,6 @@ resources:
   - prometheusrule-cnpg.yaml
   - prometheusrule-tibber.yaml
   - prometheusrule-shelly-control.yaml
+  - prometheusrule-siemens-home-connect.yaml
 generators:
   - secret-generator.yaml

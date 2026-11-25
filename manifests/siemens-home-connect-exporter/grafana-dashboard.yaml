@@ -1,0 +1,597 @@
+---
+# The Home Connect dashboard. Written for this deployment; the visual
+# language (dark, 30s refresh, 24h window, shared crosshair, stat tiles
+# over step timeseries, muted fixed-color lines) follows the DIRIGERA
+# dashboard in manifests/dirigera-exporter/grafana-dashboard.yaml.
+# Copy notes: UID homeconnect (first Grafana UID of this dashboard), time
+# zone Europe/Amsterdam, editable false, hidden data source variable with
+# Prometheus SELECTED - an unselected variable makes Grafana pick the first
+# data source by name and every panel shows No data.
+# The top strip crosses into the tibber-exporter data (job tibber-exporter):
+# Price now, Run the dishwasher now? and Cheaper window in use
+# tibber_power_price, tibber_power_price_level and
+# tibber_power_price_level_next_hour, all 15-minute slots. The exporter
+# publishes no forecast beyond the next hour, so the cheaper-window tile
+# counts only to the top of the hour.
+# The appliance rows repeat over the `appliance` label of
+# homeconnect_appliance_info, so a paired appliance gets its own row after
+# the next exporter rollout, with no dashboard change.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeconnect-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: '1'
+data:
+  dashboard.json: |-
+    {
+      "uid": "homeconnect",
+      "title": "Home Connect",
+      "description": "Siemens home appliances through the Home Connect exporter: dishwasher, coffee maker and hob state, programs and cycles. Phone first.",
+      "tags": ["homeconnect", "siemens", "appliances"],
+      "timezone": "Europe/Amsterdam",
+      "editable": false,
+      "graphTooltip": 1,
+      "style": "dark",
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "time": {"from": "now-24h", "to": "now"},
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {"text": "Prometheus", "value": "Prometheus"},
+            "hide": 2
+          },
+          {
+            "name": "appliance",
+            "type": "query",
+            "datasource": {"type": "prometheus", "uid": "${datasource}"},
+            "query": {"query": "label_values(homeconnect_appliance_info, appliance)", "refId": "appliance"},
+            "refresh": 2,
+            "includeAll": true,
+            "multi": true,
+            "sort": 1,
+            "current": {"text": "All", "value": "$__all"}
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Needs attention",
+          "description": "Appliances with connected == 0 right now. Green 0, red 1 or more.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 3, "w": 6, "x": 0, "y": 0},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "sum(homeconnect_connected{job=\"siemens-home-connect-exporter\"} == 0) or vector(0)",
+              "legendFormat": "offline",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {"type": "value", "options": {"0": {"text": "all appliances online", "color": "green", "index": 0}}}
+              ],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Price now",
+          "description": "Tibber price per kWh incl. tax of the current 15-minute slot, from the tibber-exporter.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 3, "w": 6, "x": 6, "y": 0},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "max by () (tibber_power_price{job=\"tibber-exporter\", type=\"total\"})",
+              "legendFormat": "per kWh",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "currencyEUR",
+              "decimals": 3,
+              "noValue": "—",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Run the dishwasher now?",
+          "description": "Tibber level of the current 15-minute slot. Yes at Cheap or Very cheap.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 3, "w": 6, "x": 12, "y": 0},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "max by () (tibber_power_price_level{job=\"tibber-exporter\"})",
+              "legendFormat": "level",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "1": {"text": "Yes — very cheap", "color": "green", "index": 0},
+                    "2": {"text": "Yes — cheap", "color": "green", "index": 1},
+                    "3": {"text": "Not yet", "color": "yellow", "index": 2},
+                    "4": {"text": "No", "color": "orange", "index": 3},
+                    "5": {"text": "No", "color": "red", "index": 4}
+                  }
+                }
+              ],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Cheaper window in",
+          "description": "Minutes to the top of the hour, when the next hour is Cheap or better and now is not. Empty when the next hour is not cheaper.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 3, "w": 6, "x": 18, "y": 0},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "(max by () (tibber_power_price_level{job=\"tibber-exporter\"}) >= bool 3) * (max by () (tibber_power_price_level_next_hour{job=\"tibber-exporter\"}) <= bool 2) * ((3600 - (time() % 3600)) / 60)",
+              "legendFormat": "minutes",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "m",
+              "decimals": 0,
+              "noValue": "—",
+              "mappings": [
+                {"type": "value", "options": {"0": {"text": "—", "color": "transparent", "index": 0}}}
+              ],
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 100,
+          "type": "row",
+          "title": "$appliance",
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 4},
+          "panels": [],
+          "repeat": "appliance",
+          "repeatDirection": "h"
+        },
+        {
+          "id": 101,
+          "type": "stat",
+          "title": "State",
+          "description": "The active BSH operation state, e.g. Inactive, Ready, Run, Finished.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 4, "w": 8, "x": 0, "y": 5},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "homeconnect_operation_state{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\"} == 1",
+              "legendFormat": "{{state}}",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "name",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 102,
+          "type": "stat",
+          "title": "Time remaining",
+          "description": "Remaining program time. Empty when no program runs.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 4, "w": 8, "x": 8, "y": 5},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "homeconnect_program_time_remaining_seconds{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\"}",
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "—",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 107,
+          "type": "timeseries",
+          "title": "Cycles per hour",
+          "description": "ProgramFinished events per hour. For the coffee maker, each finished program is one cup or one pot.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 7, "w": 8, "x": 16, "y": 9},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "increase(homeconnect_program_events_total{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\", event=\"ProgramFinished\"}[1h])",
+              "legendFormat": "{{appliance}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "decimals": 0,
+              "min": 0,
+              "noValue": "0",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "custom": {
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 1,
+                "fillOpacity": 20,
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom", "showLegend": false},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 104,
+          "type": "stat",
+          "title": "Door",
+          "description": "Door state. Empty for appliances without a door sensor in Home Connect.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 4, "w": 8, "x": 16, "y": 5},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "homeconnect_door_open{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\"}",
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "noValue": "—",
+              "mappings": [
+                {"type": "value", "options": {"0": {"text": "Closed", "color": "green", "index": 0}, "1": {"text": "Open", "color": "red", "index": 1}}}
+              ],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 105,
+          "type": "timeseries",
+          "title": "Program progress",
+          "description": "Percent of the active program.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 7, "w": 8, "x": 0, "y": 9},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "homeconnect_program_progress_percent{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\"}",
+              "legendFormat": "{{appliance}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "custom": {
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom", "showLegend": false},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 106,
+          "type": "timeseries",
+          "title": "Program time",
+          "description": "Remaining and elapsed program time in seconds.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 7, "w": 8, "x": 8, "y": 9},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "homeconnect_program_time_remaining_seconds{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\"}",
+              "legendFormat": "remaining",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "homeconnect_program_time_elapsed_seconds{job=\"siemens-home-connect-exporter\", appliance=~\"$appliance\"}",
+              "legendFormat": "elapsed",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "custom": {
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 1,
+                "fillOpacity": 0,
+                "showPoints": "never",
+                "spanNulls": false
+              },
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "elapsed"},
+                "properties": [
+                  {"id": "custom.lineStyle", "value": {"fill": "dash", "dashLength": 4, "spaceLength": 4}},
+                  {"id": "color", "value": {"mode": "fixed", "fixedColor": "#5a5a5a"}}
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 200,
+          "type": "row",
+          "title": "Coffee",
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16},
+          "panels": []
+        },
+        {
+          "id": 201,
+          "type": "stat",
+          "title": "Cups in 24h",
+          "description": "Finished coffee programs in the last 24 hours, across every coffee maker.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 4, "w": 12, "x": 0, "y": 17},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "sum by () (increase(homeconnect_program_events_total{job=\"siemens-home-connect-exporter\", appliance=~\"(?i).*(kaffe|coffee).*\", event=\"ProgramFinished\"}[24h]))",
+              "legendFormat": "cups",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "decimals": 0,
+              "noValue": "0",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 202,
+          "type": "stat",
+          "title": "Cups since the exporter started",
+          "description": "The cumulative ProgramFinished counter of every coffee maker.",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 4, "w": 12, "x": 12, "y": 17},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "sum by () (homeconnect_program_events_total{job=\"siemens-home-connect-exporter\", appliance=~\"(?i).*(kaffe|coffee).*\", event=\"ProgramFinished\"})",
+              "legendFormat": "cups",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "decimals": 0,
+              "noValue": "0",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto",
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 203,
+          "type": "timeseries",
+          "title": "Coffee cups",
+          "description": "Cups per hour (filled) and the running total (line).",
+          "datasource": {"type": "prometheus", "uid": "${datasource}"},
+          "gridPos": {"h": 7, "w": 24, "x": 0, "y": 21},
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "sum by () (increase(homeconnect_program_events_total{job=\"siemens-home-connect-exporter\", appliance=~\"(?i).*(kaffe|coffee).*\", event=\"ProgramFinished\"}[1h]))",
+              "legendFormat": "per hour",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": {"type": "prometheus", "uid": "${datasource}"},
+              "editorMode": "code",
+              "expr": "sum by () (homeconnect_program_events_total{job=\"siemens-home-connect-exporter\", appliance=~\"(?i).*(kaffe|coffee).*\", event=\"ProgramFinished\"})",
+              "legendFormat": "total",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "decimals": 0,
+              "min": 0,
+              "noValue": "0",
+              "color": {"mode": "fixed", "fixedColor": "#8a8a8a"},
+              "custom": {
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 1,
+                "fillOpacity": 20,
+                "showPoints": "never",
+                "spanNulls": true
+              },
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+            },
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "total"},
+                "properties": [
+                  {"id": "custom.fillOpacity", "value": 0},
+                  {"id": "custom.lineStyle", "value": {"fill": "dash", "dashLength": 4, "spaceLength": 4}},
+                  {"id": "color", "value": {"mode": "fixed", "fixedColor": "#5a5a5a"}}
+                ]
+              }
+            ]
+          },
+          "options": {
+            "legend": {"displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        }
+      ]
+    }

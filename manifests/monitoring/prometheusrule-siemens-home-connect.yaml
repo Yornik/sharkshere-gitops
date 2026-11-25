@@ -1,0 +1,62 @@
+# Alerts for the Home Connect exporter. The runbook is
+# docs/runbooks/siemens-home-connect-exporter.md.
+#
+# The chart alerts see the pod, not the data. The exporter retries its
+# streams inside the process, so the pod stays Ready through an appliance
+# outage or a Home Connect 429, and only these rules see the data stop.
+#
+# The release label is required. Prometheus ignores a PrometheusRule without
+# it and gives no error. See
+# docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+#
+# No backtest exists yet: the exporter went live on 2026-11-25 and Prometheus
+# holds no history for these series. The `for` durations follow the standing
+# 60-minute gate: no page for transient drops, only problems that persist.
+# Revisit the tuning after 30 days of data, the way the tibber rules were
+# backtested on 2026-10-25.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homeconnect-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: siemens-home-connect-exporter
+      rules:
+        # One appliance lost its cloud connection. A reboot, a Wi-Fi drop
+        # or a power cut clears it in minutes; 1 hour matches the standing
+        # gate. The exporter keeps serving the other appliances meanwhile.
+        - alert: HomeConnectApplianceOffline
+          expr: |-
+            max by (namespace, job, appliance) (
+              homeconnect_connected{namespace="monitoring", job="siemens-home-connect-exporter"} == 0
+            )
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: A Home Connect appliance has been offline for 1 hour.
+            description: >-
+              The appliance lost its connection to the Home Connect cloud. Check
+              the appliance display and Wi-Fi first. Follow the section
+              "HomeConnectApplianceOffline" in
+              docs/runbooks/siemens-home-connect-exporter.md.
+
+        # The whole exporter stopped answering scrapes: the pod died beyond
+        # its probes, or the whole deployment is gone. Chart alerts cover the
+        # pod; this rule covers the data path for 1 hour, matching the
+        # standing gate.
+        - alert: HomeConnectExporterNoData
+          expr: |-
+            absent_over_time(homeconnect_up{namespace="monitoring", job="siemens-home-connect-exporter"}[1h])
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Prometheus has stored no Home Connect sample for 75 minutes.
+            description: >-
+              No scrape answered for 1 hour. Check the deployment and its logs.
+              Follow the section "HomeConnectExporterNoData" in
+              docs/runbooks/siemens-home-connect-exporter.md.
