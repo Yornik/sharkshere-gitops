@@ -32,7 +32,7 @@ spec:
         - name: hce
           # Rust Home Connect exporter. Source, CI and signed images:
           # github.com/Yornik/Siemens-home-connect-exporter
-          image: ghcr.io/yornik/siemens-home-connect-exporter:v0.3.1
+          image: ghcr.io/yornik/siemens-home-connect-exporter:v0.3.2
           imagePullPolicy: IfNotPresent
           env:
             - name: HCE_CLIENT_ID
