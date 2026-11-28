@@ -186,27 +186,32 @@ spec:
             - name: TUWUNEL_ADMIN__SIGNAL_EXECUTE
               value: '["server backup-database"]'
 
-            # The built-in OIDC authorization server (next-generation
-            # Matrix auth). It starts at boot when the well_known.client
-            # issuer URL above is set and this switch is on, with no
-            # upstream identity provider configured. It serves the local
-            # login page under /_tuwunel/oidc/native and powers "Link new
-            # device" in Element: the QR handshake relays through the
-            # rendezvous endpoints and finishes as an OAuth device grant.
-            # Enabling this needs one pod restart; existing sessions and
-            # the classic password login below it stay unchanged.
+            # The built-in OIDC authorization server. It is the server
+            # side of next-generation Matrix auth: clients that speak
+            # OAuth talk to Tuwunel directly. The local login page
+            # serves under /_tuwunel/oidc/native. The issuer is the
+            # well-known client URL above, https://finfra.party.
             #
-            # The phishing gate for the OAuth surface is
-            # oidc_require_client_approval, ON by default: every newly
-            # registered client needs a one-click approval on the consent
-            # page before it receives any grant. Dynamic client
-            # registration stays open for client UX (a redirect host
-            # allowlist would break Element X scheme redirects), and no
-            # redirect is involved in the device grant the QR flow uses.
+            # Element's "Link new device" (QR sign-in) rides this
+            # server. The rendezvous handshake finishes as an OAuth
+            # device grant, which carries no redirect URI.
+            #
+            # The server starts at boot. A flip of this switch needs one
+            # pod restart. Existing sessions and the classic password
+            # login stay unchanged.
+            #
+            # The phishing gate of the OAuth surface is
+            # oidc_require_client_approval, on by default. A newly
+            # registered client receives no grant until one click on the
+            # consent page approves it. Dynamic registration stays
+            # open: a redirect host allowlist would break the scheme
+            # redirects of mobile clients.
+            #
             # The login and device pages sit behind the fail2ban route
-            # of ingressroute.yaml; the token endpoint stays outside it,
-            # because the QR device poll answers 400 authorization_pending
-            # every few seconds and must not feed the ban counter.
+            # of ingressroute.yaml. The token endpoint stays outside it:
+            # the QR device poll answers 400 authorization_pending until
+            # approval. Counting those 400s would ban the linking device
+            # itself.
             - name: TUWUNEL_AUTHENTICATION__OIDC__NATIVE_AUTH
               value: "true"
 

@@ -3,8 +3,12 @@
 #
 #   /_matrix/...           client and federation API, both on :443
 #   /.well-known/matrix/*  served by tuwunel from its well_known config
-#   /_tuwunel/...          no route: the health check reads it on localhost
-#                          from inside the pod, and nothing outside needs it
+#   /_tuwunel/oidc/...      the built-in OIDC authorization server, from
+#                          the OIDC switch in the Deployment. The login
+#                          and device pages carry fail2ban; registration
+#                          carries its own rate limit; the rest rides the
+#                          plain route. The health check reads
+#                          /_tuwunel/server_version on localhost only.
 #
 # Federation peers reach this host on :443 because the well-known server
 # file says so; the default :8448 is not advertised. The edge HAProxy
@@ -16,7 +20,7 @@
 # broken ranges (verified in the same place every other IngressRoute's
 # behaviour is: the running chart in apps/values.yaml).
 #
-# Two routes, one per protection class:
+# Three routes, one per protection class:
 #
 #   login and register carry fail2ban. These are the guessing surfaces: a
 #   wrong password, a guessed token, an enumerated username all answer
@@ -30,6 +34,11 @@
 #   device grant polls it every few seconds, and until the user approves
 #   it answers 400 authorization_pending - counting those 400s would ban
 #   the very device that is linking, mid-linking.
+#
+#   OIDC registration carries a rate limit. The endpoint is
+#   unauthenticated and open on purpose, a flood of registrations
+#   answers 2xx, and each record lands in the RocksDB database. The
+#   limit caps that write path; see the middleware file.
 #
 #   everything else carries no fail2ban, on purpose. The plugin bans on
 #   ten 4xx answers inside 10 minutes, and normal Matrix traffic can
@@ -64,14 +73,23 @@ spec:
         || PathPrefix(`/_matrix/client/r0/login`)
         || PathPrefix(`/_matrix/client/r0/register`)
         || PathPrefix(`/_tuwunel/oidc/native`)
-        || PathPrefix(`/_tuwunel/oidc/device`)
-        || PathPrefix(`/_tuwunel/oidc/device_callback`))
+        || PathPrefix(`/_tuwunel/oidc/device`))
       kind: Rule
       middlewares:
         - name: security-headers
           namespace: traefik
         - name: fail2ban
           namespace: traefik
+      services:
+        - name: tuwunel
+          port: 8008
+    - match: Host(`finfra.party`) && PathPrefix(`/_tuwunel/oidc/registration`)
+      kind: Rule
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: registration-ratelimit
+          namespace: matrix
       services:
         - name: tuwunel
           port: 8008

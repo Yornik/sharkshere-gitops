@@ -14,5 +14,6 @@ resources:
   - middleware-media-rewrite.yaml
   - ingressroute-web.yaml
   - middleware-redirect-https.yaml
+  - middleware-registration-ratelimit.yaml
 generators:
   - secret-generator.yaml
