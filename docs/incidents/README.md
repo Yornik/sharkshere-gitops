@@ -30,6 +30,8 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-11-01 | [truenas-27-update-readonly-pv-again.md](2026-11-01-truenas-27-update-readonly-pv-again.md) | The TrueNAS 27 update turned the iSCSI volumes of 3 Postgres clusters read-only for the second time; the instance that looked Ready blocked the rebuild again, and the same repair fixed it |
 | 2026-11-01 | [jellyfin-health-probe-timeout.md](2026-11-01-jellyfin-health-probe-timeout.md) | Jellyfin answered "no available server" for 2 minutes while it rescanned its libraries, because the health probe waited 1 second |
 | 2026-11-14 | [openproject-chart-bump-waits-for-seeder-ttl.md](2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md) | Every OpenProject chart update waited 3.5 to 25 hours behind its seeder Job, with ArgoCD in a ComparisonError, and nothing reported it |
+| 2026-11-28 | [tuwunel-legacy-port-crashloop.md](2026-11-28-tuwunel-legacy-port-crashloop.md) | The Tuwunel pod crash-looped on its first boot on `TUWUNEL_PORT`, an image-baked env var the repository did not set, and no CI check could see it |
+| 2026-11-28 | [tuwunel-renovate-variant-downgrade.md](2026-11-28-tuwunel-renovate-variant-downgrade.md) | A Renovate digest bump moved the Tuwunel pin from the x86-64-v3 manifest to the baseline amd64 one of the same index; the pod runs either way, so nothing was red |
 
 ## How to add an incident
 

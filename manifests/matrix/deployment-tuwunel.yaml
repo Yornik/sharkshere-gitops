@@ -30,23 +30,29 @@ spec:
         fsGroup: 65532
       containers:
         - name: tuwunel
-          # Tuwunel is the official successor to conduwuit. Upstream publishes
-          # no version tags: only the rolling latest, preview and main. The
-          # The image pin is `latest` at a digest, and the digest is the
-          # x86-64-v3 platform manifest inside the index (see the resource
-          # note). A digest bump on a multi-arch tag can name the index or
-          # the baseline amd64 manifest, so renovate.json5 turns automerge
-          # off for this image: a person reads each bump and re-pins the v3
-          # manifest of the new latest.
+          # Tuwunel is the official successor to conduwuit. Upstream
+          # publishes no version tags: only the rolling latest, preview and
+          # main, so a rolling-tag reference is unavoidable. The reference
+          # still carries a digest, per the house rule on rolling tags (see
+          # docs/incidents/2026-11-01-democratic-csi-rolling-tag.md).
           #
-          # The pinned digest is the x86-64-v3 platform manifest of the
-          # `latest` image index, not the index itself. The cluster nodes
-          # are 4x Intel N150 (Twin Lake), which supports x86-64-v3 and no
-          # more (no AVX-512), so v3 is the highest CPU-optimised build that
+          # The digest is the x86-64-v3 platform manifest of the `latest`
+          # image index, not the index itself. The cluster nodes are 4x
+          # Intel N150 (Twin Lake), which supports x86-64-v3 and no more
+          # (no AVX-512), so v3 is the highest CPU-optimised build that
           # runs there. Upstream recommends v2 or better for RocksDB CRC32
-          # performance. The other entries in the index are arm64, the amd64
-          # baseline (v1) and amd64 v2.
-          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:a2a37a82b82bf2c427da6040fe63d4d028e287d55b6cbbd977709d4a1645b0ab
+          # performance. The other entries in the index are arm64, the
+          # amd64 baseline (v1) and amd64 v2.
+          #
+          # Re-pinned to v3 on 2026-11-28: the Renovate bump #737 moved
+          # this line to the baseline amd64 manifest of the same index.
+          # That build runs, but it gives up the CPU optimisation. Every
+          # future bump has this shape: Renovate names the index or the
+          # baseline, and the person who merges re-pins to the v3 entry.
+          # The PR body note of the tuwunel rule in renovate.json5
+          # carries the lookup. See docs/incidents/
+          # 2026-11-28-tuwunel-renovate-variant-downgrade.md.
+          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:5e42c29ed88e77322e33d5cff7ca4b14986818da219e6eb7bc984d756396ed02
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -73,6 +79,17 @@ spec:
             # the health check both need this.
             - name: TUWUNEL_HTTP__LISTEN__ADDRESS
               value: '["0.0.0.0"]'
+
+            # The image bakes a legacy TUWUNEL_PORT in a list form the
+            # current config parser rejects. The pod crash-looped on its
+            # first boot with "data did not match any variant of untagged
+            # enum Either" (2026-11-28, minutes after the merge). This
+            # override gives the parser an integer it accepts, and it
+            # matches the containerPort below. Remove it together with an
+            # image that stops baking the legacy variable. See
+            # docs/incidents/2026-11-28-tuwunel-legacy-port-crashloop.md.
+            - name: TUWUNEL_PORT
+              value: "8008"
 
             # Registration is on, but token-gated: the register endpoint
             # demands the token below, so the server is not an open

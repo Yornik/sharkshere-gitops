@@ -101,7 +101,7 @@
     // inside it, because the nodes are Intel N150 (Twin Lake) and v3 is the
     // highest level they run. A digest bump for a multi-arch tag can name
     // the new index or the baseline amd64 manifest, and a wrong pick
-    // silently moves the homeserver off the optimized build with no red
+    // silently moves the homeserver off the optimised build with no red
     // check anywhere. A person reads each bump and re-pins the amd64 v3
     // manifest of the new latest. This rule turns automerge off for that
     // image only. Its labels leave out `automerge`, as for the rules
@@ -110,6 +110,17 @@
     {
       matchPackageNames: [
         'ghcr.io/matrix-construct/tuwunel',
+      ],
+      // The note lands on every bump PR, where the person who merges
+      // reads it. The rule comment above explains the why; this is the
+      // instruction at the point of action.
+      prBodyNotes: [
+        'This is a re-pin task, not a merge task. The proposed digest names the index or the baseline amd64 manifest. Before merging, look up the amd64 variants of the current `latest` and replace the digest with the `variant: v3` entry:',
+        '```sh',
+        'TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:matrix-construct/tuwunel:pull" | jq -r .token)',
+        'curl -s -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.oci.image.index.v1+json" https://ghcr.io/v2/matrix-construct/tuwunel/manifests/latest | jq -r \'.manifests[] | select(.platform.architecture=="amd64") | (.platform.variant // "baseline"), .digest\'',
+        '```',
+        'If the v3 digest did not move, close this PR instead of merging it.',
       ],
       // No group: a digest bump of this image must stand in its own pull
       // request. With the group of rule 1 it would share the automerging
