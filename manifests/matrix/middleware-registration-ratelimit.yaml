@@ -1,0 +1,26 @@
+# Rate limit for the OIDC dynamic client registration endpoint.
+#
+# Registration is unauthenticated and open on purpose: clients that speak
+# next-generation auth register themselves before their first sign-in,
+# and a redirect allowlist would break the scheme redirects of mobile
+# clients. The consent gate oidc_require_client_approval still holds:
+# a registered client receives no grant without a one-click approval.
+#
+# A flood of registrations answers 2xx, so the fail2ban route never sees
+# it, and every record lands in the RocksDB database on the PVC. This
+# limit caps that write path. One new device registers once; humans do
+# not hit the numbers below.
+#
+# The other rendezvous and OIDC endpoints need no route: the rendezvous
+# transports rate limit per client IP in the server, and the session
+# pool holds at most 100 entries in memory with the oldest evicted.
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: registration-ratelimit
+  namespace: matrix
+spec:
+  rateLimit:
+    average: 1
+    period: 1m
+    burst: 3

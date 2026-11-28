@@ -186,6 +186,35 @@ spec:
             - name: TUWUNEL_ADMIN__SIGNAL_EXECUTE
               value: '["server backup-database"]'
 
+            # The built-in OIDC authorization server. It is the server
+            # side of next-generation Matrix auth: clients that speak
+            # OAuth talk to Tuwunel directly. The local login page
+            # serves under /_tuwunel/oidc/native. The issuer is the
+            # well-known client URL above, https://finfra.party.
+            #
+            # Element's "Link new device" (QR sign-in) rides this
+            # server. The rendezvous handshake finishes as an OAuth
+            # device grant, which carries no redirect URI.
+            #
+            # The server starts at boot. A flip of this switch needs one
+            # pod restart. Existing sessions and the classic password
+            # login stay unchanged.
+            #
+            # The phishing gate of the OAuth surface is
+            # oidc_require_client_approval, on by default. A newly
+            # registered client receives no grant until one click on the
+            # consent page approves it. Dynamic registration stays
+            # open: a redirect host allowlist would break the scheme
+            # redirects of mobile clients.
+            #
+            # The login and device pages sit behind the fail2ban route
+            # of ingressroute.yaml. The token endpoint stays outside it:
+            # the QR device poll answers 400 authorization_pending until
+            # approval. Counting those 400s would ban the linking device
+            # itself.
+            - name: TUWUNEL_AUTHENTICATION__OIDC__NATIVE_AUTH
+              value: "true"
+
             # Left unset on purpose, so a later reader does not have to
             # re-derive why:
             #
