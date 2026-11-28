@@ -32,6 +32,7 @@ The write-ups follow a fixed structure: Date, Effect, Cause, Correction, Prevent
 | 2026-11-14 | [openproject-chart-bump-waits-for-seeder-ttl.md](2026-11-14-openproject-chart-bump-waits-for-seeder-ttl.md) | Every OpenProject chart update waited 3.5 to 25 hours behind its seeder Job, with ArgoCD in a ComparisonError, and nothing reported it |
 | 2026-11-28 | [tuwunel-legacy-port-crashloop.md](2026-11-28-tuwunel-legacy-port-crashloop.md) | The Tuwunel pod crash-looped on its first boot on `TUWUNEL_PORT`, an image-baked env var the repository did not set, and no CI check could see it |
 | 2026-11-28 | [tuwunel-renovate-variant-downgrade.md](2026-11-28-tuwunel-renovate-variant-downgrade.md) | A Renovate digest bump moved the Tuwunel pin from the x86-64-v3 manifest to the baseline amd64 one of the same index; the pod runs either way, so nothing was red |
+| 2026-11-28 | [matrix-argocd-sync-crd-group.md](2026-11-28-matrix-argocd-sync-crd-group.md) | A new Middleware shipped with the dead `traefik.containo.us` group, so the ArgoCD sync of the whole matrix app retried and the merged OIDC change never reached the cluster; every schema validator skips Traefik CRDs, so no check was red |
 
 ## How to add an incident
 
