@@ -160,7 +160,7 @@ Tuwunel serves no Prometheus endpoint, so there is no ServiceMonitor for it and 
 
    Expected result: `https://finfra.party`. A "Not supported by your account provider" answer from Element means the switch is off, or the pod has not restarted since it was turned on.
 
-4. Check the homeserver version:
+5. Check the homeserver version:
 
    ```sh
    kubectl -n matrix exec deploy/tuwunel -- tuwunel --health-check
