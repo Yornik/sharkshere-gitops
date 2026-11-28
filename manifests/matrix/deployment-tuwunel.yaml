@@ -52,7 +52,7 @@ spec:
           # The PR body note of the tuwunel rule in renovate.json5
           # carries the lookup. See docs/incidents/
           # 2026-11-28-tuwunel-renovate-variant-downgrade.md.
-          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:5e42c29ed88e77322e33d5cff7ca4b14986818da219e6eb7bc984d756396ed02
+          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:a2a37a82b82bf2c427da6040fe63d4d028e287d55b6cbbd977709d4a1645b0ab
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
