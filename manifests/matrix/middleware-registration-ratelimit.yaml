@@ -14,7 +14,7 @@
 # The other rendezvous and OIDC endpoints need no route: the rendezvous
 # transports rate limit per client IP in the server, and the session
 # pool holds at most 100 entries in memory with the oldest evicted.
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: registration-ratelimit
