@@ -5,10 +5,11 @@ metadata:
     namespace: ENC[AES256_GCM,data:aaiIVQ+V,iv:iRjcjqcwT0edtCvEyks5C1VTXn/cWy+feIyIBdDz3N0=,tag:hNl6GzpmdT6IwSetF482Gw==,type:str]
 type: ENC[AES256_GCM,data:0Y8st/fg,iv:P3jDtVo2V1m/g1m0qLFPKazGWWS/eiPUZY3Flqhw4m0=,tag:7UDfFGEZCR0muv86imrJPQ==,type:str]
 stringData:
-    RECOVERY_KEY: ENC[AES256_GCM,data:3Mz6H1Yegu3nwG1Ti36fh0uzVMIgwQnNEA6gTgbLSbTq9iVk2Z3e7LpYqJ1KQy+F4+Cf4JYzMs9FAR4=,iv:SirbOmN9CtqU36YmnV9T348bwrFJq2k1ia771Ex3Z9Y=,tag:PA+z8WiBVxz4GGaez+Ekgg==,type:str]
+    RECOVERY_KEY: ENC[AES256_GCM,data:BZPf5aheTvjJQXafpwhlha2hh40qB0Ud+GDa22Xl7qCt2SfE6R6+edVBWLp/BT7PIaHmwGlfFCnc/Gk=,iv:mhQaEUiTTy+ZkkcroRMzqytb/VukMahU3Gumci0cJtg=,tag:TUNH6kgmzGQwuaNc85e8kA==,type:str]
 sops:
     age:
-        - enc: |
+        - recipient: age1uhgqfcm3tfuzv3tq8d62medf04g977zas2hr9wmntc8wjn2e3asqvp7adp
+          enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBnbVBIbG5tUnF5bXhaNnpG
             TVdYYzJHbEVxbXpFTDZMeUl4YkN6WEc0bEhjCkRVdkdLdHovdXZ3cENjait4RjRn
@@ -16,8 +17,7 @@ sops:
             cU9qNCtzaHBWdGtZdlk0UGZaa1FEaTAKUB2McmZitErmx2q+Tkg4oB7DqnlD1QIV
             P2z+9PXw01QAT4w0sdhjOucwzrTMyVGL5iPh2gdrzlbbuysNs1pkuQ==
             -----END AGE ENCRYPTED FILE-----
-          recipient: age1uhgqfcm3tfuzv3tq8d62medf04g977zas2hr9wmntc8wjn2e3asqvp7adp
-    lastmodified: "2026-11-28T12:10:33Z"
-    mac: ENC[AES256_GCM,data:3BHM4OipbID5VJfms5JuWASmOV3YyxGqHpm1QIhb2RO8UAQctmNnIfiJqUGn7wiQslikj7KrfjCkM2pvUNoUl0+evw8JHmqjN0WB4+6Qgya+hj/Nm8OuyQjEEWtiRASnDMJAdsFEFVl3ypfGB7yHfSM4Uq0pVU+8JoK+u+Ndqic=,iv:cDdv4y2E4Cum4OL1wtJ6Wqz3XjkLpw9wvTl0uIsVvU4=,tag:/9GtnDTZN0m/zxZt4U6txA==,type:str]
+    lastmodified: "2026-11-28T12:13:21Z"
+    mac: ENC[AES256_GCM,data:Ikn00n3UYzkiLxxlbvpajuBuFoiRIcBC8AtkmsIkL89YizfGIKRrZSbB5LN3tP6N4e+N0CENM/6TwomeOTVz05Gb27VRyQaxH2R2+/UVMksXaYo7tsx2ce4DKy0SGXFqn0POg3RzJwuafcnnM4/lZJ8M9OyQw74THm7cFUm22Ic=,iv:8gOQl3UJoNwZ/PKfRblNvuVKtGUCP143vh/PkGtAhYc=,tag:t62m2smqlREXNWi8WJ2Fyw==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.3
