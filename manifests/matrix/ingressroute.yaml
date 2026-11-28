@@ -21,7 +21,15 @@
 #   login and register carry fail2ban. These are the guessing surfaces: a
 #   wrong password, a guessed token, an enumerated username all answer
 #   4xx, which is exactly what the plugin counts. The v3 and the legacy
-#   r0 names of both endpoints are listed.
+#   r0 names of both endpoints are listed. The built-in OIDC login page
+#   (/_tuwunel/oidc/native, from the OIDC switch in the Deployment) and
+#   the device-code approval pages sit behind it too, for the same
+#   reason: a guessed password or device code there answers 4xx.
+#
+#   The OIDC token endpoint stays OUTSIDE this route on purpose. The QR
+#   device grant polls it every few seconds, and until the user approves
+#   it answers 400 authorization_pending - counting those 400s would ban
+#   the very device that is linking, mid-linking.
 #
 #   everything else carries no fail2ban, on purpose. The plugin bans on
 #   ten 4xx answers inside 10 minutes, and normal Matrix traffic can
@@ -54,7 +62,10 @@ spec:
         && (PathPrefix(`/_matrix/client/v3/login`)
         || PathPrefix(`/_matrix/client/v3/register`)
         || PathPrefix(`/_matrix/client/r0/login`)
-        || PathPrefix(`/_matrix/client/r0/register`))
+        || PathPrefix(`/_matrix/client/r0/register`)
+        || PathPrefix(`/_tuwunel/oidc/native`)
+        || PathPrefix(`/_tuwunel/oidc/device`)
+        || PathPrefix(`/_tuwunel/oidc/device_callback`))
       kind: Rule
       middlewares:
         - name: security-headers

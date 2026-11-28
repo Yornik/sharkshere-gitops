@@ -89,6 +89,9 @@ Tuwunel keeps all local state in one RocksDB database directory.
 - The image is pinned to the `x86-64-v3` platform digest of the `latest` index, because the nodes are Intel N150 (Twin Lake) and v3 is the highest level they run (no AVX-512). Upstream recommends v2 or better for RocksDB CRC32 performance. Renovate tracks `latest`, but a digest bump of this image does not automerge: `renovate.json5` turns automerge off, because a multi-arch bump can name the index or the baseline amd64 manifest, and a person re-pins the v3 manifest of the new latest.
 - The node seccomp default blocks the three `io_uring` syscalls. Upstream documents this as harmless: the engine falls back to synchronous reads. The default profile is not relaxed.
 - Registration is token-gated. The token sits in the Secret `tuwunel-app`; tell it only to people who can create an account. The first account to register joins the admin room and holds the server.
+- The built-in OIDC authorization server runs with native authentication (`TUWUNEL_AUTHENTICATION__OIDC__NATIVE_AUTH`). It is the server side of next-generation Matrix auth: clients that speak OAuth talk to Tuwunel directly, and the local login page serves under `/_tuwunel/oidc/native`. It starts at boot, so a flip of the switch needs one pod restart; the classic password login stays as it was. The issuer is the well-known client URL, `https://finfra.party`. Element's "Link new device" (QR sign-in) rides this server: the rendezvous handshake finishes as an OAuth device grant, which carries no redirect URI.
+- The phishing gate of that OAuth surface is `oidc_require_client_approval`, on by default: a newly registered client gets no grant until its consent page is approved by one click. Dynamic client registration stays open on purpose, because a redirect-host allowlist would break the scheme redirects of mobile clients.
+- The fail2ban route in `ingressroute.yaml` covers the OIDC login and device pages. It does not cover the OIDC token endpoint: the QR device grant polls it with `400 authorization_pending` until approval, and counting those 400s would ban the linking device itself.
 - The admin commands run from the admin room `#admins:finfra.party` with the `!admin` prefix.
 
 ## Media
@@ -130,6 +133,17 @@ Tuwunel serves no Prometheus endpoint, so there is no ServiceMonitor for it and 
 - Own rule: `MatrixBackupCronStale` (in `manifests/monitoring/prometheusrule-matrix.yaml`) fires when the backup CronJob has not scheduled a Job for over 26 hours. That is the failure a Job-level alert cannot see: nothing ran at all. The gate is the standing 60 minutes.
 
 ## How to check
+
+0. Check the OIDC server (powers "Link new device" in Element):
+
+   ```sh
+   curl -s https://finfra.party/_matrix/client/v1/auth_metadata | jq -r .issuer
+   ```
+
+   Expected result: `https://finfra.party`. A "Not supported by your
+   account provider" answer from Element means the switch
+   `TUWUNEL_AUTHENTICATION__OIDC__NATIVE_AUTH` is off, or the pod has
+   not restarted since it was turned on.
 
 1. Check the pods:
 

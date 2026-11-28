@@ -190,3 +190,4 @@ With both volumes lost, the homeserver starts empty: register a new first accoun
 | IRC links answer 404 | The registration `media_path` and the middleware `media-rewrite` must agree; both files say so. |
 | `Illegal Instruction` crash | The image digest moved off the v3 variant; re-pin to the amd64 `variant: v3` manifest of the `latest` index. |
 | No federation | Run the Federation Tester on `finfra.party`; check the DS record first if DANE errors appear. |
+| "Link new device" not supported | Check `auth_metadata` (see tech doc); the OIDC switch needs one pod restart, and a restart mid-linking clears the QR session pool - scan again. |

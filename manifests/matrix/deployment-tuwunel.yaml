@@ -186,6 +186,30 @@ spec:
             - name: TUWUNEL_ADMIN__SIGNAL_EXECUTE
               value: '["server backup-database"]'
 
+            # The built-in OIDC authorization server (next-generation
+            # Matrix auth). It starts at boot when the well_known.client
+            # issuer URL above is set and this switch is on, with no
+            # upstream identity provider configured. It serves the local
+            # login page under /_tuwunel/oidc/native and powers "Link new
+            # device" in Element: the QR handshake relays through the
+            # rendezvous endpoints and finishes as an OAuth device grant.
+            # Enabling this needs one pod restart; existing sessions and
+            # the classic password login below it stay unchanged.
+            #
+            # The phishing gate for the OAuth surface is
+            # oidc_require_client_approval, ON by default: every newly
+            # registered client needs a one-click approval on the consent
+            # page before it receives any grant. Dynamic client
+            # registration stays open for client UX (a redirect host
+            # allowlist would break Element X scheme redirects), and no
+            # redirect is involved in the device grant the QR flow uses.
+            # The login and device pages sit behind the fail2ban route
+            # of ingressroute.yaml; the token endpoint stays outside it,
+            # because the QR device poll answers 400 authorization_pending
+            # every few seconds and must not feed the ban counter.
+            - name: TUWUNEL_AUTHENTICATION__OIDC__NATIVE_AUTH
+              value: "true"
+
             # Left unset on purpose, so a later reader does not have to
             # re-derive why:
             #
