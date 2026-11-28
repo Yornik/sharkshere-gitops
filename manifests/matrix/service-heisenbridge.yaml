@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: heisenbridge
+  namespace: matrix
+  labels:
+    app.kubernetes.io/name: heisenbridge
+    app.kubernetes.io/instance: matrix
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: heisenbridge
+    app.kubernetes.io/instance: matrix
+  ports:
+    - name: appservice
+      port: 9898
+      targetPort: appservice
+      protocol: TCP

@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heisenbridge
+  namespace: matrix
+  labels:
+    app.kubernetes.io/name: heisenbridge
+    app.kubernetes.io/instance: matrix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: heisenbridge
+      app.kubernetes.io/instance: matrix
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: heisenbridge
+        app.kubernetes.io/instance: matrix
+    spec:
+      containers:
+        - name: heisenbridge
+          # The upstream tags each GitHub release as x.y.z, so this pin gives
+          # Renovate a version to track. `latest` follows the master branch
+          # and is the one rolling tag the house forbids.
+          #
+          # The image ENTRYPOINT already binds 0.0.0.0; the args below add
+          # the config, the port, the owner and the homeserver URL. The
+          # bridge holds no database: its state lives in Matrix rooms, so a
+          # restart needs no volume and an upgrade needs no migration.
+          image: hif1/heisenbridge:1.15.4
+          imagePullPolicy: IfNotPresent
+          args:
+            # The registration file is the same Secret the homeserver reads
+            # through its appservice_dir. Both sides must agree on as_token
+            # and hs_token, and one file is the only way they cannot drift.
+            - "-c"
+            - /config/heisenbridge-registration.yaml
+            # The URL tuwunel pushes transactions to, from the Service below.
+            # It is cluster-internal, so the bridge needs no
+            # IngressRoute and no TLS certificate exists to renew.
+            - "-p"
+            - "9898"
+            # The owner of the control room. The first DM with
+            # @heisenbridge:finfra.party lands this user in it.
+            - "-o"
+            - "@yorde:finfra.party"
+            # The homeserver, over the in-cluster Service, not the public
+            # URL: no edge hop, no Traefik middlewares and no rate limit in
+            # between. The registration file carries this URL for the
+            # homeserver side; see secret-generator.yaml.
+            - "http://tuwunel.matrix.svc.cluster.local:8008"
+          ports:
+            - name: appservice
+              containerPort: 9898
+              protocol: TCP
+          # TCP only: the bridge speaks its appservice protocol, not a
+          # health endpoint. A process that is up but wedged shows in the
+          # rooms it stops answering in, which is where the users are.
+          livenessProbe:
+            tcpSocket:
+              port: appservice
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: appservice
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+          env:
+            # Keep Python from writing bytecode into the image directory:
+            # the root filesystem is read-only and a failed write would only
+            # cost recompiles, but the flag makes the intent explicit.
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          resources:
+            # No cpu limit, same reasoning as every other app here. The
+            # bridge is one asyncio process that turns messages around; it
+            # has no expensive paths to burst on.
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: registration
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: registration
+          secret:
+            secretName: heisenbridge-registration
+            # defaultMode 0444: readable by any account in the pod, so the
+            # non-root user above can read it without a fsGroup dance.
+            defaultMode: 0444

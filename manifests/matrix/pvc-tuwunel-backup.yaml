@@ -1,0 +1,25 @@
+# The nightly RocksDB backup copy. The live database refuses NFS (see
+# pvc-tuwunel.yaml); a backup is a plain copy that the RocksDB Backup
+# engine writes one file at a time, so it needs no file locks and the
+# shared SSD class is enough. A backup that survives a node needs to leave
+# the node: the SSD mirror of the NAS is the house location for that, the
+# same class jellyfin-backup-ssd uses.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tuwunel-backup-ssd
+  namespace: matrix
+  annotations:
+    # Same reason as the data volume: losing the Application must not lose
+    # the backups. See pvc-tuwunel.yaml.
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-ssd
+  resources:
+    requests:
+      # The Backup engine shares unchanged files between the kept
+      # generations, so 3 backups cost little more than 1 plus the growth
+      # of the database. The class allows expansion.
+      storage: 5Gi

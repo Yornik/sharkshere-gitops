@@ -1,0 +1,28 @@
+# Tuwunel keeps all local state in one RocksDB database directory. RocksDB
+# takes file locks and relies on fsync: NFS cannot provide either safely, so
+# this volume is block storage, not the shared NFS classes. See
+# docs/incidents/ and docs/tech/database.md for the NFS-lock incidents that
+# moved every other database here before this one.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tuwunel-data
+  namespace: matrix
+  annotations:
+    # Keep the volume when the Application goes. ArgoCD prunes what git does
+    # not hold, and an accidentally removed entry in apps/values.yaml must
+    # not take the homeserver database with it. See the CNPG clusters, which
+    # carry the same annotation for the same reason.
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-ssd-iscsi
+  resources:
+    requests:
+      # Media does not land here (see the S3 storage provider in the
+      # Deployment), so this holds the RocksDB database only. 5 Gi is about
+      # 4x the size of every other small-app state volume in the cluster and
+      # leaves room for federation of large rooms. The class allows volume
+      # expansion if the estimate is wrong.
+      storage: 5Gi

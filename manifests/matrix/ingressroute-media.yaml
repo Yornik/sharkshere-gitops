@@ -1,0 +1,43 @@
+# media.finfra.party, the host Heisenbridge puts into the file links it
+# relays to IRC. The bridge downloads the file from the homeserver over the
+# in-cluster Service and streams it to whoever opens the link, so this route
+# is the only public way to reach a media object.
+#
+# The path is NOT optional polish: without a public media_url in the
+# registration file, the bridge relays "<media unavailable>" to IRC for
+# every upload (heisenbridge __main__.py, mxc_to_url). The host exists for
+# that reason; the nice name is a side effect.
+#
+# The /m/<media_id>/<checksum>/<filename> shape comes from the same
+# registration file, and the media-rewrite middleware restores the bridge's
+# hardcoded route shape before the request reaches it. See that middleware
+# for why the shape is split like this.
+#
+# The checksum stays in the path. The bridge recomputes an HMAC over the
+# media ID and refuses a mismatch, which is what stops anyone from walking
+# other people's uploads by guessing IDs. That part cannot be shortened.
+#
+# No fail2ban: the checksum already rejects enumeration without a counter,
+# and a 404 for a bad link is normal traffic, not abuse. security-headers
+# stays so the responses carry HSTS like every other public host.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: matrix-media
+  namespace: matrix
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`media.finfra.party`) && PathPrefix(`/m`)
+      kind: Rule
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: media-rewrite
+          namespace: matrix
+      services:
+        - name: heisenbridge
+          port: 9898
+  tls:
+    certResolver: letsencrypt

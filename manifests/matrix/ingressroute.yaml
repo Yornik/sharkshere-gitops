@@ -1,0 +1,79 @@
+# The apex finfra.party routes everything to Tuwunel: the client API, the
+# federation API and the well-known files the homeserver serves itself:
+#
+#   /_matrix/...           client and federation API, both on :443
+#   /.well-known/matrix/*  served by tuwunel from its well_known config
+#   /_tuwunel/...          no route: the health check reads it on localhost
+#                          from inside the pod, and nothing outside needs it
+#
+# Federation peers reach this host on :443 because the well-known server
+# file says so; the default :8448 is not advertised. The edge HAProxy
+# forwards 80 and 443 only, so no new edge forwarding exists for Matrix.
+#
+# The X-Matrix federation header is byte-sensitive. Upstream warns that
+# Traefik builds 3.6.4-3.6.6 and 2.11.32-2.11.34 alter it and need a
+# workaround flag; this cluster runs Traefik v3.7.4, which is outside the
+# broken ranges (verified in the same place every other IngressRoute's
+# behaviour is: the running chart in apps/values.yaml).
+#
+# Two routes, one per protection class:
+#
+#   login and register carry fail2ban. These are the guessing surfaces: a
+#   wrong password, a guessed token, an enumerated username all answer
+#   4xx, which is exactly what the plugin counts. The v3 and the legacy
+#   r0 names of both endpoints are listed.
+#
+#   everything else carries no fail2ban, on purpose. The plugin bans on
+#   ten 4xx answers inside 10 minutes, and normal Matrix traffic can
+#   reach that without attacking anything: a peer that backfills a large
+#   room draws 429 answers from the homeserver's own rate limits, a
+#   client can ask for a room it left, a sync can name a dead alias. A
+#   home server sits behind one NAT address, so one bad client would ban
+#   every device of the house for 3 hours. The endpoints above cannot
+#   produce that pattern from a legitimate client.
+#
+# No rate-limit on either route. A federation peer legitimately bursts
+# hundreds of requests when it backfills a large room, and the homeserver
+# rate-limits clients itself.
+#
+# Order per REVIEW.md B8: security-headers first on both routes, fail2ban
+# after it. There is no rejecting middleware between them.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: matrix
+  namespace: matrix
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # The longer rule wins by Traefik's default priority, so these paths
+    # take the fail2ban route and the host-only route takes the rest.
+    - match: >-
+        Host(`finfra.party`)
+        && (PathPrefix(`/_matrix/client/v3/login`)
+        || PathPrefix(`/_matrix/client/v3/register`)
+        || PathPrefix(`/_matrix/client/r0/login`)
+        || PathPrefix(`/_matrix/client/r0/register`))
+      kind: Rule
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+        - name: fail2ban
+          namespace: traefik
+      services:
+        - name: tuwunel
+          port: 8008
+    - match: Host(`finfra.party`)
+      kind: Rule
+      middlewares:
+        - name: security-headers
+          namespace: traefik
+      services:
+        - name: tuwunel
+          port: 8008
+  tls:
+    # The Let's Encrypt HTTP-01 resolver every other public host here uses.
+    # The certificate must cover exactly this host, because the DANE TLSA
+    # record of the dane-updater CronJob pins its public key.
+    certResolver: letsencrypt

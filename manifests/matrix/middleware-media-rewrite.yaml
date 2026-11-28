@@ -1,0 +1,26 @@
+# Makes the IRC media links shorter than the bridge's own default path.
+#
+# The bridge's aiohttp router only knows the hardcoded route
+# /_heisenbridge/media/{server}/{media_id}/{checksum}(/filename), so it
+# cannot serve a shorter path by itself. But it PRINTS whatever template
+# the registration file gives it, and this bridge serves exactly one
+# homeserver, so the {server} segment of every real URL is always
+# finfra.party. The registration therefore prints
+# /m/{media_id}/{checksum}{filename} and this middleware stitches the
+# constant parts back in before the request reaches the bridge.
+#
+# THE TWO SIDES MUST AGREE: if the registration's media_path or the
+# homeserver name changes, the replacement below has to change with it,
+# or every media link starts answering 404 at the Traefik layer with no
+# error anywhere to read. The same note points back from the
+# registration file: see secret-generator.yaml under
+# heisenbridge-registration.enc.yaml.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: media-rewrite
+  namespace: matrix
+spec:
+  replacePathRegex:
+    regex: ^/m/(.*)$
+    replacement: /_heisenbridge/media/finfra.party/${1}

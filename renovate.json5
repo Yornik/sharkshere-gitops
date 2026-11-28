@@ -94,6 +94,34 @@
         'dependencies',
       ],
     },
+    // Tuwunel, the Matrix homeserver of manifests/matrix, publishes no
+    // version tags: only the rolling latest, preview and main. The pin in
+    // deployment-tuwunel.yaml is therefore `latest` at a digest, and the
+    // digest is not the image index but the x86-64-v3 platform manifest
+    // inside it, because the nodes are Intel N150 (Twin Lake) and v3 is the
+    // highest level they run. A digest bump for a multi-arch tag can name
+    // the new index or the baseline amd64 manifest, and a wrong pick
+    // silently moves the homeserver off the optimized build with no red
+    // check anywhere. A person reads each bump and re-pins the amd64 v3
+    // manifest of the new latest. This rule turns automerge off for that
+    // image only. Its labels leave out `automerge`, as for the rules
+    // above. It comes before the major rule, so a major bump still gets
+    // the `major` label.
+    {
+      matchPackageNames: [
+        'ghcr.io/matrix-construct/tuwunel',
+      ],
+      // No group: a digest bump of this image must stand in its own pull
+      // request. With the group of rule 1 it would share the automerging
+      // `patch updates` request, which both stalls that request and puts
+      // the `automerge` label on it, and the review job skips the label.
+      groupName: null,
+      automerge: false,
+      labels: [
+        'renovate',
+        'dependencies',
+      ],
+    },
     {
       matchUpdateTypes: [
         'major',

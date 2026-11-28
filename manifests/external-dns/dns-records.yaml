@@ -208,3 +208,45 @@ spec:
     - name: dummy
       port: 80
       targetPort: 80
+---
+# finfra.party, the Matrix zone: the apex IS the homeserver host, so this
+# one record carries client API, federation and the well-known files that
+# tuwunel serves itself. The same 4 jump-host addresses as the other zones,
+# because every public host leaves through the same HAProxy edge.
+#
+# media.finfra.party follows: the host Heisenbridge puts into the IRC file
+# links, at the public /m path that ingressroute-media.yaml rewrites. Like
+# the apex it points straight at the jump hosts rather than through a
+# CNAME: a DANE TLSA record sits on _443._tcp.media.finfra.party, and a
+# CNAME would send a validator to the target's records instead.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-finfra-party
+  namespace: external-dns
+  annotations:
+    external-dns.kubernetes.io/hostname: finfra.party
+    external-dns.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
+    external-dns.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-media-finfra-party
+  namespace: external-dns
+  annotations:
+    external-dns.kubernetes.io/hostname: media.finfra.party
+    external-dns.kubernetes.io/target: 78.47.240.158,77.42.94.152,2a01:4f8:1c19:60c2::1,2a01:4f9:c014:e6de::1
+    external-dns.kubernetes.io/ttl: "3600"
+spec:
+  type: ClusterIP
+  ports:
+    - name: dummy
+      port: 80
+      targetPort: 80

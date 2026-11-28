@@ -1,0 +1,50 @@
+# Alerts for the Matrix stack in the namespace `matrix`.
+#
+# What already covers this stack without this file: the default
+# kube-prometheus-stack rules. KubeJobFailed fires when the nightly
+# tuwunel-backup Job fails, like it does for the jellyfin-backup Job.
+# KubePodCrashLooping, the deployment-availability rules and
+# KubePersistentVolumeFillingUp cover the pods and both volumes. Tuwunel
+# serves no Prometheus endpoint, so there is no ServiceMonitor and no
+# application metric to alert on.
+#
+# The release label is required. Prometheus ignores a PrometheusRule
+# without it and gives no error. See
+# docs/incidents/2026-09-09-prometheus-release-label-selector.md.
+#
+# No history exists for these rules: the stack is new. The threshold is
+# 26 hours, one day plus 2 hours of slack on a daily schedule, and the
+# gate is the standing 60 minutes. Revisit about 30 days after the first
+# boot, from the actual run times.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: matrix-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: matrix
+      rules:
+        # KubeJobFailed sees a job that ran and failed. This rule sees the
+        # worse case: no job runs at all. A suspended CronJob, a timezone
+        # change on the schedule or a broken controller all show up here,
+        # because kube_cronjob_status_last_schedule_time stops moving. The
+        # series exists from the first schedule, so a fresh deployment does
+        # not fire before its first night.
+        - alert: MatrixBackupCronStale
+          expr: |-
+            time() - max(kube_cronjob_status_last_schedule_time{namespace="matrix", cronjob="tuwunel-backup"}) > 93600
+          for: 60m
+          labels:
+            severity: warning
+          annotations:
+            summary: The nightly Tuwunel backup has not been scheduled for over a day.
+            description: >-
+              The CronJob tuwunel-backup in namespace matrix did not schedule a Job for
+              more than 26 hours, so the RocksDB backup is not running. A failed Job is a
+              different alert (KubeJobFailed); this one means no Job even started. Check
+              `kubectl -n matrix get cronjob tuwunel-backup` for SUSPEND, then the
+              schedule against the clock. The backup story and the manual command are in
+              docs/runbooks/tuwunel.md.

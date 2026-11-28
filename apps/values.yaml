@@ -1020,6 +1020,16 @@ apps:
     namespace: go-practice
     path: manifests/go-practice
 
+  # Matrix on its own zone finfra.party: Tuwunel (RocksDB on the ssd iSCSI
+  # class, media in Hetzner Object Storage) answering on the zone apex, so
+  # user IDs are @user:finfra.party with no delegation, Heisenbridge as an
+  # appservice with its IRC media links on media.finfra.party. 1 Application,
+  # 1 namespace. First deploy, registration, restore:
+  # docs/runbooks/tuwunel.md. The stack: docs/tech/matrix.md.
+  matrix:
+    namespace: matrix
+    path: manifests/matrix
+
   # Thins old backups in object storage by age: the GitLab tarballs and Omni's
   # etcd snapshots, neither of which anything else ever deletes. Live: it
   # deletes. PRUNE_APPLY in manifests/backup-prune/ is the switch back to a dry
