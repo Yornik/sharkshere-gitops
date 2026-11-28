@@ -46,7 +46,7 @@ spec:
           # runs there. Upstream recommends v2 or better for RocksDB CRC32
           # performance. The other entries in the index are arm64, the amd64
           # baseline (v1) and amd64 v2.
-          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:5e42c29ed88e77322e33d5cff7ca4b14986818da219e6eb7bc984d756396ed02
+          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:a2a37a82b82bf2c427da6040fe63d4d028e287d55b6cbbd977709d4a1645b0ab
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
