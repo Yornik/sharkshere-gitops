@@ -1,0 +1,271 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tuwunel
+  namespace: matrix
+  labels:
+    app.kubernetes.io/name: tuwunel
+    app.kubernetes.io/instance: matrix
+spec:
+  # 1 replica on an RWO iSCSI volume. A rolling update starts the new pod
+  # first, the volume stays attached to the old pod, and the rollout stops on
+  # Multi-Attach. See docs/incidents/grafana-rwo-multi-attach.md.
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tuwunel
+      app.kubernetes.io/instance: matrix
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tuwunel
+        app.kubernetes.io/instance: matrix
+    spec:
+      securityContext:
+        # The iSCSI volume mounts as ext4 owned by root. The kubelet gives
+        # it to this group, so the process (run with the same group below)
+        # can write its database without running as root.
+        fsGroup: 65532
+      containers:
+        - name: tuwunel
+          # Tuwunel is the official successor to conduwuit. Upstream publishes
+          # no version tags: only the rolling latest, preview and main. The
+          # The image pin is `latest` at a digest, and the digest is the
+          # x86-64-v3 platform manifest inside the index (see the resource
+          # note). A digest bump on a multi-arch tag can name the index or
+          # the baseline amd64 manifest, so renovate.json5 turns automerge
+          # off for this image: a person reads each bump and re-pins the v3
+          # manifest of the new latest.
+          #
+          # The pinned digest is the x86-64-v3 platform manifest of the
+          # `latest` image index, not the index itself. The cluster nodes
+          # are 4x Intel N150 (Twin Lake), which supports x86-64-v3 and no
+          # more (no AVX-512), so v3 is the highest CPU-optimised build that
+          # runs there. Upstream recommends v2 or better for RocksDB CRC32
+          # performance. The other entries in the index are arm64, the amd64
+          # baseline (v1) and amd64 v2.
+          image: ghcr.io/matrix-construct/tuwunel:latest@sha256:5e42c29ed88e77322e33d5cff7ca4b14986818da219e6eb7bc984d756396ed02
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8008
+              protocol: TCP
+          env:
+            # The server_name is the part behind the colon of every user and
+            # room ID this server will ever issue: @user:finfra.party. IT
+            # CANNOT CHANGE: the first start records it in the database, and
+            # a database recorded under another name is refused. Changing it
+            # means starting over.
+            #
+            # The server_name is also the host this IngressRoute serves: the
+            # zone finfra.party exists for Matrix alone, so the homeserver
+            # answers on the apex and no delegation is involved. That keeps
+            # discovery trivial - the well-known files below are served by
+            # tuwunel itself on the same host that reads them.
+            - name: TUWUNEL_SERVER_NAME
+              value: "finfra.party"
+
+            # The default binds loopback only, which is correct for a host
+            # install and wrong in a container: nothing outside the pod's
+            # network namespace could reach the listener. The Service and
+            # the health check both need this.
+            - name: TUWUNEL_HTTP__LISTEN__ADDRESS
+              value: '["0.0.0.0"]'
+
+            # Registration is on, but token-gated: the register endpoint
+            # demands the token below, so the server is not an open
+            # registration relay while friends and family can still create
+            # accounts with the token in the runbook. The first account to
+            # register joins the admin room (grant_admin_to_first_user
+            # defaults to true), so the owner takes the server over by
+            # registering first.
+            - name: TUWUNEL_REGISTRATION__ENABLE
+              value: "true"
+            - name: TUWUNEL_REGISTRATION__TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tuwunel-app
+                  key: REGISTRATION_TOKEN
+
+            # Tuwunel serves /.well-known/matrix/client and /server itself
+            # from these two values, on this host. Without `client` set,
+            # that file answers 404 and client auto-discovery yields
+            # nothing. Traefik cannot serve .well-known files itself, and
+            # with the homeserver on the apex no second web server is
+            # needed to publish them.
+            #
+            # The `server` value names the federation endpoint WITH a port
+            # and no scheme: federation peers default to port 8448, which
+            # this cluster does not expose (the edge forwards 80 and 443
+            # only). Pointing peers at :443 puts federation on the same
+            # Traefik entrypoint as everything else, so no new edge
+            # forwarding is needed.
+            - name: TUWUNEL_WELL_KNOWN__CLIENT
+              value: "https://finfra.party"
+            - name: TUWUNEL_WELL_KNOWN__SERVER
+              value: "finfra.party:443"
+
+            # Media lives in Hetzner Object Storage, not on the volume above.
+            # Only the S3 provider is listed, so no upload touches the iSCSI
+            # volume and the RocksDB directory stays small. The credentials
+            # are the same Hetzner S3 keys the CNPG clusters archive WAL
+            # with: one key reaches every bucket of the project, and a
+            # second key would need a second project, not a second secret.
+            # See the Secret/cnpg-s3-wal note in secret-generator.yaml.
+            #
+            # The key names stay ACCESS_KEY_ID and ACCESS_SECRET_KEY even
+            # here where they gate media, not WAL: they come from the shared
+            # Secret, and renaming a key inside a SOPS file needs the age
+            # private key. secretKeyRef.key below points at the old names.
+            - name: TUWUNEL_MEDIA_STORAGE_PROVIDERS
+              value: '["media_on_s3"]'
+            - name: TUWUNEL_STORAGE_PROVIDER__MEDIA_ON_S3__S3__ENDPOINT
+              value: "https://nbg1.your-objectstorage.com"
+            # Hetzner's S3 region name, not an AWS region. The default
+            # us-east-1 would sign against a nonexistent region.
+            - name: TUWUNEL_STORAGE_PROVIDER__MEDIA_ON_S3__S3__REGION
+              value: "nbg1"
+            - name: TUWUNEL_STORAGE_PROVIDER__MEDIA_ON_S3__S3__BUCKET
+              value: "tuwunel-media"
+            - name: TUWUNEL_STORAGE_PROVIDER__MEDIA_ON_S3__S3__USE_VHOST_REQUEST
+              value: "false"
+            - name: TUWUNEL_STORAGE_PROVIDER__MEDIA_ON_S3__S3__KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cnpg-s3-wal
+                  key: ACCESS_KEY_ID
+            - name: TUWUNEL_STORAGE_PROVIDER__MEDIA_ON_S3__S3__SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cnpg-s3-wal
+                  key: ACCESS_SECRET_KEY
+
+            # Heisenbridge registers as an appservice through the YAML file
+            # this directory holds. Both sides share one registration file
+            # (mounted from Secret/heisenbridge-registration) with the same
+            # as_token and hs_token, which is the whole of the
+            # homeserver-to-bridge trust.
+            - name: TUWUNEL_APPSERVICE_DIR
+              value: "/appservices"
+
+            # The online RocksDB backup. `!admin server backup-database`
+            # (or a SIGUSR2, see the next key) copies the database through
+            # the RocksDB Backup engine without stopping the server. The
+            # copy lands on a separate NFS volume: a backup is a plain
+            # copy and needs none of the locks that keep the live database
+            # on iSCSI. See pvc-tuwunel-backup.yaml and the CronJob that
+            # triggers it nightly.
+            - name: TUWUNEL_DATABASE__BACKUP__PATH
+              value: "/var/lib/tuwunel-backups"
+            # 3 rolling generations. The Backup engine shares unchanged
+            # files between generations, so 3 cost little more than 1.
+            - name: TUWUNEL_DATABASE__BACKUP__KEEP
+              value: "3"
+            # What SIGUSR2 runs. The CronJob tuwunel-backup sends that
+            # signal once a night, which is the upstream-documented way to
+            # schedule the backup. SIGUSR1 stays the config-reload signal.
+            - name: TUWUNEL_ADMIN__SIGNAL_EXECUTE
+              value: '["server backup-database"]'
+
+            # Left unset on purpose, so a later reader does not have to
+            # re-derive why:
+            #
+            #   TUWUNEL_DATABASE__PATH       the image default
+            #                                /var/lib/tuwunel is the volume
+            #                                mount below; a second place for
+            #                                one truth.
+            #   TUWUNEL_HTTP__LISTEN__PORT   8008, already the containerPort
+            #                                and the Service target.
+            #   TUWUNEL_DB_POOL_MAX_WORKERS  the pool sizes itself from the
+            #                                4 cores of an N150 and stays far
+            #                                below the node podPidsLimit of
+            #                                4096 (see docs/tech/README.md).
+            #   TUWUNEL_TURN_*               no TURN server exists; voice
+            #                                and video calls will not
+            #                                connect across NATs until one
+            #                                is added.
+            #   TUWUNEL_FEDERATION__ENABLE   federation stays on (the
+            #                                default). It leaves over the
+            #                                same 443 via the well-known
+            #                                server value above.
+            #   io_uring seccomp             the node seccompDefault blocks
+            #                                the three io_uring syscalls.
+            #                                Upstream documents this as
+            #                                harmless: the engine falls back
+            #                                to synchronous reads. The
+            #                                default profile is not relaxed.
+          # The image ships its own health check: the same binary, run with
+          # --health-check, reads the configuration from this container's
+          # env, connects to each listener and requests
+          # /_tuwunel/server_version. Upstream documents the flag as the
+          # intended Kubernetes exec probe. It needs no HTTP path to be
+          # public, and none is.
+          startupProbe:
+            exec:
+              command: ["tuwunel", "--health-check"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            exec:
+              command: ["tuwunel", "--health-check"]
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["tuwunel", "--health-check"]
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+          resources:
+            # No cpu limit by design - see fedishark/deployment.yaml for the
+            # full reasoning. The same shape: request bursts from federation
+            # and sync, where a CFS quota turns a burst into a stall.
+            #
+            # The memory limit is an estimate, not a measurement: nothing has
+            # run long enough to measure. 512 Mi covers the RocksDB caches,
+            # jemalloc and the sync scratch of a small server, with room to
+            # spare. Revisit about 30 days after the first boot, from the
+            # pod's actual working set.
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/tuwunel
+            - name: backups
+              mountPath: /var/lib/tuwunel-backups
+            - name: appservices
+              mountPath: /appservices
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: tuwunel-data
+        - name: backups
+          persistentVolumeClaim:
+            claimName: tuwunel-backup-ssd
+        # The registration file reaches both containers from one Secret, so
+        # the tokens cannot drift between the two sides of the bridge.
+        - name: appservices
+          secret:
+            secretName: heisenbridge-registration
+            items:
+              - key: heisenbridge-registration.yaml
+                path: heisenbridge.yaml

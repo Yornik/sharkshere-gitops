@@ -1,0 +1,93 @@
+# The nightly database backup trigger.
+#
+# Tuwunel copies its own RocksDB database online, through the RocksDB Backup
+# engine: `!admin server backup-database` in the admin room, or a SIGUSR2
+# when admin.signal_execute names the command (set in the Deployment). A
+# backup cannot run from another container against the mounted volume,
+# because RocksDB allows one writer: the command must reach the running
+# process. This job is the upstream-documented timer - see the
+# database.backup section of tuwunel-example.toml.
+#
+# RBAC: the job can exec into the pods of this namespace and nothing else.
+# The exec needs no secret: it sends a signal that runs a command the
+# server itself declares in its configuration.
+#
+# 04:43 Europe/Amsterdam, after the 23:00 jellyfin-backup on the same NAS
+# and outside the 03:xx-to-04:13 UTC window the DNS CronJobs use. The
+# backup of a small homeserver runs in seconds.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tuwunel-backup
+  namespace: matrix
+spec:
+  schedule: "43 4 * * *"
+  timeZone: "Europe/Amsterdam"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: tuwunel-backup
+          restartPolicy: OnFailure
+          containers:
+            - name: trigger
+              # alpine/k8s ships kubectl at the version tag. The tag matches
+              # the cluster version; Renovate tracks it.
+              image: alpine/k8s:1.37.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  # PID 1 inside the tuwunel container is the server
+                  # process. The shell builtin sends the signal: the image
+                  # ships no procps and needs none.
+                  kubectl -n matrix exec deploy/tuwunel -- \
+                    /bin/sh -c 'kill -USR2 1'
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tuwunel-backup
+  namespace: matrix
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tuwunel-backup
+  namespace: matrix
+rules:
+  # kubectl resolves deploy/tuwunel before it execs: it reads the
+  # Deployment to find its pods, then execs into one. The grant names the
+  # one Deployment, so the job cannot read any other.
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["tuwunel"]
+    verbs: ["get"]
+  # kubectl then lists the pods of that Deployment and creates the exec.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tuwunel-backup
+  namespace: matrix
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tuwunel-backup
+subjects:
+  - kind: ServiceAccount
+    name: tuwunel-backup
+    namespace: matrix

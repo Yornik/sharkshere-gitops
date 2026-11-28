@@ -4,8 +4,8 @@ This repository holds the desired state of the sharkshere Kubernetes cluster. Ar
 
 ## What this repository does
 
-- It defines 58 ArgoCD Applications for a 4-node Talos Linux cluster.
-- It serves 16 public HTTPS domains. Examples are GitLab CE, OpenProject, Vaultwarden, Jellyfin and a Fediverse instance.
+- It defines 62 ArgoCD Applications for a 4-node Talos Linux cluster.
+- It serves 18 public HTTPS domains. Examples are GitLab CE, OpenProject, Vaultwarden, Jellyfin, a Fediverse instance and a Matrix homeserver.
 - It keeps all secrets encrypted with SOPS and age. ArgoCD decrypts them in the cluster with KSOPS.
 
 This repository is one of three:
@@ -23,6 +23,7 @@ This repository is one of three:
 | [`docs/tech/README.md`](docs/tech/README.md) | Full technical overview: traffic flow, storage classes, application inventory, public domains, constraints. |
 | [`docs/tech/monitoring.md`](docs/tech/monitoring.md) | How metrics, logs, dashboards and alerts work, and the gaps in them. |
 | [`docs/tech/database.md`](docs/tech/database.md) | The 4 Postgres clusters: which app uses which, storage, backups, alerts, upgrades, how to add a database. |
+| [`docs/tech/matrix.md`](docs/tech/matrix.md) | The Matrix stack: homeserver, IRC bridge, media storage, the zone that carries them, how to operate it. |
 | [`docs/tech/renovate.md`](docs/tech/renovate.md) | How Renovate updates the versions: what it reads, which bump merges itself, which waits for a person. |
 | [`AGENTS.md`](AGENTS.md) | Instructions for a coding agent. `CLAUDE.md` points here. |
 | [`REVIEW.md`](REVIEW.md) | 2 checklists for a pull request: A for a dependency bump, B for a change. The `Claude review` CI job uses them. |

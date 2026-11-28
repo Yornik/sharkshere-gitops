@@ -45,6 +45,15 @@ spec:
             # same account. Its apex comes from the dummy Service
             # dns-vesper-labs-org in dns-records.yaml.
             - --domain-filter=vesper-labs.org
+            # finfra.party, the Matrix zone of its own in the same Cloudflare
+            # account: the apex is the homeserver host (finfra.party) and
+            # media.finfra.party carries the IRC file links. Both records come
+            # from the dummy Services dns-finfra-party and
+            # dns-media-finfra-party in dns-records.yaml, so without this
+            # filter ExternalDNS skips them and neither name resolves. The
+            # Cloudflare token in secret.enc.yaml already reaches the zone
+            # (verified against the API on 2026-11-28: the token lists it).
+            - --domain-filter=finfra.party
             - --policy=upsert-only
             - --registry=txt
             - --txt-owner-id=sharkshere

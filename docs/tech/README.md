@@ -2,7 +2,7 @@
 
 > Moved from the repository root. The root `README.md` is the short operator-facing version; this file keeps the full narrative, diagrams and inventories. Incident write-ups live in [`../incidents/`](../incidents/README.md).
 
-GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 59 ArgoCD Applications that serve 16 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, and a Fediverse instance.
+GitOps control plane for the sharkshere homelab platform — a 4-node Talos Kubernetes cluster reconciling 62 ArgoCD Applications that serve 18 public HTTPS domains end-to-end, including self-hosted **GitLab CE** (with container registry on `registry.git.yornik.eu` and git-over-SSH on `:2222`), **OpenProject**, **Vaultwarden**, **Jellyfin**, a Fediverse instance and a **Matrix** homeserver on its own zone.
 
 Traffic enters via two Hetzner edge nodes (HAProxy L4 TCP with PROXY v2 preserving real client IPs), tunnels through a Tailscale mesh, and terminates TLS at in-cluster Traefik via ACME (Let's Encrypt HTTP-01).
 
@@ -24,9 +24,10 @@ This repo is one of three:
 | CNI | Flannel (`ghcr.io/siderolabs/flannel`), the Talos default. It does not enforce NetworkPolicy, so the NetworkPolicy objects in `argocd`, `openproject`, `go-practice`, `go-practice-runner` and `shelly-control` have no effect. Checked on 2026-10-17. |
 | Kubelet | `podPidsLimit: 4096` and `seccompDefault: true` on all 4 nodes. Omni manages this configuration, not this repository. The PID limit is an Omni cluster config patch on `machine.kubelet.extraConfig`, applied on 2026-10-21. Talos v1.14 marks `machine.kubelet` deprecated, but this cluster's config uses it: a `KubeletConfig` document next to it fails with "kubelet config is already set in v1alpha1 config". |
 | Memory | 128 GiB cluster total |
-| Workloads | 59 ArgoCD Applications, 16 public HTTPS domains, 12 tailnet-only web interfaces, 1 tailnet-only SMB service |
+| Workloads | 62 ArgoCD Applications, 18 public HTTPS domains, 12 tailnet-only web interfaces, 1 tailnet-only SMB service |
 | Postgres | 4 CloudNativePG Clusters (shared / OpenProject / GitLab / soiree), 3-instance HA each. See [`database.md`](database.md). |
-| Object storage | 8 buckets in Hetzner Object Storage (WAL archive + per-app backends) |
+| Matrix | Tuwunel homeserver + Heisenbridge IRC bridge on `finfra.party`, media in Hetzner S3. See [`matrix.md`](matrix.md). |
+| Object storage | 9 buckets in Hetzner Object Storage (WAL archive + per-app backends + Matrix media) |
 | Edge | 2 Hetzner jump hosts (Nuremberg + Helsinki) with HAProxy L4 + Tailscale |
 | Storage backend | TrueNAS SCALE (7-disk raidz1 HDD pool + 2-disk SSD mirror) over NFS + iSCSI + SMB |
 | Logs | Alloy (DaemonSet) → Loki (60-day retention, 30 GiB store) |
@@ -205,9 +206,10 @@ NOTE: Sonarr numbers anime episodes by absolute number only when the series type
 - **Tailscale operator for inbound SSH.** `gitlab-shell` is exposed via `tailscale.com/expose` so HAProxy on the jump hosts reaches it over the mesh on `:22` — externally surfaced as `:2222` because the jump host's own sshd keeps `:22`.
 - **Admin interfaces on the tailnet only.** Tailscale Ingresses publish the ArgoCD UI, Grafana, Alertmanager, ArchiSteamFarm, qBittorrent, Seerr, Sonarr, Radarr, Prowlarr, MeTube, the Vaultwarden admin panel, the TrueNAS web interface and the boiler page of shelly-control to tailnet devices, with Tailnet Lock signing each new proxy device. The NAS is outside the cluster, so a small nginx pod relays TCP to it. The SMB service of the NAS has its own relay pod and its own tailnet address, `nas-smb`. ArgoCD keeps 1 public path, `/api/webhook`, because GitHub cannot join the tailnet. Tailnet traffic skips Traefik, so each app's own login is the gate there. Alertmanager and the boiler page have no login, so the tailnet is their only gate — see [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis.md).
 - **Media request pipeline.** A request starts in the Jellyfin web UI, through the Jellyfin Enhanced plugin, or in Seerr. Seerr sends a series to Sonarr and a film to Radarr. Prowlarr holds the indexers and syncs them to both. qBittorrent downloads behind the gluetun Mullvad sidecar into `downloads/` on the series or movies share. Each `downloads/` folder has a `.ignore` file, so Jellyfin skips unfinished files. Sonarr and Radarr copy a finished download into the library and tell Jellyfin to scan. Prowlarr searches from the home address, because public indexers block VPN exit addresses. The gluetun sidecar of qBittorrent also serves an HTTP proxy for MeTube on port 8888. The proxy has a login, because the cluster runs flannel and enforces no NetworkPolicy. A restart of the qBittorrent pod interrupts the downloads of MeTube for about 1 minute. The qBittorrent pod sets `ndots:1`, because gluetun's DNS answers a missing name with an empty NOERROR and the musl resolver then gave up — see [the incident](../incidents/2026-10-23-qbittorrent-dns-search-domain.md). Jellyfin Enhanced, the qBittorrent categories and the app settings live in each app's config volume, not in git — see [the runbook](../runbooks/seerr-sonarr.md).
-- **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu` and `vesper-labs.org`, and a reject-all SPF and DMARC policy for the 3 zones that send no mail.
+- **DNS policy as code.** CronJobs in `external-dns` keep the records ExternalDNS does not manage: CAA (Let's Encrypt only, no wildcards; the job fails when resolvers serve anything wider), DANE TLSA, and mail records — SPF, DKIM and DMARC for `yornik.eu` and `vesper-labs.org`, and a reject-all SPF and DMARC policy for the 4 zones that send no mail.
 - **GitHub webhook + ArgoCD prune+selfHeal** means a merge to `main` reconciles within seconds — not 3-minute polling.
 - **SOPS + KSOPS** for in-cluster secret decryption. `.enc.yaml` files are decrypted by the repo-server init container with an age key mounted as a Secret; no plaintext secrets at rest or in git.
+- **Matrix on its own DNSSEC-signed zone.** `finfra.party` serves the stack alone: Tuwunel answers on the apex with federation on `:443` through the well-known file it serves itself, Heisenbridge runs as an appservice with its IRC media links on `media.finfra.party`, and media lives in the `tuwunel-media` bucket of Hetzner Object Storage - see [`matrix.md`](matrix.md).
 - **PR-gated everything**: seven CI jobs before merge — yamllint, signed `security.txt` validation, a KSOPS version/hash guard, helm template, per-chart values rendering, and kubeconform with CRD schemas on both raw and rendered output (see [CI](#ci)).
 
 ## Repository layout
@@ -257,6 +259,7 @@ manifests/      per-app manifests and Kustomize overlays
 | `argocd-config` | `argocd` | public IngressRoute for `/api/webhook` only, tailnet Ingress for the UI and CLI, fail2ban middleware |
 | `soiree` | `soiree` | shared event budget/task planner + its CNPG cluster (`bokings-driessen.party`) |
 | `go-practice` | `go-practice`, `go-practice-runner` | web IDE for the Go practice course (`vesper-labs.org`; `go-learn.party` redirects there) + a sandboxed runner for learner code in its own namespace — see [runbook](../runbooks/go-practice.md) |
+| `matrix` | `matrix` | Tuwunel homeserver + Heisenbridge IRC bridge on `finfra.party` (its own zone, DNSSEC-signed); RocksDB on the ssd iSCSI class, media in the Hetzner `tuwunel-media` bucket, nightly online backup — see [matrix.md](matrix.md) and [runbook](../runbooks/tuwunel.md) |
 | `vaultwarden` | `vaultwarden` | password manager (`passwords.yornik.eu`); admin panel on the tailnet only |
 | `vikunja` | `vikunja` | task management (`todo.yornik.eu`) |
 | `asf` | `asf` | ArchiSteamFarm; IPC interface on the tailnet only |
@@ -330,6 +333,8 @@ manifests/      per-app manifests and Kustomize overlays
 | `registry.git.yornik.eu` | GitLab Container Registry |
 | `bokings-driessen.party` | soiree — event planner. Served from the **apex**, so its A/AAAA records point straight at the jump hosts rather than using the `target:` CNAME the subdomains take; `www.` redirects to it. Deliberately not indexed: `SOIREE_ALLOW_INDEXING` is off, so the app disallows in `robots.txt` and sends `X-Robots-Tag: noindex` on every response. |
 | `vesper-labs.org` | go-practice — web IDE for the Go practice course. Served from the **apex** of its own zone, with A/AAAA records straight at the jump hosts like `bokings-driessen.party`; no `www.`, because the app accepts 1 origin, its WebAuthn relying party. Sign-up is by invite only. The runner that executes learner code has no public route. Sends its mail through Resend as `hush@vesper-labs.org`. DNSSEC-signed, with a DANE TLSA record on `_443._tcp`. Moved here from `go-learn.party`; see [the runbook](../runbooks/go-practice.md#how-to-move-the-site-to-vesper-labsorg). |
+| `finfra.party` | matrix — Tuwunel homeserver answering on the **apex** of its own DNSSEC-signed zone: client API, federation (over `:443`, via the well-known file tuwunel serves itself) and discovery. User IDs are `@user:finfra.party`. Registration is token-gated; nightly online RocksDB backup. See [matrix.md](matrix.md). |
+| `media.finfra.party` | matrix — the IRC media links of Heisenbridge. A Traefik rewrite maps the public `/m/<media_id>/<checksum>/<filename>` path onto the bridge's own route; the checksum is an HMAC, so URLs cannot be enumerated. |
 | `go-learn.party` | Redirect only, the old host of go-practice. Every path goes to the same path and query on `vesper-labs.org`: 301 for GET, 308 for every other method. Old links and the verify links in issued certificates point here, so the name keeps its A/AAAA records, its certificate and its routes on `web` and `websecure`. `/.well-known/security.txt` is served here, not redirected. It sends no mail. |
 
 ### Tailnet only
@@ -354,7 +359,7 @@ See [`../runbooks/tailnet-only-admin-uis.md`](../runbooks/tailnet-only-admin-uis
 | `nas-smb.hedgehog-wage.ts.net` | TrueNAS SMB service on port 445, through a TCP relay pod; see [`../runbooks/truenas-smb.md`](../runbooks/truenas-smb.md) |
 | `boiler.hedgehog-wage.ts.net` | shelly-control, the page that sets the rules that switch the boiler. No login: the tailnet policy grant for `tag:boiler` is the only gate. See [`../runbooks/shelly-control.md`](../runbooks/shelly-control.md) |
 
-ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party` and `vesper-labs.org` — the last 3 are zones of their own, so each needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
+ExternalDNS manages all subdomains for `fedishark.eu`, `yornik.eu`, `bokings-driessen.party`, `go-learn.party`, `vesper-labs.org` and `finfra.party` — the last 4 are zones of their own, so each needs its own `--domain-filter` and a Cloudflare token that reaches it. Apex records are managed via dummy Services in `manifests/external-dns/dns-records.yaml`, pointing directly at the jump host IPs (Cloudflare CNAME flattening conflicts with DANE TLSA, which is selectively applied where it provides practical value).
 
 ExternalDNS runs with `--policy=upsert-only`. It creates and updates records. It does not delete a record. To remove a hostname:
 

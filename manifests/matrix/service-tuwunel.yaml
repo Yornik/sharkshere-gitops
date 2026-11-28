@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tuwunel
+  namespace: matrix
+  labels:
+    app.kubernetes.io/name: tuwunel
+    app.kubernetes.io/instance: matrix
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: tuwunel
+    app.kubernetes.io/instance: matrix
+  ports:
+    - name: http
+      port: 8008
+      targetPort: http
+      protocol: TCP
